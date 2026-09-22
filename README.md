@@ -1,0 +1,117 @@
+# KeepIt - AI-Powered Second Brain & Smart Visual Bookmarks 🧠✨
+
+> **"Never lose an idea, reel, article, or note again."**  
+> KeepIt is a privacy-first, visually aesthetic second brain for mobile (Flutter) and desktop (Chrome Extension). Inspired by the beauty of mymind, engineered for effortless recall and privacy.
+
+---
+
+## 🌟 Why KeepIt?
+Every day we scroll past dozens of insightful Instagram Reels, YouTube Shorts, Twitter threads, technical articles, and design inspirations. Bookmarking them on individual platforms means they get forgotten forever. 
+
+**KeepIt solves this seamlessly:**
+1. **One-Tap Share Target:** Share directly from Instagram, YouTube, Twitter/X, TikTok, Reddit, or your browser.
+2. **Local-First Architecture:** Instant access offline with zero latency using local database (Hive/Isar/SQLite), seamlessly backed up to Firebase.
+3. **Smart Serendipity & AI Recall:** Smart notifications remind you of items you saved days or weeks ago right when you need inspiration.
+4. **Minimal Aesthetic UI:** Card-based dynamic masonry grid with tag clouds, color palettes, space categorizations, and distraction-free viewing.
+5. **Cross-Platform Ecosystem:** Native Flutter App (Android & iOS) + Manifest V3 Chrome Extension.
+
+---
+
+## 📱 App Features Overview
+
+| Feature | Description |
+| :--- | :--- |
+| **Visual Masonry Grid** | Dynamic Pinterest/mymind-style layout tailored for Reels, image cards, quote snippets, and link previews. |
+| **Share Intent Receiver** | Accepts links, media, and text directly from Android/iOS system share sheets. |
+| **Smart Metadata Extraction** | Automatically fetches title, OG image, author, favicon, and extracts core content. |
+| **Spaces & Smart Tags** | Auto-categorize by hashtags, themes, or custom user spaces (e.g. `Design`, `Dev`, `Quotes`, `AI Tools`). |
+| **Serendipity Engine** | Algorithmic "Rediscovery" tab and intelligent push notifications reminding you of forgotten saves. |
+| **"I've Watched / Read This"** | Track read/watch status so your active mind feed stays fresh and actionable. |
+| **Local-First + Cloud Sync** | 100% offline functionality first. Transparent background sync with Firebase Cloud Firestore & Storage. |
+| **Full-Text & Color Search** | Search through tags, titles, notes, domains, and even dominant visual colors. |
+
+---
+
+## 🛠️ Architecture & Tech Stack
+
+```mermaid
+graph TD
+    A[User Share / Input] -->|Android/iOS Share Sheet| B(Flutter App)
+    C[Web Browser] -->|Context Menu / Hotkey| D(Chrome Extension)
+    
+    B --> E[(Local DB: Hive / Isar)]
+    D --> F[(IndexedDB / Chrome Storage)]
+    
+    E <-->|Sync Engine with Conflict Resolution| G[(Firebase Firestore & Cloud Storage)]
+    F <-->|Direct / Cloud Function Sync| G
+    
+    G --> H[Cloud Functions / AI Metadata Extractor]
+    H --> G
+    
+    G --> I[FCM Push Notification Service: Serendipity Bot]
+    I --> B
+```
+
+- **Frontend App:** Flutter 3.x (Dart), Riverpod / Bloc for reactive state management.
+- **Local Storage:** Hive / Isar / SQLite for instant local query speeds and offline capability.
+- **Backend Sync:** Firebase Authentication, Cloud Firestore, Cloud Storage, Cloud Functions.
+- **Chrome Extension:** Manifest V3, TypeScript/JavaScript, TailwindCSS popup, Background Service Worker.
+- **Notification Engine:** Firebase Cloud Messaging (FCM) + Flutter Local Notifications (zoned schedule for spaced repetition).
+
+---
+
+## 📂 Repository Structure
+
+```text
+keepit/
+├── docs/
+│   ├── ARCHITECTURE.md          # Technical architecture & sync engine spec
+│   ├── APP_FLOW_AND_UI.md       # Complete screen wireframes & interaction flows
+│   ├── ASO_PLAYSTORE_STRATEGY.md# App Store Optimization & launch strategy
+│   ├── CHROME_EXTENSION_SPEC.md # Chrome Extension Manifest V3 architecture
+│   └── NOTIFICATION_ENGINE.md   # Spaced repetition & serendipity algorithm
+├── flutter_app/                 # Complete Flutter Mobile Application codebase
+│   ├── lib/
+│   │   ├── core/                # Theme, constants, network, utils
+│   │   ├── data/                # Local database (Hive), Firebase repos
+│   │   ├── domain/              # Entities and use cases
+│   │   └── presentation/        # Screens (Masonry feed, Detail, Spaces, Serendipity)
+│   └── pubspec.yaml
+├── chrome_extension/            # Manifest V3 Extension for 1-click web bookmarking
+│   ├── manifest.json
+│   ├── popup/
+│   ├── background/
+│   └── icons/
+└── README.md
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Flutter SDK (v3.19.0 or higher)
+- Dart SDK
+- Chrome Browser (for extension testing)
+- Firebase Project configured (`google-services.json` / `GoogleService-Info.plist`)
+
+### Quick Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/Keshab1997/keepit.git
+cd keepit
+
+# Run Flutter App
+cd flutter_app
+flutter pub get
+flutter run
+
+# Load Chrome Extension
+# Open chrome://extensions -> Enable Developer Mode -> Load Unpacked -> select 'chrome_extension'
+```
+
+---
+
+## 📄 License
+Licensed under the [MIT License](LICENSE). Built with ❤️ by [Keshab Sarkar](https://github.com/Keshab1997).

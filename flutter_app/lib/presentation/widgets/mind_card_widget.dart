@@ -201,7 +201,6 @@ class MindCardWidget extends StatelessWidget {
       case ItemType.quickNote:
         return LucideIcons.fileText;
       case ItemType.webArticle:
-      default:
         return LucideIcons.globe;
     }
   }

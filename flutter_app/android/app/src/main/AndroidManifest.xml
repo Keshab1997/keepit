@@ -10,7 +10,7 @@
         android:icon="@mipmap/ic_launcher">
         
         <activity
-            android:name=".MainActivity"
+            android:name="io.flutter.embedding.android.FlutterActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/LaunchTheme"
@@ -42,9 +42,5 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
-        
-        <meta-data
-            android:name="flutterEmbedding"
-            android:value="2" />
     </application>
 </manifest>

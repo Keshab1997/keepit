@@ -26,15 +26,15 @@ class MindCardWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: item.isTopMind
-                ? AppColors.primary.withOpacity(0.5)
+                ? const Color(0x80FF5B37)
                 : AppColors.cardBorder,
             width: item.isTopMind ? 1.5 : 0.8,
           ),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Color(0x08000000),
               blurRadius: 10,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),
@@ -67,7 +67,7 @@ class MindCardWidget extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.4),
+                        color: const Color(0x66000000),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -84,9 +84,9 @@ class MindCardWidget extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.45),
+                        color: const Color(0x73000000),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.8), width: 1.5),
+                        border: Border.all(color: const Color(0xCCFFFFFF), width: 1.5),
                       ),
                       child: const Icon(
                         LucideIcons.play,
@@ -103,7 +103,7 @@ class MindCardWidget extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.9),
+                          color: const Color(0xE610B981),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Row(

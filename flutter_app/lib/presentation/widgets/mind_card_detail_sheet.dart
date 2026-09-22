@@ -21,165 +21,169 @@ class MindCardDetailSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final liveItem = ref.watch(mindFeedProvider).items.firstWhere(
-          (element) => element.id == item.id,
-          orElse: () => item,
-        );
+  Widget build(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final liveItem = ref.watch(mindFeedProvider).items.firstWhere(
+              (element) => element.id == item.id,
+              orElse: () => item,
+            );
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              // Header Controls (Dismiss chevron, Title, Options)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(LucideIcons.chevronDown, size: 24),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    Expanded(
-                      child: Text(
-                        liveItem.title,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(LucideIcons.moreHorizontal, size: 24),
-                      onPressed: () {
-                        _showActionsMenu(context, ref, liveItem);
-                      },
-                    ),
-                  ],
-                ),
+        return DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              const Divider(height: 1, color: AppColors.cardBorder),
-
-              // Scrollable Body
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    // Main Media Preview Card
-                    if (liveItem.thumbnailUrl != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Image.network(
-                              liveItem.thumbnailUrl!,
-                              width: double.infinity,
-                              height: 380,
-                              fit: BoxFit.cover,
+              child: Column(
+                children: [
+                  // Header Controls (Dismiss chevron, Title, Options)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: const Icon(LucideIcons.chevronDown, size: 24),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        Expanded(
+                          child: Text(
+                            liveItem.title,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                            // Frosted Play Icon
-                            Container(
-                              width: 64,
-                              height: 64,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.4),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                              ),
-                              child: const Icon(
-                                LucideIcons.play,
-                                color: Colors.white,
-                                size: 30,
-                              ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(LucideIcons.moreHorizontal, size: 24),
+                          onPressed: () {
+                            _showActionsMenu(context, ref, liveItem);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: AppColors.cardBorder),
+
+                  // Scrollable Body
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        // Main Media Preview Card
+                        if (liveItem.thumbnailUrl != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Image.network(
+                                  liveItem.thumbnailUrl!,
+                                  width: double.infinity,
+                                  height: 380,
+                                  fit: BoxFit.cover,
+                                ),
+                                // Frosted Play Icon
+                                Container(
+                                  width: 64,
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0x66000000),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2),
+                                  ),
+                                  child: const Icon(
+                                    LucideIcons.play,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-
-                    const SizedBox(height: 20),
-
-                    // "I've watched this reel" Primary Interactive Action Button
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        ref.read(mindFeedProvider.notifier).toggleWatched(liveItem.id);
-                      },
-                      icon: Icon(
-                        liveItem.isWatched ? LucideIcons.checkCheck : LucideIcons.eye,
-                        color: liveItem.isWatched ? AppColors.success : AppColors.primary,
-                      ),
-                      label: Text(
-                        liveItem.isWatched
-                            ? "Completed & Watched"
-                            : "I've watched this reel",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: liveItem.isWatched ? AppColors.success : AppColors.primary,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: liveItem.isWatched
-                            ? AppColors.success.withOpacity(0.12)
-                            : AppColors.primaryLight,
-                        minimumSize: const Size(double.infinity, 54),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Tags Cloud
-                    const Text(
-                      "MIND TAGS",
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.1,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: liveItem.tags.map((tag) {
-                        return Chip(
-                          label: Text('#$tag'),
-                          backgroundColor: AppColors.tagBg,
-                          labelStyle: const TextStyle(
-                            color: AppColors.tagText,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
                           ),
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+
+                        const SizedBox(height: 20),
+
+                        // "I've watched this reel" Primary Interactive Action Button
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            ref.read(mindFeedProvider.notifier).toggleWatched(liveItem.id);
+                          },
+                          icon: Icon(
+                            liveItem.isWatched ? LucideIcons.checkCheck : LucideIcons.eye,
+                            color: liveItem.isWatched ? AppColors.success : AppColors.primary,
                           ),
-                        );
-                      }).toList(),
+                          label: Text(
+                            liveItem.isWatched
+                                ? "Completed & Watched"
+                                : "I've watched this reel",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: liveItem.isWatched ? AppColors.success : AppColors.primary,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: liveItem.isWatched
+                                ? const Color(0x1F10B981)
+                                : AppColors.primaryLight,
+                            minimumSize: const Size(double.infinity, 54),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Tags Cloud
+                        const Text(
+                          "MIND TAGS",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: liveItem.tags.map((tag) {
+                            return Chip(
+                              label: Text('#$tag'),
+                              backgroundColor: AppColors.tagBg,
+                              labelStyle: const TextStyle(
+                                color: AppColors.tagText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -204,7 +208,7 @@ class MindCardDetailSheet extends ConsumerWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: AppColors.textMuted.withOpacity(0.4),
+                  color: const Color(0x66A5A9B8),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -226,7 +230,6 @@ class MindCardDetailSheet extends ConsumerWidget {
                 title: "Add tags",
                 onTap: () {
                   Navigator.pop(ctx);
-                  // Add tag logic
                 },
               ),
               _buildActionTile(
@@ -251,7 +254,7 @@ class MindCardDetailSheet extends ConsumerWidget {
                 onTap: () {
                   ref.read(mindFeedProvider.notifier).deleteItem(item.id);
                   Navigator.pop(ctx);
-                  Navigator.pop(context); // Close detail sheet as well
+                  Navigator.pop(context);
                 },
               ),
             ],
@@ -282,7 +285,7 @@ class MindCardDetailSheet extends ConsumerWidget {
           color: isDestructive ? AppColors.danger : AppColors.textPrimary,
         ),
       ),
-      tileColor: isDestructive ? AppColors.danger.withOpacity(0.06) : AppColors.background,
+      tileColor: isDestructive ? const Color(0x0FFF3B30) : AppColors.background,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),

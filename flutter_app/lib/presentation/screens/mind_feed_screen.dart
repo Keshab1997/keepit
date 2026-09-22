@@ -46,11 +46,11 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: AppColors.cardBorder, width: 0.8),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
+                            color: Color(0x05000000), // Pure hex to avoid deprecation warnings
                             blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            offset: Offset(0, 2),
                           ),
                         ],
                       ),
@@ -98,11 +98,11 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
+                            color: Color(0x4DFF5B37),
                             blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),

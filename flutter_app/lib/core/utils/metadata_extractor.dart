@@ -33,7 +33,6 @@ class MetadataExtractor {
           }
         } catch (_) {}
 
-        // Separate scraping for full extended description
         try {
           final scraped = await _scrapeOpenGraph(cleanUrl);
           if (scraped['description'] != null && scraped['description']!.isNotEmpty) {
@@ -70,11 +69,10 @@ class MetadataExtractor {
     // 2. Instagram Handler (Reels & Posts)
     if (cleanUrl.contains('instagram.com/reel') || cleanUrl.contains('instagram.com/p/')) {
       String? igThumb;
-      String extractedCaption = '';
       String author = 'Instagram';
-      String finalTitle = '';
+      String rawCaption = '';
 
-      // First attempt: Instagram oEmbed API
+      // First attempt: Instagram oEmbed API (Returns clean author & caption without metric clutter)
       try {
         final oembedUri = Uri.parse(
           'https://api.instagram.com/oembed/?url=${Uri.encodeComponent(cleanUrl)}',
@@ -85,55 +83,70 @@ class MetadataExtractor {
           author = json['author_name'] ?? author;
           igThumb = json['thumbnail_url'];
           if (json['title'] != null && json['title'].toString().trim().isNotEmpty) {
-            extractedCaption = json['title'].toString().trim();
+            rawCaption = json['title'].toString().trim();
           }
         }
       } catch (_) {}
 
       // Second attempt: Scrape Open Graph meta tags
-      if (extractedCaption.isEmpty || igThumb == null) {
+      if (rawCaption.isEmpty || igThumb == null) {
         try {
           final scraped = await _scrapeOpenGraph(cleanUrl);
           if (scraped['image'] != null && scraped['image']!.isNotEmpty) {
             igThumb ??= scraped['image'];
           }
-          if (scraped['description'] != null && scraped['description']!.isNotEmpty) {
-            extractedCaption = scraped['description']!;
-          } else if (scraped['title'] != null && scraped['title']!.isNotEmpty && scraped['title'] != 'Instagram') {
-            extractedCaption = scraped['title']!;
+          // Some Instagram meta tags hold the caption in og:title, twitter:title or og:description
+          final candidateDesc = scraped['description'] ?? '';
+          final candidateTitle = scraped['title'] ?? '';
+
+          // Prefer the text that doesn't say "likes, comments"
+          if (!_isInstagramMetricClutter(candidateTitle) && candidateTitle.isNotEmpty && candidateTitle != 'Instagram') {
+            rawCaption = candidateTitle;
+          } else if (!_isInstagramMetricClutter(candidateDesc) && candidateDesc.isNotEmpty) {
+            rawCaption = candidateDesc;
+          } else {
+            // Strip the "X likes, Y comments:" prefix from description
+            rawCaption = _stripInstagramMetricPrefix(candidateDesc.isNotEmpty ? candidateDesc : candidateTitle);
           }
         } catch (_) {}
       }
 
-      // Fallback caption from shared raw text if provided
-      if (extractedCaption.isEmpty && rawText != cleanUrl) {
-        extractedCaption = rawText.replaceAll(cleanUrl, '').trim();
+      // Fallback to text shared from Instagram share sheet
+      if ((rawCaption.isEmpty || _isInstagramMetricClutter(rawCaption)) && rawText != cleanUrl) {
+        final sharedWithoutUrl = rawText.replaceAll(cleanUrl, '').trim();
+        if (sharedWithoutUrl.isNotEmpty) {
+          rawCaption = sharedWithoutUrl;
+        }
       }
 
-      // INTELLIGENT SEPARATION OF TITLE & DESCRIPTION:
-      // Instagram puts the whole caption into the title field.
-      // We extract only the 1st sentence/headline for the Title, and the entire text for Description!
-      if (extractedCaption.isNotEmpty) {
-        finalTitle = _extractConciseHeadline(extractedCaption);
-      } else {
-        finalTitle = 'Instagram Reel by $author';
-        extractedCaption = 'Saved Instagram Reel by $author. Tap above to watch directly on Instagram.';
+      // Clean author name if formatted as "... on Instagram"
+      if (author == 'Instagram') {
+        final extractedAuthor = _extractInstagramUsername(cleanUrl);
+        if (extractedAuthor != null) {
+          author = '@$extractedAuthor';
+        }
       }
+
+      // Filter and clean the caption completely
+      final cleanCaption = _purifyInstagramCaption(rawCaption, author);
+
+      // Extract a meaningful, concise headline title
+      final cleanTitle = _extractInstagramTitle(cleanCaption, author);
 
       igThumb ??= 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=700&q=80';
 
       final tags = _generateAccurateTags(
-        title: finalTitle,
-        description: extractedCaption,
+        title: cleanTitle,
+        description: cleanCaption,
         rawText: rawText,
         sourceType: 'reel',
       );
 
       return MindItem(
         id: id,
-        title: finalTitle,
+        title: cleanTitle,
         url: cleanUrl,
-        content: extractedCaption,
+        content: cleanCaption,
         thumbnailUrl: igThumb,
         authorName: author,
         type: ItemType.instagramReel,
@@ -197,47 +210,103 @@ class MetadataExtractor {
     );
   }
 
-  /// Extracts a short, clean headline (max 7-10 words or up to first newline/period)
-  /// Prevents entire long descriptions from cluttering the title
-  static String _extractConciseHeadline(String fullText) {
-    // 1. Remove wrapping quotes if Instagram returns: "username: caption text"
-    var text = fullText.trim();
-    if (text.startsWith('"') && text.endsWith('"')) {
-      text = text.substring(1, text.length - 1).trim();
-    }
-    // Remove "Author on Instagram: ..." prefix if present
-    final colonIdx = text.indexOf(': ');
-    if (colonIdx != -1 && colonIdx < 30) {
-      final possibleAuthor = text.substring(0, colonIdx);
-      if (!possibleAuthor.contains(' ')) {
-        text = text.substring(colonIdx + 2).trim();
+  /// Checks if a string contains Instagram's standard metric clutter
+  /// Example: "4,520 likes, 120 comments - username on September 22, 2026: ..."
+  static bool _isInstagramMetricClutter(String text) {
+    final lower = text.toLowerCase();
+    return lower.contains('likes,') && lower.contains('comments');
+  }
+
+  /// Strips out Instagram's automated metric prefix:
+  /// "12K likes, 45 comments - Author on Sept 20: Real Caption Here" -> "Real Caption Here"
+  static String _stripInstagramMetricPrefix(String text) {
+    var result = text.trim();
+
+    // Pattern 1: "... likes, ... comments ... : Actual Caption"
+    final colonIndex = result.indexOf(':');
+    if (colonIndex != -1 && colonIndex < 120) {
+      final prefix = result.substring(0, colonIndex).toLowerCase();
+      if (prefix.contains('like') || prefix.contains('comment') || prefix.contains('instagram')) {
+        result = result.substring(colonIndex + 1).trim();
       }
     }
 
-    // 2. Take only the first sentence or first line before line breaks
-    final lines = text.split(RegExp(r'[\r\n]+'));
-    String firstSegment = lines.first.trim();
+    // Pattern 2: Regex remove "X likes, Y comments" directly if still present
+    result = result.replaceAll(RegExp(r'^[\d,KMkm\.\s]+likes?,\s*[\d,KMkm\.\s]+comments?[^:]*[:\s-]*', caseSensitive: false), '').trim();
 
-    final sentenceMatch = RegExp(r'^([^.!?\n]+[.!?]?)').firstMatch(firstSegment);
-    if (sentenceMatch != null && sentenceMatch.group(1)!.length > 10) {
-      firstSegment = sentenceMatch.group(1)!.trim();
+    // Pattern 3: Remove leading quotes
+    if (result.startsWith('"') && result.endsWith('"') && result.length > 2) {
+      result = result.substring(1, result.length - 1).trim();
     }
 
-    // 3. If still too long (> 80 chars), truncate gracefully at word boundary
-    if (firstSegment.length > 80) {
-      final words = firstSegment.split(RegExp(r'\s+'));
-      if (words.length > 10) {
-        return '${words.take(10).join(' ')}...';
+    return result;
+  }
+
+  /// Purifies caption completely from bot prefixes, quotes, and metadata junk
+  static String _purifyInstagramCaption(String raw, String author) {
+    var cleaned = _stripInstagramMetricPrefix(raw);
+
+    // If Instagram caption is completely empty, provide an aesthetic description
+    if (cleaned.isEmpty || _isInstagramMetricClutter(cleaned)) {
+      return 'Instagram Reel by $author. Tap preview above to watch with audio.';
+    }
+
+    return cleaned;
+  }
+
+  /// Extracts an aesthetic, meaningful title free from likes, comments, or technical tags
+  static String _extractInstagramTitle(String caption, String author) {
+    if (caption.isEmpty || _isInstagramMetricClutter(caption)) {
+      return 'Reel by $author';
+    }
+
+    // Take the very first sentence or first line before newlines
+    final lines = caption.split(RegExp(r'[\r\n]+'));
+    String firstLine = lines.first.trim();
+
+    // Remove leading hashtags or clean them up
+    firstLine = firstLine.replaceAll(RegExp(r'^#\w+\s*'), '').trim();
+
+    // If first line starts with quote, remove it
+    if (firstLine.startsWith('"')) {
+      firstLine = firstLine.replaceFirst('"', '');
+    }
+
+    // Limit length to a punchy, clean headline
+    if (firstLine.length > 65) {
+      final words = firstLine.split(RegExp(r'\s+'));
+      if (words.length > 8) {
+        firstLine = '${words.take(8).join(' ')}...';
+      } else {
+        firstLine = '${firstLine.substring(0, 62)}...';
       }
-      return '${firstSegment.substring(0, 77)}...';
     }
 
-    return firstSegment.isNotEmpty ? firstSegment : 'Saved Reel';
+    // If still blank or only emojis/punctuation
+    if (firstLine.replaceAll(RegExp(r'[^\w\s]'), '').trim().isEmpty) {
+      return 'Reel by $author';
+    }
+
+    return firstLine;
+  }
+
+  static String? _extractInstagramUsername(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      final segments = uri.pathSegments;
+      if (segments.length >= 2 && (segments[0] == 'reel' || segments[0] == 'p')) {
+        // Can't reliably get author from /reel/ID, default to Creator
+        return 'Creator';
+      }
+      if (segments.isNotEmpty && segments[0] != 'reel' && segments[0] != 'p') {
+        return segments[0];
+      }
+    }
+    return null;
   }
 
   static String _cleanTitle(String title) {
     var clean = title.trim();
-    // Remove trailing site watermarks like " - YouTube" or " | TechCrunch"
     clean = clean.replaceAll(RegExp(r'\s*[-|•]\s*(YouTube|Instagram|Medium).*$', caseSensitive: false), '').trim();
     return clean.isNotEmpty ? clean : 'Saved Item';
   }
@@ -299,7 +368,6 @@ class MetadataExtractor {
       tags.add(word);
     }
 
-    // 4. Include source type tag (e.g. reel, shorts, article)
     if (!tags.contains(sourceType)) {
       tags.add(sourceType);
     }
@@ -313,7 +381,7 @@ class MetadataExtractor {
       'there', 'their', 'which', 'about', 'some', 'only', 'very', 'super',
       'watch', 'share', 'instagram', 'youtube', 'http', 'https', 'www', 'com',
       'video', 'post', 'click', 'link', 'check', 'view', 'full', 'open', 'like',
-      'comment', 'subscribe', 'follow', 'reels', 'shorts',
+      'comment', 'subscribe', 'follow', 'reels', 'shorts', 'likes', 'comments',
     };
     return stopWords.contains(word);
   }

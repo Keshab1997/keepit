@@ -33,7 +33,7 @@ class MetadataExtractor {
           }
         } catch (_) {}
 
-        // Fetch detailed page metadata for accurate description
+        // Separate scraping for full extended description
         try {
           final scraped = await _scrapeOpenGraph(cleanUrl);
           if (scraped['description'] != null && scraped['description']!.isNotEmpty) {
@@ -42,22 +42,21 @@ class MetadataExtractor {
         } catch (_) {}
       }
 
-      if (description.isEmpty) {
-        description = 'Video by $author on YouTube. Watch full video on YouTube app.';
-      }
+      final cleanTitle = _cleanTitle(ytTitle);
+      final cleanDesc = description.isNotEmpty ? description : 'Watch full video by $author on YouTube.';
 
       final tags = _generateAccurateTags(
-        title: ytTitle,
-        description: description,
+        title: cleanTitle,
+        description: cleanDesc,
         rawText: rawText,
         sourceType: isShort ? 'shorts' : 'youtube',
       );
 
       return MindItem(
         id: id,
-        title: ytTitle,
+        title: cleanTitle,
         url: cleanUrl,
-        content: description,
+        content: cleanDesc,
         thumbnailUrl: ytThumb.isNotEmpty ? ytThumb : null,
         authorName: author,
         type: ItemType.youtubeVideo,
@@ -71,9 +70,9 @@ class MetadataExtractor {
     // 2. Instagram Handler (Reels & Posts)
     if (cleanUrl.contains('instagram.com/reel') || cleanUrl.contains('instagram.com/p/')) {
       String? igThumb;
-      String igTitle = 'Instagram Reel';
+      String extractedCaption = '';
       String author = 'Instagram';
-      String description = '';
+      String finalTitle = '';
 
       // First attempt: Instagram oEmbed API
       try {
@@ -83,52 +82,58 @@ class MetadataExtractor {
         final oembedRes = await http.get(oembedUri).timeout(const Duration(seconds: 4));
         if (oembedRes.statusCode == 200) {
           final json = jsonDecode(oembedRes.body);
-          igTitle = json['title'] ?? igTitle;
           author = json['author_name'] ?? author;
           igThumb = json['thumbnail_url'];
-          description = json['title'] ?? '';
+          if (json['title'] != null && json['title'].toString().trim().isNotEmpty) {
+            extractedCaption = json['title'].toString().trim();
+          }
         }
       } catch (_) {}
 
-      // Second attempt: Scrape Open Graph meta tags for real description & title
-      try {
-        final scraped = await _scrapeOpenGraph(cleanUrl);
-        if (scraped['title'] != null && scraped['title']!.isNotEmpty && scraped['title'] != 'Instagram') {
-          igTitle = scraped['title']!;
-        }
-        if (scraped['image'] != null && scraped['image']!.isNotEmpty) {
-          igThumb = scraped['image'];
-        }
-        if (scraped['description'] != null && scraped['description']!.isNotEmpty) {
-          description = scraped['description']!;
-        }
-      } catch (_) {}
-
-      // Fallback clean caption if extracted from raw shared text
-      if (description.isEmpty && rawText != cleanUrl) {
-        description = rawText.replaceAll(cleanUrl, '').trim();
+      // Second attempt: Scrape Open Graph meta tags
+      if (extractedCaption.isEmpty || igThumb == null) {
+        try {
+          final scraped = await _scrapeOpenGraph(cleanUrl);
+          if (scraped['image'] != null && scraped['image']!.isNotEmpty) {
+            igThumb ??= scraped['image'];
+          }
+          if (scraped['description'] != null && scraped['description']!.isNotEmpty) {
+            extractedCaption = scraped['description']!;
+          } else if (scraped['title'] != null && scraped['title']!.isNotEmpty && scraped['title'] != 'Instagram') {
+            extractedCaption = scraped['title']!;
+          }
+        } catch (_) {}
       }
 
-      if (description.isEmpty) {
-        description = igTitle.isNotEmpty && igTitle != 'Instagram Reel'
-            ? igTitle
-            : 'Saved Instagram Reel by $author. Tap below to watch directly on Instagram.';
+      // Fallback caption from shared raw text if provided
+      if (extractedCaption.isEmpty && rawText != cleanUrl) {
+        extractedCaption = rawText.replaceAll(cleanUrl, '').trim();
+      }
+
+      // INTELLIGENT SEPARATION OF TITLE & DESCRIPTION:
+      // Instagram puts the whole caption into the title field.
+      // We extract only the 1st sentence/headline for the Title, and the entire text for Description!
+      if (extractedCaption.isNotEmpty) {
+        finalTitle = _extractConciseHeadline(extractedCaption);
+      } else {
+        finalTitle = 'Instagram Reel by $author';
+        extractedCaption = 'Saved Instagram Reel by $author. Tap above to watch directly on Instagram.';
       }
 
       igThumb ??= 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=700&q=80';
 
       final tags = _generateAccurateTags(
-        title: igTitle,
-        description: description,
+        title: finalTitle,
+        description: extractedCaption,
         rawText: rawText,
         sourceType: 'reel',
       );
 
       return MindItem(
         id: id,
-        title: igTitle,
+        title: finalTitle,
         url: cleanUrl,
-        content: description,
+        content: extractedCaption,
         thumbnailUrl: igThumb,
         authorName: author,
         type: ItemType.instagramReel,
@@ -142,11 +147,12 @@ class MetadataExtractor {
     // 3. General Web Articles / Links
     try {
       final scraped = await _scrapeOpenGraph(cleanUrl);
-      final title = scraped['title'] ?? uri?.host ?? 'Saved Link';
-      final description = scraped['description'] ?? 'Article from ${uri?.host}. Tap to view original content.';
+      final rawTitle = scraped['title'] ?? uri?.host ?? 'Saved Link';
+      final cleanTitle = _cleanTitle(rawTitle);
+      final description = scraped['description'] ?? 'Article saved from ${uri?.host}. Tap to view original content.';
 
       final tags = _generateAccurateTags(
-        title: title,
+        title: cleanTitle,
         description: description,
         rawText: rawText,
         sourceType: 'article',
@@ -154,7 +160,7 @@ class MetadataExtractor {
 
       return MindItem(
         id: id,
-        title: title,
+        title: cleanTitle,
         content: description,
         url: cleanUrl,
         thumbnailUrl: scraped['image'],
@@ -189,6 +195,51 @@ class MetadataExtractor {
       createdAt: now,
       updatedAt: now,
     );
+  }
+
+  /// Extracts a short, clean headline (max 7-10 words or up to first newline/period)
+  /// Prevents entire long descriptions from cluttering the title
+  static String _extractConciseHeadline(String fullText) {
+    // 1. Remove wrapping quotes if Instagram returns: "username: caption text"
+    var text = fullText.trim();
+    if (text.startsWith('"') && text.endsWith('"')) {
+      text = text.substring(1, text.length - 1).trim();
+    }
+    // Remove "Author on Instagram: ..." prefix if present
+    final colonIdx = text.indexOf(': ');
+    if (colonIdx != -1 && colonIdx < 30) {
+      final possibleAuthor = text.substring(0, colonIdx);
+      if (!possibleAuthor.contains(' ')) {
+        text = text.substring(colonIdx + 2).trim();
+      }
+    }
+
+    // 2. Take only the first sentence or first line before line breaks
+    final lines = text.split(RegExp(r'[\r\n]+'));
+    String firstSegment = lines.first.trim();
+
+    final sentenceMatch = RegExp(r'^([^.!?\n]+[.!?]?)').firstMatch(firstSegment);
+    if (sentenceMatch != null && sentenceMatch.group(1)!.length > 10) {
+      firstSegment = sentenceMatch.group(1)!.trim();
+    }
+
+    // 3. If still too long (> 80 chars), truncate gracefully at word boundary
+    if (firstSegment.length > 80) {
+      final words = firstSegment.split(RegExp(r'\s+'));
+      if (words.length > 10) {
+        return '${words.take(10).join(' ')}...';
+      }
+      return '${firstSegment.substring(0, 77)}...';
+    }
+
+    return firstSegment.isNotEmpty ? firstSegment : 'Saved Reel';
+  }
+
+  static String _cleanTitle(String title) {
+    var clean = title.trim();
+    // Remove trailing site watermarks like " - YouTube" or " | TechCrunch"
+    clean = clean.replaceAll(RegExp(r'\s*[-|•]\s*(YouTube|Instagram|Medium).*$', caseSensitive: false), '').trim();
+    return clean.isNotEmpty ? clean : 'Saved Item';
   }
 
   /// Accurate, Multi-tag Generator (Produces 5 to 8 hyper-relevant tags)
@@ -253,7 +304,6 @@ class MetadataExtractor {
       tags.add(sourceType);
     }
 
-    // Return 5 to 8 accurate tags
     return tags.take(8).toList();
   }
 

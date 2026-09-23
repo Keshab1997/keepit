@@ -19,13 +19,13 @@
      - ⚡ Save in 1 Tap from any app
      - 🎨 Visual Aesthetic Feed (Masonry Grid)
      - 🔔 Smart Recall & Serendipity (Never forget saved gems)
-     - 🔒 100% Private & Local-First (Your data belongs to you)
+     - 🔒 Private & Local-First: works offline with no account; optional Google sign-in for encrypted cloud backup & sync
   3. **Who is it for?** Creators, Developers, Students, Designers, Voracious Readers.
 
 ---
 
 ## 2. Creative Assets Blueprint
-1. **App Icon:** Vibrant saffron-orange backdrop with a minimalist, glowing brain/spark icon (`#FF5B37`). High visual contrast against white or dark OS launchers.
+1. **App Icon:** ✅ Done: `store_assets/play_store_icon_512.png` (white bookmark + spark on coral gradient). Original brief: Vibrant saffron-orange backdrop with a minimalist, glowing brain/spark icon (`#FF5B37`). High visual contrast against white or dark OS launchers.
 2. **Screenshots (Figma / Mockup template):**
    - **Screenshot 1:** "Save Anything in 1 Tap" (Showing Instagram Share Sheet pointing to KeepIt).
    - **Screenshot 2:** "Your Visual Second Brain" (The aesthetic masonry grid feed).

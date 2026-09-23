@@ -138,7 +138,7 @@ class NotificationService {
 
       await _plugin.initialize(
         InitializationSettings(
-          android: const AndroidInitializationSettings('@mipmap/ic_launcher'),
+          android: const AndroidInitializationSettings('@drawable/ic_stat_keepit'),
           iOS: darwinSettings,
           macOS: darwinSettings,
         ),
@@ -324,7 +324,7 @@ class NotificationService {
         channelDescription: _digestChannelDesc,
         importance: Importance.defaultImportance,
         priority: Priority.defaultPriority,
-        icon: '@mipmap/ic_launcher',
+        icon: '@drawable/ic_stat_keepit',
         category: AndroidNotificationCategory.recommendation,
         styleInformation: InboxStyleInformation(
           reminder.lines,
@@ -346,7 +346,7 @@ class NotificationService {
       channelDescription: _sparkChannelDesc,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@drawable/ic_stat_keepit',
       category: AndroidNotificationCategory.reminder,
       styleInformation: BigTextStyleInformation(
         reminder.body,

@@ -6,6 +6,7 @@ class HomeTab {
   static const int everything = 0;
   static const int spaces = 1;
   static const int serendipity = 2;
+  static const int profile = 3;
 }
 
 /// Currently selected home tab. Lifted into a provider so notification deep

@@ -27,8 +27,21 @@ Every day we scroll past dozens of insightful Instagram Reels, YouTube Shorts, T
 | **Spaces & Smart Tags** | Auto-categorize by hashtags, themes, or custom user spaces (e.g. `Design`, `Dev`, `Quotes`, `AI Tools`). |
 | **Serendipity Engine** | Rediscovery tab + scheduled spaced-repetition reminders (day 3 / 14 / 45 / 90, max 1/day, Sunday Mind Digest) with Mark Watched / Remind in 1 Week buttons and deep links. See [docs/NOTIFICATION_ENGINE.md](docs/NOTIFICATION_ENGINE.md). |
 | **"I've Watched / Read This"** | Track read/watch status so your active mind feed stays fresh and actionable. |
-| **Local-First + Cloud Sync** | 100% offline functionality first. Transparent background sync with Firebase Cloud Firestore & Storage. |
+| **Profile & Cloud Sync** | Works 100% offline with no account. Optional Google sign-in (Profile tab) backs up & syncs items via Firestore (last-write-wins, tombstones, auto-sync). Export JSON, delete local data, in-app account deletion. See [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md). |
 | **Full-Text & Color Search** | Search through tags, titles, notes, domains, and even dominant visual colors. |
+
+---
+
+## 🚀 Publishing
+
+| Doc | What |
+| :--- | :--- |
+| [docs/PUBLISHING.md](docs/PUBLISHING.md) | Step-by-step Play Store release: keystore, AAB, Play Console, closed testing, checklist |
+| [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md) | Create Firebase project, SHA fingerprints, Google Sign-In, Firestore rules |
+| [docs/PLAY_CONSOLE_ANSWERS.md](docs/PLAY_CONSOLE_ANSWERS.md) | Data safety, content rating, account deletion answers |
+| [docs/PLAY_STORE_LISTING.md](docs/PLAY_STORE_LISTING.md) | Store title, descriptions, release notes |
+| `store_assets/` | 512 icon, 1024×500 feature graphic, `generate_assets.py` (regenerates all app icons) |
+| `docs/*.html` | Privacy policy, Terms, Delete-account pages (GitHub Pages) |
 
 ---
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'core/cloud/firebase_bootstrap.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/mind_toast.dart';
 import 'core/utils/notification_service.dart';
@@ -9,18 +10,22 @@ import 'data/datasources/local_mind_datasource.dart';
 import 'presentation/controllers/mind_feed_controller.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/widgets/notification_host.dart';
+import 'presentation/widgets/sync_host.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // 1. Initialize Hive Local Database
   await Hive.initFlutter();
   final localDataSource = LocalMindDataSource();
   await localDataSource.init();
 
-  // 2. Initialize Serendipity Notification Service (scheduling happens in
+  // 2. Firebase (optional — the app runs fully offline without it)
+  await FirebaseBootstrap.init();
+
+  // 3. Initialize Serendipity Notification Service (scheduling happens in
   //    NotificationHost once the saved items are loaded).
   await NotificationService().init();
 
@@ -81,14 +86,16 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
 
   @override
   Widget build(BuildContext context) {
-    return NotificationHost(
-      navigatorKey: navigatorKey,
-      child: MaterialApp(
+    return SyncHost(
+      child: NotificationHost(
         navigatorKey: navigatorKey,
-        title: 'KeepIt',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        home: const HomeScreen(),
+        child: MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'KeepIt',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          home: const HomeScreen(),
+        ),
       ),
     );
   }

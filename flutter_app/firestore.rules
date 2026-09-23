@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// KeepIt Cloud Sync security rules.
+// Every user can only read/write their own subtree: users/{uid}/items/{itemId}.
+// Deploy: firebase deploy --only firestore:rules  (or paste in Firebase Console → Firestore → Rules)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /items/{itemId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.id == itemId
+          && request.resource.data.updatedAtMs is int
+          && request.resource.data.deleted is bool
+          && request.resource.size() < 60
+          // Keep documents small (no raw media, just metadata).
+          && (!('description' in request.resource.data)
+              || request.resource.data.description == null
+              || request.resource.data.description.size() < 20000);
+      }
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -6,6 +6,7 @@ import '../controllers/navigation_controller.dart';
 import 'mind_feed_screen.dart';
 import 'spaces_screen.dart';
 import 'serendipity_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -14,6 +15,7 @@ class HomeScreen extends ConsumerWidget {
     MindFeedScreen(),
     SpacesScreen(),
     SerendipityScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -77,6 +79,17 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   label: 'Serendipity',
                 ),
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 3),
+                    child: Icon(LucideIcons.userCircle, size: 22),
+                  ),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 3),
+                    child: Icon(LucideIcons.userCircle, size: 22, color: AppColors.primary),
+                  ),
+                  label: 'Profile',
+                ),
               ],
             ),
           ),
@@ -85,5 +98,3 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
-
-

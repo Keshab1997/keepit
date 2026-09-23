@@ -12,3 +12,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Firebase config is project-specific (safe to commit for private repos, but
+# this repo is public - keep it out and add it locally / in CI secrets).
+/app/google-services.json

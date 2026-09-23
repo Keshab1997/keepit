@@ -70,12 +70,29 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   /// notification deep links that may arrive before the feed is ready).
   late final Future<void> ready;
 
-  Future<void> loadItems() async {
+  /// Invoked after every user-initiated data change (used by Cloud Sync).
+  void Function()? onLocalChange;
+
+  void _changed() => onLocalChange?.call();
+
+  /// Reloads from Hive. Demo items are seeded only on the very first launch
+  /// (never again after the user empties their mind, signs out or syncs).
+  Future<void> loadItems({bool seedDemo = true}) async {
     state = state.copyWith(isLoading: true);
     final items = await _localDataSource.getAllItems();
-    
+
+    var alreadySeeded = false;
+    try {
+      alreadySeeded = _localDataSource.getMeta<bool>(LocalMindDataSource.demoSeededKey) ?? false;
+    } catch (_) {
+      // Meta box unavailable — fall back to old behaviour.
+    }
+
     // Seed initial demo items if empty
-    if (items.isEmpty) {
+    if (items.isEmpty && seedDemo && !alreadySeeded) {
+      try {
+        await _localDataSource.putMeta(LocalMindDataSource.demoSeededKey, true);
+      } catch (_) {}
       final demoItems = _generateDemoItems();
       for (final demo in demoItems) {
         await _localDataSource.saveItem(demo);
@@ -118,6 +135,7 @@ class MindFeedController extends StateNotifier<MindFeedState> {
 
     await _localDataSource.saveItem(newItem);
     state = state.copyWith(items: [newItem, ...state.items]);
+    _changed();
     return SaveResult.success;
   }
 
@@ -166,6 +184,7 @@ class MindFeedController extends StateNotifier<MindFeedState> {
       return item;
     }).toList();
     state = state.copyWith(items: updatedList);
+    _changed();
   }
 
   /// Sets the watched flag explicitly (idempotent — safe for notification
@@ -182,6 +201,7 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     if (updated == null) return;
     state = state.copyWith(items: updatedList);
     await _localDataSource.updateItem(updated!);
+    _changed();
   }
 
   Future<void> toggleTopMind(String id) async {
@@ -197,6 +217,7 @@ class MindFeedController extends StateNotifier<MindFeedState> {
       return item;
     }).toList();
     state = state.copyWith(items: updatedList);
+    _changed();
   }
 
   Future<void> deleteItem(String id) async {
@@ -204,6 +225,7 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     state = state.copyWith(
       items: state.items.where((element) => element.id != id).toList(),
     );
+    _changed();
   }
 
   void setSearchQuery(String query) {

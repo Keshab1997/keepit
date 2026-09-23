@@ -38,12 +38,15 @@ dependencies:
   intl: ^0.19.0
 
   # Firebase Sync & Push Notifications
-  firebase_core: ^2.30.1
-  firebase_auth: ^4.19.4
-  cloud_firestore: ^4.17.2
+  firebase_core: ^4.15.0
+  firebase_auth: ^6.7.0
+  cloud_firestore: ^6.10.0
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.4
   path_provider: ^2.1.5
+  google_sign_in: ^7.2.0
+  package_info_plus: ^10.2.1
+  share_plus: ^13.3.0
 
 dev_dependencies:
   flutter_test:

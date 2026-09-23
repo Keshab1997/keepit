@@ -231,15 +231,35 @@ class MindCardDetailSheet extends ConsumerWidget {
 
                         const SizedBox(height: 24),
 
-                        // Tags Cloud
-                        const Text(
-                          "MIND TAGS",
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.1,
-                            color: AppColors.textSecondary,
-                          ),
+                        // MIND TAGS SECTION (Accurate multi-tag cloud)
+                        Row(
+                          children: [
+                            const Text(
+                              "MIND TAGS",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.1,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0x33FF5B37),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${liveItem.tags.length}',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 10),
                         Wrap(
@@ -264,6 +284,47 @@ class MindCardDetailSheet extends ConsumerWidget {
                             );
                           }).toList(),
                         ),
+
+                        const SizedBox(height: 24),
+
+                        // DESCRIPTION BOX (Real description from original link)
+                        const Text(
+                          "DESCRIPTION",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0x99F1F2F6), // Frosted subtle card
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: const Color(0x66FFFFFF), width: 1.0),
+                              ),
+                              child: SelectableText(
+                                (liveItem.content != null && liveItem.content!.trim().isNotEmpty)
+                                    ? liveItem.content!.trim()
+                                    : "No extended description found for this bookmark. Tap the card above to open in the native app.",
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  color: AppColors.textPrimary,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),

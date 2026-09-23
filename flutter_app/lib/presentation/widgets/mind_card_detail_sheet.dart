@@ -600,7 +600,6 @@ class MindCardDetailSheet extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Material(
         color: isDestructive ? const Color(0x14FF3B30) : const Color(0x66F9F9FB),
-        borderRadius: BorderRadius.circular(16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(

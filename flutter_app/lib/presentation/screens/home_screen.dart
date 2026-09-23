@@ -95,10 +95,10 @@ class _SpacesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spaces = [
-      {'name': 'Design & Aesthetic', 'count': '18 inspirations', 'icon': LucideIcons.palette, 'color': Color(0xFF8B5CF6)},
-      {'name': 'AI & Tech Stack', 'count': '42 bookmarks', 'icon': LucideIcons.cpu, 'color': Color(0xFF3B82F6)},
-      {'name': 'Reels & Viral Gems', 'count': '35 saved videos', 'icon': LucideIcons.video, 'color': Color(0xFFEC4899)},
-      {'name': 'Deep Reading List', 'count': '9 articles', 'icon': LucideIcons.bookOpen, 'color': Color(0xFF10B981)},
+      {'name': 'Design & Aesthetic', 'count': '18 inspirations', 'icon': LucideIcons.palette, 'color': const Color(0xFF8B5CF6)},
+      {'name': 'AI & Tech Stack', 'count': '42 bookmarks', 'icon': LucideIcons.cpu, 'color': const Color(0xFF3B82F6)},
+      {'name': 'Reels & Viral Gems', 'count': '35 saved videos', 'icon': LucideIcons.video, 'color': const Color(0xFFEC4899)},
+      {'name': 'Deep Reading List', 'count': '9 articles', 'icon': LucideIcons.bookOpen, 'color': const Color(0xFF10B981)},
     ];
 
     return Scaffold(

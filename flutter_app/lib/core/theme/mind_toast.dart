@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../theme/app_colors.dart';
+import 'app_colors.dart';
 
 class MindToast {
   static void showDuplicateToast(BuildContext context, {String title = 'Already in your mind!'}) {
@@ -54,7 +54,7 @@ class MindToast {
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
-                                LucideIcons.bookmarkCheck,
+                                LucideIcons.bookmark,
                                 color: AppColors.primary,
                                 size: 20,
                               ),

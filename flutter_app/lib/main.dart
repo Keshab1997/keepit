@@ -62,8 +62,9 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
 
   Future<void> _handleIncomingShare(String sharedText) async {
     final result = await ref.read(mindFeedProvider.notifier).addUrl(sharedText);
+    if (!mounted) return;
     final context = navigatorKey.currentContext;
-    if (context != null) {
+    if (context != null && context.mounted) {
       if (result == SaveResult.duplicate) {
         MindToast.showDuplicateToast(context);
       } else if (result == SaveResult.success) {

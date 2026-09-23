@@ -40,11 +40,11 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
             child: Container(
               width: 260,
               height: 260,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0x33FF5B37),
+                    Color(0x33FF5B37),
                     Colors.transparent,
                   ],
                 ),
@@ -57,11 +57,11 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
             child: Container(
               width: 240,
               height: 240,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0x24833AB4),
+                    Color(0x24833AB4),
                     Colors.transparent,
                   ],
                 ),

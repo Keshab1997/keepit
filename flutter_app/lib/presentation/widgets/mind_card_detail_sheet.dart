@@ -2,8 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/external_link_launcher.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/mind_feed_controller.dart';
 
@@ -96,19 +96,39 @@ class MindCardDetailSheet extends ConsumerWidget {
                       controller: scrollController,
                       padding: const EdgeInsets.all(20),
                       children: [
-                        // Main Media Preview Card
-                        if (liveItem.thumbnailUrl != null)
-                          ClipRRect(
+                        // Main Media Preview Card - Tapping opens original app
+                        GestureDetector(
+                          onTap: () {
+                            ExternalLinkLauncher.openSource(liveItem.url);
+                          },
+                          child: ClipRRect(
                             borderRadius: BorderRadius.circular(24),
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                Image.network(
-                                  liveItem.thumbnailUrl!,
-                                  width: double.infinity,
-                                  height: 380,
-                                  fit: BoxFit.cover,
-                                ),
+                                if (liveItem.thumbnailUrl != null)
+                                  Image.network(
+                                    liveItem.thumbnailUrl!,
+                                    width: double.infinity,
+                                    height: 380,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      height: 250,
+                                      color: AppColors.tagBg,
+                                      child: const Center(
+                                        child: Icon(LucideIcons.image, size: 40, color: AppColors.textMuted),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    height: 200,
+                                    color: AppColors.tagBg,
+                                    child: const Center(
+                                      child: Icon(LucideIcons.link2, size: 40, color: AppColors.textMuted),
+                                    ),
+                                  ),
+
                                 // Frosted Glass Play Button
                                 ClipOval(
                                   child: BackdropFilter(
@@ -129,9 +149,40 @@ class MindCardDetailSheet extends ConsumerWidget {
                                     ),
                                   ),
                                 ),
+
+                                // Open in Original App Floating Hint
+                                Positioned(
+                                  bottom: 12,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0x80000000),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: const Color(0x40FFFFFF), width: 0.8),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(LucideIcons.externalLink, color: Colors.white, size: 14),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              "Tap to open in app",
+                                              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
+                        ),
 
                         const SizedBox(height: 22),
 
@@ -254,16 +305,11 @@ class MindCardDetailSheet extends ConsumerWidget {
                     ),
                   ),
                   _buildActionTile(
-                    icon: LucideIcons.link,
-                    title: "View original source",
+                    icon: LucideIcons.externalLink,
+                    title: "View original source (Open App)",
                     onTap: () async {
                       Navigator.pop(ctx);
-                      if (item.url != null) {
-                        final uri = Uri.parse(item.url!);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        }
-                      }
+                      ExternalLinkLauncher.openSource(item.url);
                     },
                   ),
                   _buildActionTile(

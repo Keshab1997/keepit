@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/mind_toast.dart';
 import '../controllers/mind_feed_controller.dart';
 import '../widgets/mind_card_widget.dart';
 import '../widgets/mind_card_detail_sheet.dart';
@@ -63,20 +64,20 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
 
     // Dynamic background colors responding smoothly to scrolling
     final currentBgColor = Color.lerp(
-      const Color(0xFFF7F8FA), // Clean bright morning canvas
-      const Color(0xFFF1F4F9), // Subtle deep slate tone as user scrolls down
+      const Color(0xFFF7F8FA),
+      const Color(0xFFF1F4F9),
       _scrollProgress,
     )!;
 
     final primaryOrbColor = Color.lerp(
-      const Color(0x38FF5B37), // Warm coral
-      const Color(0x306366F1), // Shifts to deep indigo on scroll
+      const Color(0x38FF5B37),
+      const Color(0x306366F1),
       _scrollProgress,
     )!;
 
     final secondaryOrbColor = Color.lerp(
-      const Color(0x28833AB4), // Purple
-      const Color(0x2806B6D4), // Shifts to vivid cyan on scroll
+      const Color(0x28833AB4),
+      const Color(0x2806B6D4),
       _scrollProgress,
     )!;
 
@@ -84,7 +85,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
       backgroundColor: currentBgColor,
       body: Stack(
         children: [
-          // 1. Dynamic Ambient Reactive Orbs (Fluid Canvas responding to scroll)
+          // 1. Dynamic Ambient Reactive Orbs (Canvas responding to scroll)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 150),
             curve: Curves.easeOut,
@@ -387,11 +388,18 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
               child: const Text("Cancel", style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final link = urlController.text.trim();
                 if (link.isNotEmpty) {
-                  ref.read(mindFeedProvider.notifier).addUrl(link);
                   Navigator.pop(ctx);
+                  final result = await ref.read(mindFeedProvider.notifier).addUrl(link);
+                  if (!context.mounted) return;
+
+                  if (result == SaveResult.duplicate) {
+                    MindToast.showDuplicateToast(context);
+                  } else if (result == SaveResult.success) {
+                    MindToast.showSuccessToast(context);
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(

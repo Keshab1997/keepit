@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/mind_toast.dart';
 import 'data/datasources/local_mind_datasource.dart';
 import 'presentation/controllers/mind_feed_controller.dart';
 import 'presentation/screens/home_screen.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,9 +47,7 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
     ReceiveSharingIntent.instance.getMediaStream().listen((List<SharedMediaFile> value) {
       if (value.isNotEmpty) {
         final path = value.first.path;
-        if (path.startsWith('http://') || path.startsWith('https://')) {
-          ref.read(mindFeedProvider.notifier).addUrl(path);
-        }
+        _handleIncomingShare(path);
       }
     });
 
@@ -54,16 +55,27 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
     ReceiveSharingIntent.instance.getInitialMedia().then((List<SharedMediaFile> value) {
       if (value.isNotEmpty) {
         final path = value.first.path;
-        if (path.startsWith('http://') || path.startsWith('https://')) {
-          ref.read(mindFeedProvider.notifier).addUrl(path);
-        }
+        _handleIncomingShare(path);
       }
     });
+  }
+
+  Future<void> _handleIncomingShare(String sharedText) async {
+    final result = await ref.read(mindFeedProvider.notifier).addUrl(sharedText);
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      if (result == SaveResult.duplicate) {
+        MindToast.showDuplicateToast(context);
+      } else if (result == SaveResult.success) {
+        MindToast.showSuccessToast(context);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'KeepIt',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,

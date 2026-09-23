@@ -10,7 +10,7 @@ import '../../core/utils/external_link_launcher.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/mind_feed_controller.dart';
 
-class MindCardDetailSheet extends ConsumerWidget {
+class MindCardDetailSheet extends ConsumerStatefulWidget {
   final MindItem item;
 
   const MindCardDetailSheet({super.key, required this.item});
@@ -26,13 +26,21 @@ class MindCardDetailSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MindCardDetailSheet> createState() => _MindCardDetailSheetState();
+}
+
+class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
+  bool _isCopied = false;
+
+  @override
+  Widget build(BuildContext context) {
     final liveItem = ref.watch(mindFeedProvider).items.firstWhere(
-          (element) => element.id == item.id,
-          orElse: () => item,
+          (element) => element.id == widget.item.id,
+          orElse: () => widget.item,
         );
 
     final formattedDate = DateFormat('MMM d, yyyy • h:mm a').format(liveItem.createdAt);
+    final hasDescription = liveItem.content != null && liveItem.content!.trim().isNotEmpty;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.92,
@@ -76,13 +84,11 @@ class MindCardDetailSheet extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                     child: Row(
                       children: [
-                        // Dismiss Chevron Pill
                         _buildCircleIconButton(
                           icon: LucideIcons.chevronDown,
                           onPressed: () => Navigator.pop(context),
                         ),
                         const SizedBox(width: 10),
-                        // Middle Info: Author / Source Badge
                         Expanded(
                           child: Center(
                             child: Container(
@@ -115,7 +121,6 @@ class MindCardDetailSheet extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // More Options Pill
                         _buildCircleIconButton(
                           icon: LucideIcons.moreHorizontal,
                           onPressed: () => _showActionsMenu(context, ref, liveItem),
@@ -132,7 +137,7 @@ class MindCardDetailSheet extends ConsumerWidget {
                       controller: scrollController,
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
                       children: [
-                        // A. Cinema Poster Media Preview (Interactive Tap to Open App)
+                        // A. Cinema Poster Media Preview
                         GestureDetector(
                           onTap: () {
                             HapticFeedback.lightImpact();
@@ -177,7 +182,6 @@ class MindCardDetailSheet extends ConsumerWidget {
                                       ),
                                     ),
 
-                                  // Cinematic Gradient Shade
                                   Positioned.fill(
                                     child: DecoratedBox(
                                       decoration: BoxDecoration(
@@ -195,7 +199,6 @@ class MindCardDetailSheet extends ConsumerWidget {
                                     ),
                                   ),
 
-                                  // Frosted Glass Radiant Play Button
                                   ClipOval(
                                     child: BackdropFilter(
                                       filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
@@ -222,7 +225,6 @@ class MindCardDetailSheet extends ConsumerWidget {
                                     ),
                                   ),
 
-                                  // Bottom Open Original App Floating Island Badge
                                   Positioned(
                                     bottom: 16,
                                     child: ClipRRect(
@@ -317,7 +319,7 @@ class MindCardDetailSheet extends ConsumerWidget {
 
                         const SizedBox(height: 20),
 
-                        // C. Interactive Status Action Pill ("I've watched this reel")
+                        // C. Interactive Status Action Pill
                         ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: BackdropFilter(
@@ -418,70 +420,151 @@ class MindCardDetailSheet extends ConsumerWidget {
                           }).toList(),
                         ),
 
-                        const SizedBox(height: 26),
+                        const SizedBox(height: 28),
 
-                        // E. Description Box with Glass Styling & Copy Tool
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "ORIGINAL DESCRIPTION",
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.2,
-                                color: AppColors.textSecondary,
+                        // E. LUXURY REDESIGNED DESCRIPTION BOX
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x0A000000),
+                                blurRadius: 20,
+                                offset: Offset(0, 6),
                               ),
-                            ),
-                            if (liveItem.content != null && liveItem.content!.isNotEmpty)
-                              GestureDetector(
-                                onTap: () {
-                                  Clipboard.setData(ClipboardData(text: liveItem.content!));
-                                  HapticFeedback.selectionClick();
-                                  MindToast.showSuccessToast(context, title: "Description copied!");
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xEBF1F3F6),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Row(
-                                    children: [
-                                      Icon(LucideIcons.copy, size: 12, color: AppColors.textSecondary),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        "Copy",
-                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
-                                      ),
-                                    ],
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                              child: Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xF4FFFFFF),
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.95),
+                                    width: 1.4,
                                   ),
                                 ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(18),
-                              decoration: BoxDecoration(
-                                color: const Color(0x99F1F3F6),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.2),
-                              ),
-                              child: SelectableText(
-                                (liveItem.content != null && liveItem.content!.trim().isNotEmpty)
-                                    ? liveItem.content!.trim()
-                                    : "No caption or extended description found for this bookmark. Tap the preview above to view original post.",
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  color: AppColors.textPrimary,
-                                  height: 1.55,
-                                  fontWeight: FontWeight.w400,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Header Strip of Description Card
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0x59F1F3F6),
+                                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                        border: Border(
+                                          bottom: BorderSide(color: Color(0x1AE5E7EB), width: 1.0),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                width: 28,
+                                                height: 28,
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primaryLight,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Icon(
+                                                  LucideIcons.fileText,
+                                                  size: 15,
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              const Text(
+                                                "ORIGINAL CAPTION",
+                                                style: TextStyle(
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w800,
+                                                  letterSpacing: 1.0,
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+
+                                          // Smooth Animated Copy Button
+                                          if (hasDescription)
+                                            GestureDetector(
+                                              onTap: () {
+                                                Clipboard.setData(ClipboardData(text: liveItem.content!));
+                                                HapticFeedback.selectionClick();
+                                                setState(() => _isCopied = true);
+                                                MindToast.showSuccessToast(context, title: "Copied to clipboard!");
+                                                Future.delayed(const Duration(seconds: 2), () {
+                                                  if (mounted) setState(() => _isCopied = false);
+                                                });
+                                              },
+                                              child: AnimatedContainer(
+                                                duration: const Duration(milliseconds: 200),
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                decoration: BoxDecoration(
+                                                  color: _isCopied ? const Color(0x1F10B981) : Colors.white,
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  border: Border.all(
+                                                    color: _isCopied
+                                                        ? const Color(0x6610B981)
+                                                        : const Color(0x33E5E7EB),
+                                                    width: 1.0,
+                                                  ),
+                                                  boxShadow: const [
+                                                    BoxShadow(
+                                                      color: Color(0x08000000),
+                                                      blurRadius: 6,
+                                                      offset: Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      _isCopied ? LucideIcons.check : LucideIcons.copy,
+                                                      size: 13,
+                                                      color: _isCopied ? AppColors.success : AppColors.textSecondary,
+                                                    ),
+                                                    const SizedBox(width: 5),
+                                                    Text(
+                                                      _isCopied ? "Copied" : "Copy",
+                                                      style: TextStyle(
+                                                        fontSize: 11.5,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: _isCopied ? AppColors.success : AppColors.textSecondary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // Body of Description Card
+                                    Padding(
+                                      padding: const EdgeInsets.all(18),
+                                      child: SelectableText(
+                                        hasDescription
+                                            ? liveItem.content!.trim()
+                                            : "No caption found for this item. Tap the card preview above to view original post.",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: hasDescription ? AppColors.textPrimary : AppColors.textMuted,
+                                          height: 1.6,
+                                          fontWeight: FontWeight.w400,
+                                          letterSpacing: -0.1,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),

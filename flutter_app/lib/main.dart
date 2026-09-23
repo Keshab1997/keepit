@@ -18,6 +18,9 @@ void main() async {
   final localDataSource = LocalMindDataSource();
   await localDataSource.init();
 
+  // 2. Initialize Serendipity Notification Service
+  await NotificationService().init();
+
   runApp(
     ProviderScope(
       overrides: [

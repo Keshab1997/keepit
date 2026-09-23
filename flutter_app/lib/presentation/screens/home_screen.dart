@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
 import 'mind_feed_screen.dart';
 import 'spaces_screen.dart';
+import 'serendipity_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = [
     const MindFeedScreen(),
     const SpacesScreen(),
-    const _SerendipityScreen(),
+    const SerendipityScreen(),
   ];
 
   @override

@@ -23,82 +23,66 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true, // Seamless scrolling behind the floating dock
       backgroundColor: AppColors.background,
       body: _pages[_currentIndex],
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x18000000),
-              blurRadius: 24,
-              offset: Offset(0, 10),
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-            child: Container(
-              height: 68,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xEEFFFFFF),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.5),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(0, LucideIcons.layoutGrid, 'Everything'),
-                  _buildNavItem(1, LucideIcons.folder, 'Spaces'),
-                  _buildNavItem(2, LucideIcons.sparkles, 'Serendipity'),
-                ],
-              ),
-            ),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          border: Border(
+            top: BorderSide(color: Color(0x33E5E7EB), width: 1.0),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(int index, IconData icon, String label) {
-    final isSelected = _currentIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 60,
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) => setState(() => _currentIndex = index),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              selectedItemColor: AppColors.primary,
+              unselectedItemColor: AppColors.textSecondary,
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11.5),
+              type: BottomNavigationBarType.fixed,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 3),
+                    child: Icon(LucideIcons.layoutGrid, size: 22),
+                  ),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 3),
+                    child: Icon(LucideIcons.layoutGrid, size: 22, color: AppColors.primary),
+                  ),
+                  label: 'Everything',
                 ),
-              ),
-            ],
-          ],
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 3),
+                    child: Icon(LucideIcons.folder, size: 22),
+                  ),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 3),
+                    child: Icon(LucideIcons.folder, size: 22, color: AppColors.primary),
+                  ),
+                  label: 'Spaces',
+                ),
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 3),
+                    child: Icon(LucideIcons.sparkles, size: 22),
+                  ),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 3),
+                    child: Icon(LucideIcons.sparkles, size: 22, color: AppColors.primary),
+                  ),
+                  label: 'Serendipity',
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -123,29 +107,22 @@ class _SpacesScreen extends StatelessWidget {
         title: const Text('Spaces', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22)),
       ),
       body: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
+        padding: const EdgeInsets.all(20),
         itemCount: spaces.length,
         separatorBuilder: (_, __) => const SizedBox(height: 14),
         itemBuilder: (context, index) {
           final space = spaces[index];
           final color = space['color'] as Color;
           return ClipRRect(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(20),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.glassCard,
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.glassBorder, width: 1.2),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x0A000000),
-                      blurRadius: 14,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: Row(
                   children: [

@@ -17,6 +17,8 @@ class MindFeedScreen extends ConsumerStatefulWidget {
 
 class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  double _scrollProgress = 0.0;
 
   final List<String> _quickFilterCategories = [
     'All',
@@ -29,7 +31,27 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset.clamp(0.0, maxScroll > 0 ? maxScroll : 600.0);
+    final progress = (currentScroll / 450.0).clamp(0.0, 1.0);
+    if (progress != _scrollProgress) {
+      setState(() {
+        _scrollProgress = progress;
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -39,56 +61,62 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
     final state = ref.watch(mindFeedProvider);
     final items = state.filteredItems;
 
+    // Dynamic background colors responding smoothly to scrolling
+    final currentBgColor = Color.lerp(
+      const Color(0xFFF7F8FA), // Clean bright morning canvas
+      const Color(0xFFF1F4F9), // Subtle deep slate tone as user scrolls down
+      _scrollProgress,
+    )!;
+
+    final primaryOrbColor = Color.lerp(
+      const Color(0x38FF5B37), // Warm coral
+      const Color(0x306366F1), // Shifts to deep indigo on scroll
+      _scrollProgress,
+    )!;
+
+    final secondaryOrbColor = Color.lerp(
+      const Color(0x28833AB4), // Purple
+      const Color(0x2806B6D4), // Shifts to vivid cyan on scroll
+      _scrollProgress,
+    )!;
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: currentBgColor,
       body: Stack(
         children: [
-          // 1. Multi-Orb Atmospheric Studio Glow (Glassmorphism backdrop)
-          Positioned(
-            top: -80,
-            right: -60,
+          // 1. Dynamic Ambient Reactive Orbs (Fluid Canvas responding to scroll)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+            top: -80 + (_scrollProgress * 60),
+            right: -60 - (_scrollProgress * 40),
             child: Container(
-              width: 320,
-              height: 320,
-              decoration: const BoxDecoration(
+              width: 340,
+              height: 340,
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Color(0x38FF5B37), // Coral glow
+                    primaryOrbColor,
                     Colors.transparent,
                   ],
                 ),
               ),
             ),
           ),
-          Positioned(
-            top: 250,
-            left: -80,
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+            top: 260 - (_scrollProgress * 80),
+            left: -80 + (_scrollProgress * 50),
             child: Container(
-              width: 280,
-              height: 280,
-              decoration: const BoxDecoration(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Color(0x28833AB4), // Purple glow
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 80,
-            right: -50,
-            child: Container(
-              width: 260,
-              height: 260,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    Color(0x20F59E0B), // Warm amber glow
+                    secondaryOrbColor,
                     Colors.transparent,
                   ],
                 ),
@@ -100,28 +128,28 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 2. Elegant Header & Floating Glass Search Bar
+                // 2. Floating Search Bar & Plus Action
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+                  padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
                   child: Row(
                     children: [
-                      // Glass Search Bar
+                      // Glass Search Input
                       Expanded(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(16),
                           child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                             child: Container(
-                              height: 52,
+                              height: 50,
                               decoration: BoxDecoration(
                                 color: AppColors.glassWhite,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(color: AppColors.glassBorder, width: 1.2),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppColors.glassBorder, width: 1.1),
                                 boxShadow: const [
                                   BoxShadow(
-                                    color: Color(0x0A000000),
-                                    blurRadius: 18,
-                                    offset: Offset(0, 4),
+                                    color: Color(0x08000000),
+                                    blurRadius: 14,
+                                    offset: Offset(0, 3),
                                   ),
                                 ],
                               ),
@@ -131,7 +159,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                                   ref.read(mindFeedProvider.notifier).setSearchQuery(val);
                                 },
                                 decoration: InputDecoration(
-                                  hintText: "Search your second brain...",
+                                  hintText: "Search my mind...",
                                   hintStyle: const TextStyle(
                                     color: AppColors.textMuted,
                                     fontSize: 14.5,
@@ -152,7 +180,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                                         )
                                       : null,
                                   border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                                 ),
                               ),
                             ),
@@ -160,31 +188,24 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                         ),
                       ),
 
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
 
-                      // Radiant Gradient Floating Plus Button
+                      // Radiant Action Plus Button
                       InkWell(
                         onTap: () => _showAddUrlDialog(context, ref),
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          width: 52,
-                          height: 52,
+                          width: 50,
+                          height: 50,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFFFF6E4C),
-                                Color(0xFFFF4820),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.2),
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.0),
                             boxShadow: const [
                               BoxShadow(
-                                color: Color(0x59FF5B37),
-                                blurRadius: 14,
-                                offset: Offset(0, 5),
+                                color: Color(0x4DFF5B37),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
                               ),
                             ],
                           ),
@@ -199,11 +220,11 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                   ),
                 ),
 
-                // 3. Horizontal Glass Category Filter Pills
+                // 3. Horizontal Category Filter Pills
                 SizedBox(
                   height: 38,
                   child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
                     scrollDirection: Axis.horizontal,
                     itemCount: _quickFilterCategories.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -221,17 +242,17 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                           }
                         },
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(18),
                           child: BackdropFilter(
                             filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? AppColors.primary
                                     : AppColors.glassWhite,
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: isSelected
                                       ? AppColors.primary
@@ -263,9 +284,9 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
-                // 4. Masonry Visual Feed Grid
+                // 4. Masonry Feed Grid with Scroll Listener
                 Expanded(
                   child: state.isLoading
                       ? const Center(child: CircularProgressIndicator())
@@ -298,10 +319,11 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                               ),
                             )
                           : MasonryGridView.count(
+                              controller: _scrollController,
                               crossAxisCount: 2,
                               mainAxisSpacing: 14,
                               crossAxisSpacing: 14,
-                              padding: const EdgeInsets.fromLTRB(16, 6, 16, 90),
+                              padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
                               itemCount: items.length,
                               itemBuilder: (context, index) {
                                 final item = items[index];
@@ -334,21 +356,21 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
         child: AlertDialog(
           backgroundColor: const Color(0xF7FFFFFF),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(24),
             side: const BorderSide(color: Color(0xCCFFFFFF), width: 1.5),
           ),
           title: const Row(
             children: [
               Icon(LucideIcons.sparkles, color: AppColors.primary, size: 20),
               SizedBox(width: 8),
-              Text("Save to KeepIt", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              Text("Save to Mind", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             ],
           ),
           content: TextField(
             controller: urlController,
             autofocus: true,
             decoration: InputDecoration(
-              hintText: "Paste Instagram reel, YouTube video, or link...",
+              hintText: "Paste Instagram reel, video, or link...",
               hintStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
               filled: true,
               fillColor: const Color(0x99F1F3F6),
@@ -379,7 +401,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              child: const Text("Save Item", style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text("Save"),
             ),
           ],
         ),

@@ -25,12 +25,13 @@ class MindFeedState {
     bool? isLoading,
     String? searchQuery,
     String? selectedTag,
+    bool clearTag = false,
   }) {
     return MindFeedState(
       items: items ?? this.items,
       isLoading: isLoading ?? this.isLoading,
       searchQuery: searchQuery ?? this.searchQuery,
-      selectedTag: selectedTag ?? this.selectedTag,
+      selectedTag: clearTag ? null : (selectedTag ?? this.selectedTag),
     );
   }
 
@@ -41,7 +42,11 @@ class MindFeedState {
           (item.content?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false) ||
           item.tags.any((t) => t.toLowerCase().contains(searchQuery.toLowerCase()));
 
-      final matchesTag = selectedTag == null || item.tags.contains(selectedTag);
+      final matchesTag = selectedTag == null ||
+          selectedTag!.isEmpty ||
+          selectedTag == 'all' ||
+          item.tags.any((t) => t.toLowerCase() == selectedTag!.toLowerCase()) ||
+          item.type.name.toLowerCase().contains(selectedTag!.toLowerCase());
 
       return matchesQuery && matchesTag;
     }).toList();
@@ -126,11 +131,9 @@ class MindFeedController extends StateNotifier<MindFeedState> {
 
   String _normalizeUrl(String url) {
     var clean = url.trim().toLowerCase();
-    // Strip trailing slashes
     while (clean.endsWith('/')) {
       clean = clean.substring(0, clean.length - 1);
     }
-    // Strip common tracking query params (?igsh=..., ?si=..., ?utm_...)
     if (clean.contains('?')) {
       final parts = clean.split('?');
       final base = parts[0];
@@ -187,8 +190,14 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     state = state.copyWith(searchQuery: query);
   }
 
+  /// Sets or clears the active tag filter.
+  /// If [tag] is null, empty, or 'all', or equals current tag -> resets to all items.
   void setSelectedTag(String? tag) {
-    state = state.copyWith(selectedTag: tag == state.selectedTag ? null : tag);
+    if (tag == null || tag.isEmpty || tag.toLowerCase() == 'all' || tag.toLowerCase() == state.selectedTag?.toLowerCase()) {
+      state = state.copyWith(clearTag: true);
+    } else {
+      state = state.copyWith(selectedTag: tag.toLowerCase(), clearTag: false);
+    }
   }
 
   List<MindItem> _generateDemoItems() {

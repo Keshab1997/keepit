@@ -221,7 +221,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                   ),
                 ),
 
-                // 3. Horizontal Category Filter Pills
+                // 3. Horizontal Category Filter Pills (Fully functional toggle & All selection)
                 SizedBox(
                   height: 38,
                   child: ListView.separated(
@@ -231,16 +231,14 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       final category = _quickFilterCategories[index];
-                      final isSelected = (category == 'All' && state.selectedTag == null) ||
-                          state.selectedTag?.toLowerCase() == category.toLowerCase();
+                      final isAll = category == 'All';
+                      final isSelected = isAll
+                          ? (state.selectedTag == null || state.selectedTag!.isEmpty)
+                          : (state.selectedTag?.toLowerCase() == category.toLowerCase());
 
                       return GestureDetector(
                         onTap: () {
-                          if (category == 'All') {
-                            ref.read(mindFeedProvider.notifier).setSelectedTag(null);
-                          } else {
-                            ref.read(mindFeedProvider.notifier).setSelectedTag(category.toLowerCase());
-                          }
+                          ref.read(mindFeedProvider.notifier).setSelectedTag(isAll ? null : category);
                         },
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(18),
@@ -307,14 +305,15 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                                   ),
                                   const SizedBox(height: 16),
                                   const Text(
-                                    "Your mind is quiet",
-                                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                    "No items found in this category",
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                                   ),
                                   const SizedBox(height: 6),
-                                  const Text(
-                                    "Share a reel, article, or photo to preserve it here.",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                                  TextButton(
+                                    onPressed: () {
+                                      ref.read(mindFeedProvider.notifier).setSelectedTag(null);
+                                    },
+                                    child: const Text("Show all items", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                                   ),
                                 ],
                               ),

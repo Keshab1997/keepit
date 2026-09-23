@@ -19,7 +19,7 @@ class MindFeedScreen extends ConsumerStatefulWidget {
 class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  double _scrollProgress = 0.0;
+  final ValueNotifier<double> _scrollProgressNotifier = ValueNotifier<double>(0.0);
 
   final List<String> _quickFilterCategories = [
     'All',
@@ -39,13 +39,11 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.offset.clamp(0.0, maxScroll > 0 ? maxScroll : 600.0);
-    final progress = (currentScroll / 450.0).clamp(0.0, 1.0);
-    if (progress != _scrollProgress) {
-      setState(() {
-        _scrollProgress = progress;
-      });
+    final offset = _scrollController.offset;
+    final progress = (offset / 450.0).clamp(0.0, 1.0);
+    // Only update notifier if changed by more than 0.02 to avoid high-frequency redraws
+    if ((progress - _scrollProgressNotifier.value).abs() > 0.02) {
+      _scrollProgressNotifier.value = progress;
     }
   }
 
@@ -54,6 +52,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
+    _scrollProgressNotifier.dispose();
     super.dispose();
   }
 
@@ -62,67 +61,58 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
     final state = ref.watch(mindFeedProvider);
     final items = state.filteredItems;
 
-    // Dynamic background colors responding smoothly to scrolling
-    final currentBgColor = Color.lerp(
-      const Color(0xFFF7F8FA),
-      const Color(0xFFF1F4F9),
-      _scrollProgress,
-    )!;
-
-    final primaryOrbColor = Color.lerp(
-      const Color(0x38FF5B37),
-      const Color(0x306366F1),
-      _scrollProgress,
-    )!;
-
-    final secondaryOrbColor = Color.lerp(
-      const Color(0x28833AB4),
-      const Color(0x2806B6D4),
-      _scrollProgress,
-    )!;
-
     return Scaffold(
-      backgroundColor: currentBgColor,
+      backgroundColor: const Color(0xFFF7F8FA),
       body: Stack(
         children: [
-          // 1. Dynamic Ambient Reactive Orbs (Canvas responding to scroll)
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOut,
-            top: -80 + (_scrollProgress * 60),
-            right: -60 - (_scrollProgress * 40),
-            child: Container(
-              width: 340,
-              height: 340,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    primaryOrbColor,
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOut,
-            top: 260 - (_scrollProgress * 80),
-            left: -80 + (_scrollProgress * 50),
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    secondaryOrbColor,
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
+          // 1. Reactive Background Glow using ValueListenableBuilder (No full-screen rebuild!)
+          ValueListenableBuilder<double>(
+            valueListenable: _scrollProgressNotifier,
+            builder: (context, progress, child) {
+              final primaryOrb = Color.lerp(
+                const Color(0x38FF5B37),
+                const Color(0x306366F1),
+                progress,
+              )!;
+              final secondaryOrb = Color.lerp(
+                const Color(0x28833AB4),
+                const Color(0x2806B6D4),
+                progress,
+              )!;
+
+              return Stack(
+                children: [
+                  Positioned(
+                    top: -80 + (progress * 60),
+                    right: -60 - (progress * 40),
+                    child: Container(
+                      width: 320,
+                      height: 320,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [primaryOrb, Colors.transparent],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 260 - (progress * 80),
+                    left: -80 + (progress * 50),
+                    child: Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [secondaryOrb, Colors.transparent],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
 
           SafeArea(
@@ -221,7 +211,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                   ),
                 ),
 
-                // 3. Horizontal Category Filter Pills (Fully functional toggle & All selection)
+                // 3. Horizontal Category Filter Pills
                 SizedBox(
                   height: 38,
                   child: ListView.separated(
@@ -240,41 +230,35 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                         onTap: () {
                           ref.read(mindFeedProvider.notifier).setSelectedTag(isAll ? null : category);
                         },
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : AppColors.glassWhite,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : AppColors.glassBorder,
-                                  width: 1,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primary
+                                : const Color(0xF2FFFFFF),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : const Color(0x33E5E7EB),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              if (isSelected)
+                                const BoxShadow(
+                                  color: Color(0x40FF5B37),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 3),
                                 ),
-                                boxShadow: [
-                                  if (isSelected)
-                                    const BoxShadow(
-                                      color: Color(0x40FF5B37),
-                                      blurRadius: 10,
-                                      offset: Offset(0, 3),
-                                    ),
-                                ],
-                              ),
-                              child: Text(
-                                category,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                  color: isSelected ? Colors.white : AppColors.textSecondary,
-                                ),
-                              ),
+                            ],
+                          ),
+                          child: Text(
+                            category,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                              color: isSelected ? Colors.white : AppColors.textSecondary,
                             ),
                           ),
                         ),
@@ -285,7 +269,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
 
                 const SizedBox(height: 8),
 
-                // 4. Masonry Feed Grid with Scroll Listener
+                // 4. Masonry Feed Grid with Optimized Scroll Physics
                 Expanded(
                   child: state.isLoading
                       ? const Center(child: CircularProgressIndicator())
@@ -320,14 +304,18 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
                             )
                           : MasonryGridView.count(
                               controller: _scrollController,
+                              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                               crossAxisCount: 2,
                               mainAxisSpacing: 14,
                               crossAxisSpacing: 14,
                               padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
                               itemCount: items.length,
+                              addAutomaticKeepAlives: true, // Retains scroll position and state smoothly
+                              addRepaintBoundaries: true,   // Isolates repaints on 120Hz displays
                               itemBuilder: (context, index) {
                                 final item = items[index];
                                 return MindCardWidget(
+                                  key: ValueKey(item.id),
                                   item: item,
                                   onTap: () {
                                     MindCardDetailSheet.show(context, item);

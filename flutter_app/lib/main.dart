@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/mind_toast.dart';
+import 'core/utils/notification_service.dart';
 import 'data/datasources/local_mind_datasource.dart';
 import 'presentation/controllers/mind_feed_controller.dart';
 import 'presentation/screens/home_screen.dart';

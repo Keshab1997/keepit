@@ -179,7 +179,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
 
     return PopScope(
       canPop: !_isSelectionMode,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop && _isSelectionMode) {
           _exitSelectionMode();
         }

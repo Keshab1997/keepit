@@ -1,31 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
+import '../controllers/navigation_controller.dart';
 import 'mind_feed_screen.dart';
 import 'spaces_screen.dart';
 import 'serendipity_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _pages = [
-    const MindFeedScreen(),
-    const SpacesScreen(),
-    const SerendipityScreen(),
+  static const List<Widget> _pages = [
+    MindFeedScreen(),
+    SpacesScreen(),
+    SerendipityScreen(),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = ref.watch(homeTabProvider);
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: _pages[_currentIndex],
+      body: _pages[currentIndex],
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
@@ -38,8 +34,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: SizedBox(
             height: 60,
             child: BottomNavigationBar(
-              currentIndex: _currentIndex,
-              onTap: (index) => setState(() => _currentIndex = index),
+              currentIndex: currentIndex,
+              onTap: (index) => ref.read(homeTabProvider.notifier).state = index,
               backgroundColor: Colors.transparent,
               elevation: 0,
               selectedItemColor: AppColors.primary,

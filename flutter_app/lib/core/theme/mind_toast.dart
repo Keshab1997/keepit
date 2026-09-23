@@ -51,7 +51,10 @@ class MindToast {
     required String subtitle,
     Duration duration = const Duration(milliseconds: 2600),
   }) {
-    final overlay = Overlay.maybeOf(context);
+    // Fallback to the navigator's overlay so toasts also work when called
+    // with the Navigator's own context (e.g. navigatorKey.currentContext from
+    // share-intent or notification handlers), which has no Overlay ancestor.
+    final overlay = Overlay.maybeOf(context) ?? Navigator.maybeOf(context)?.overlay;
     if (overlay == null) return;
 
     late OverlayEntry entry;

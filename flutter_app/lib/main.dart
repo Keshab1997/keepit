@@ -8,6 +8,7 @@ import 'core/utils/notification_service.dart';
 import 'data/datasources/local_mind_datasource.dart';
 import 'presentation/controllers/mind_feed_controller.dart';
 import 'presentation/screens/home_screen.dart';
+import 'presentation/widgets/notification_host.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -19,7 +20,8 @@ void main() async {
   final localDataSource = LocalMindDataSource();
   await localDataSource.init();
 
-  // 2. Initialize Serendipity Notification Service
+  // 2. Initialize Serendipity Notification Service (scheduling happens in
+  //    NotificationHost once the saved items are loaded).
   await NotificationService().init();
 
   runApp(
@@ -79,12 +81,15 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return NotificationHost(
       navigatorKey: navigatorKey,
-      title: 'KeepIt',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      child: MaterialApp(
+        navigatorKey: navigatorKey,
+        title: 'KeepIt',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: const HomeScreen(),
+      ),
     );
   }
 }

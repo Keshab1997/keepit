@@ -63,8 +63,12 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   final LocalMindDataSource _localDataSource;
 
   MindFeedController(this._localDataSource) : super(const MindFeedState()) {
-    loadItems();
+    ready = loadItems();
   }
+
+  /// Completes once the first load from Hive has finished (used by
+  /// notification deep links that may arrive before the feed is ready).
+  late final Future<void> ready;
 
   Future<void> loadItems() async {
     state = state.copyWith(isLoading: true);
@@ -162,6 +166,22 @@ class MindFeedController extends StateNotifier<MindFeedState> {
       return item;
     }).toList();
     state = state.copyWith(items: updatedList);
+  }
+
+  /// Sets the watched flag explicitly (idempotent — safe for notification
+  /// actions that may be delivered more than once).
+  Future<void> setWatched(String id, bool watched) async {
+    MindItem? updated;
+    final updatedList = state.items.map((item) {
+      if (item.id == id && item.isWatched != watched) {
+        updated = item.copyWith(isWatched: watched, updatedAt: DateTime.now());
+        return updated!;
+      }
+      return item;
+    }).toList();
+    if (updated == null) return;
+    state = state.copyWith(items: updatedList);
+    await _localDataSource.updateItem(updated!);
   }
 
   Future<void> toggleTopMind(String id) async {

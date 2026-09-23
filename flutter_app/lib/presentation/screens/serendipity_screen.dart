@@ -12,6 +12,7 @@ import '../../core/utils/notification_service.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/mind_feed_controller.dart';
 import '../widgets/mind_card_detail_sheet.dart';
+import '../widgets/reminder_settings_sheet.dart';
 
 class SerendipityScreen extends ConsumerStatefulWidget {
   const SerendipityScreen({super.key});
@@ -31,6 +32,12 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
     final unwatchedItems = allItems.where((item) => !item.isWatched).toList();
 
     // If sparked item not yet set or deleted, pick a random candidate
+    // Keep the spark in sync with live data (it may have been marked watched
+    // from a notification action or deleted elsewhere).
+    if (_sparkedItem != null) {
+      _sparkedItem =
+          unwatchedItems.where((i) => i.id == _sparkedItem!.id).firstOrNull;
+    }
     if (_sparkedItem == null && unwatchedItems.isNotEmpty) {
       _sparkedItem = unwatchedItems.first;
     }
@@ -40,20 +47,22 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
       appBar: AppBar(
         title: const Text(
           'Serendipity',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 24, letterSpacing: -0.5),
+          style: TextStyle(
+              fontWeight: FontWeight.w800, fontSize: 24, letterSpacing: -0.5),
         ),
         actions: [
           IconButton(
-            tooltip: "Test Rediscovery Notification",
-            icon: const Icon(LucideIcons.bell, size: 21, color: AppColors.textPrimary),
+            tooltip: "Reminder settings",
+            icon: Icon(
+              NotificationService().settings.enabled
+                  ? LucideIcons.bellRing
+                  : LucideIcons.bellOff,
+              size: 21,
+              color: AppColors.textPrimary,
+            ),
             onPressed: () async {
-              if (unwatchedItems.isNotEmpty) {
-                final candidate = _sparkedItem ?? unwatchedItems.first;
-                await NotificationService().showSerendipityNotification(candidate);
-                if (context.mounted) {
-                  MindToast.showSuccessToast(context, title: "Notification sent!");
-                }
-              }
+              await ReminderSettingsSheet.show(context);
+              if (mounted) setState(() {});
             },
           ),
           const SizedBox(width: 8),
@@ -72,18 +81,25 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                         color: Color(0x2610B981),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(LucideIcons.checkCheck, color: AppColors.success, size: 44),
+                      child: const Icon(LucideIcons.checkCheck,
+                          color: AppColors.success, size: 44),
                     ),
                     const SizedBox(height: 20),
                     const Text(
                       "Your Mind is Up to Date!",
-                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       "You've watched and reviewed all your saved items. Save new links to spark serendipity.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textSecondary, height: 1.5, fontSize: 13.5),
+                      style: TextStyle(
+                          color: AppColors.textSecondary,
+                          height: 1.5,
+                          fontSize: 13.5),
                     ),
                   ],
                 ),
@@ -96,25 +112,31 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "DAILY RECALL SPARK",
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                            color: AppColors.textSecondary,
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "DAILY RECALL SPARK",
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          "Resurfaced forgotten gem",
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                        ),
-                      ],
+                          SizedBox(height: 2),
+                          Text(
+                            "Resurfaced forgotten gem",
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 12),
 
                     // Shuffle Spark Button
                     InkWell(
@@ -123,25 +145,32 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                         if (unwatchedItems.isNotEmpty) {
                           final random = Random();
                           setState(() {
-                            _sparkedItem = unwatchedItems[random.nextInt(unwatchedItems.length)];
+                            _sparkedItem = unwatchedItems[
+                                random.nextInt(unwatchedItems.length)];
                           });
                         }
                       },
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
                           color: AppColors.primaryLight,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0x66FF5B37), width: 0.8),
+                          border: Border.all(
+                              color: const Color(0x66FF5B37), width: 0.8),
                         ),
                         child: const Row(
                           children: [
-                            Icon(LucideIcons.shuffle, size: 14, color: AppColors.primary),
+                            Icon(LucideIcons.shuffle,
+                                size: 14, color: AppColors.primary),
                             SizedBox(width: 6),
                             Text(
                               "Shuffle",
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary),
                             ),
                           ],
                         ),
@@ -153,7 +182,8 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                 const SizedBox(height: 14),
 
                 // 2. Featured Spark Card
-                if (_sparkedItem != null) _buildFeaturedSparkCard(context, ref, _sparkedItem!),
+                if (_sparkedItem != null)
+                  _buildFeaturedSparkCard(context, ref, _sparkedItem!),
 
                 const SizedBox(height: 32),
 
@@ -171,7 +201,8 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
                         color: const Color(0x1FFF5B37),
                         borderRadius: BorderRadius.circular(10),
@@ -191,13 +222,16 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                 const SizedBox(height: 12),
 
                 // 4. Compact Rediscovery Queue List
-                ...unwatchedItems.take(5).map((item) => _buildQueueTile(context, ref, item)),
+                ...unwatchedItems
+                    .take(5)
+                    .map((item) => _buildQueueTile(context, ref, item)),
               ],
             ),
     );
   }
 
-  Widget _buildFeaturedSparkCard(BuildContext context, WidgetRef ref, MindItem item) {
+  Widget _buildFeaturedSparkCard(
+      BuildContext context, WidgetRef ref, MindItem item) {
     final daysAgo = DateTime.now().difference(item.createdAt).inDays;
     final timeAgoLabel = daysAgo == 0
         ? "Saved today"
@@ -222,7 +256,8 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
             decoration: BoxDecoration(
               color: const Color(0xF7FFFFFF),
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.5),
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.9), width: 1.5),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,19 +277,26 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                         top: 14,
                         left: 14,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 0.8),
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                width: 0.8),
                           ),
                           child: Row(
                             children: [
-                              const Icon(LucideIcons.history, color: Colors.white, size: 12),
+                              const Icon(LucideIcons.history,
+                                  color: Colors.white, size: 12),
                               const SizedBox(width: 5),
                               Text(
                                 timeAgoLabel,
-                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -264,16 +306,19 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                       Positioned.fill(
                         child: Center(
                           child: GestureDetector(
-                            onTap: () => ExternalLinkLauncher.openSource(item.url),
+                            onTap: () =>
+                                ExternalLinkLauncher.openSource(item.url),
                             child: Container(
                               width: 54,
                               height: 54,
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.45),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 1.8),
+                                border:
+                                    Border.all(color: Colors.white, width: 1.8),
                               ),
-                              child: const Icon(LucideIcons.play, color: Colors.white, size: 24),
+                              child: const Icon(LucideIcons.play,
+                                  color: Colors.white, size: 24),
                             ),
                           ),
                         ),
@@ -316,10 +361,14 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 HapticFeedback.mediumImpact();
-                                ref.read(mindFeedProvider.notifier).toggleWatched(item.id);
-                                MindToast.showSuccessToast(context, title: "Marked as watched!");
+                                ref
+                                    .read(mindFeedProvider.notifier)
+                                    .toggleWatched(item.id);
+                                MindToast.showSuccessToast(context,
+                                    title: "Marked as watched!");
                               },
-                              icon: const Icon(LucideIcons.checkCheck, size: 16, color: AppColors.success),
+                              icon: const Icon(LucideIcons.checkCheck,
+                                  size: 16, color: AppColors.success),
                               label: const Text(
                                 "Mark as Watched",
                                 style: TextStyle(
@@ -333,15 +382,51 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                                 backgroundColor: const Color(0x1F10B981),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
-                                  side: const BorderSide(color: Color(0x4010B981), width: 1.0),
+                                  side: const BorderSide(
+                                      color: Color(0x4010B981), width: 1.0),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Tooltip(
+                            message: "Remind me in 1 week",
+                            child: InkWell(
+                              onTap: () async {
+                                HapticFeedback.lightImpact();
+                                final items = ref.read(mindFeedProvider).items;
+                                await NotificationService()
+                                    .snoozeItem(item.id, items);
+                                if (!context.mounted) return;
+                                MindToast.showSuccessToast(context,
+                                    title: "We'll remind you in a week");
+                                final others = items
+                                    .where(
+                                        (i) => !i.isWatched && i.id != item.id)
+                                    .toList();
+                                if (others.isNotEmpty) {
+                                  setState(() => _sparkedItem =
+                                      others[Random().nextInt(others.length)]);
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F3F6),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: const Icon(LucideIcons.alarmClock,
+                                    size: 18, color: AppColors.textPrimary),
                               ),
                             ),
                           ),
                           const SizedBox(width: 10),
                           InkWell(
-                            onTap: () => MindCardDetailSheet.show(context, item),
+                            onTap: () =>
+                                MindCardDetailSheet.show(context, item),
                             borderRadius: BorderRadius.circular(14),
                             child: Container(
                               padding: const EdgeInsets.all(12),
@@ -349,7 +434,8 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                                 color: const Color(0xFFF1F3F6),
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Icon(LucideIcons.arrowUpRight, size: 18, color: AppColors.textPrimary),
+                              child: const Icon(LucideIcons.arrowUpRight,
+                                  size: 18, color: AppColors.textPrimary),
                             ),
                           ),
                         ],
@@ -368,50 +454,60 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
   Widget _buildQueueTile(BuildContext context, WidgetRef ref, MindItem item) {
     final dateStr = DateFormat('MMM d').format(item.createdAt);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
         color: const Color(0xF4FFFFFF),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0x33E5E7EB), width: 0.8),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: item.thumbnailUrl != null
-              ? Image.network(
-                  item.thumbnailUrl!,
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                )
-              : Container(
-                  width: 48,
-                  height: 48,
-                  color: AppColors.tagBg,
-                  child: const Icon(LucideIcons.link2, size: 20, color: AppColors.textMuted),
-                ),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: Color(0x33E5E7EB), width: 0.8),
         ),
-        title: Text(
-          item.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: item.thumbnailUrl != null
+                ? Image.network(
+                    item.thumbnailUrl!,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    width: 48,
+                    height: 48,
+                    color: AppColors.tagBg,
+                    child: const Icon(LucideIcons.link2,
+                        size: 20, color: AppColors.textMuted),
+                  ),
+          ),
+          title: Text(
+            item.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary),
+          ),
+          subtitle: Text(
+            "${item.authorName ?? 'Saved'} • $dateStr",
+            style:
+                const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+          ),
+          trailing: IconButton(
+            icon: const Icon(LucideIcons.check,
+                size: 18, color: AppColors.textSecondary),
+            tooltip: "Mark Watched",
+            onPressed: () {
+              ref.read(mindFeedProvider.notifier).toggleWatched(item.id);
+              MindToast.showSuccessToast(context, title: "Watched & Reviewed!");
+            },
+          ),
+          onTap: () => MindCardDetailSheet.show(context, item),
         ),
-        subtitle: Text(
-          "${item.authorName ?? 'Saved'} • $dateStr",
-          style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
-        ),
-        trailing: IconButton(
-          icon: const Icon(LucideIcons.check, size: 18, color: AppColors.textSecondary),
-          tooltip: "Mark Watched",
-          onPressed: () {
-            ref.read(mindFeedProvider.notifier).toggleWatched(item.id);
-            MindToast.showSuccessToast(context, title: "Watched & Reviewed!");
-          },
-        ),
-        onTap: () => MindCardDetailSheet.show(context, item),
       ),
     );
   }

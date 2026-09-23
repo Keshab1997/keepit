@@ -25,7 +25,7 @@ Every day we scroll past dozens of insightful Instagram Reels, YouTube Shorts, T
 | **Share Intent Receiver** | Accepts links, media, and text directly from Android/iOS system share sheets. |
 | **Smart Metadata Extraction** | Automatically fetches title, OG image, author, favicon, and extracts core content. |
 | **Spaces & Smart Tags** | Auto-categorize by hashtags, themes, or custom user spaces (e.g. `Design`, `Dev`, `Quotes`, `AI Tools`). |
-| **Serendipity Engine** | Algorithmic "Rediscovery" tab and intelligent push notifications reminding you of forgotten saves. |
+| **Serendipity Engine** | Rediscovery tab + scheduled spaced-repetition reminders (day 3 / 14 / 45 / 90, max 1/day, Sunday Mind Digest) with Mark Watched / Remind in 1 Week buttons and deep links. See [docs/NOTIFICATION_ENGINE.md](docs/NOTIFICATION_ENGINE.md). |
 | **"I've Watched / Read This"** | Track read/watch status so your active mind feed stays fresh and actionable. |
 | **Local-First + Cloud Sync** | 100% offline functionality first. Transparent background sync with Firebase Cloud Firestore & Storage. |
 | **Full-Text & Color Search** | Search through tags, titles, notes, domains, and even dominant visual colors. |

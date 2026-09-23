@@ -530,16 +530,18 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
 
   Widget _buildSelectionAppBar(BuildContext context, int totalCount) {
     final count = _selectedItemIds.length;
+    final isAllSelected = _selectedItemIds.length == totalCount && totalCount > 0;
+
     return Padding(
       key: const ValueKey('selection_app_bar'),
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
             height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               color: const Color(0xF8FFFFFF),
               borderRadius: BorderRadius.circular(18),
@@ -554,29 +556,36 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
             ),
             child: Row(
               children: [
-                // Close / Done Button
-                IconButton(
-                  icon: const Icon(LucideIcons.x, size: 20, color: AppColors.textPrimary),
-                  onPressed: _exitSelectionMode,
+                // Close / Done Icon Button
+                InkWell(
+                  onTap: _exitSelectionMode,
+                  borderRadius: BorderRadius.circular(10),
+                  child: const Padding(
+                    padding: EdgeInsets.all(6),
+                    child: Icon(LucideIcons.x, size: 19, color: AppColors.textPrimary),
+                  ),
                 ),
+
                 const SizedBox(width: 4),
+
                 // Selected Count Title
                 Text(
-                  "$count selected",
+                  "$count",
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
+
                 const Spacer(),
 
-                // Select All / Deselect Toggle
-                TextButton(
-                  onPressed: () {
+                // Select All / Deselect Action
+                InkWell(
+                  onTap: () {
                     HapticFeedback.selectionClick();
                     setState(() {
-                      if (_selectedItemIds.length == totalCount) {
+                      if (isAllSelected) {
                         _selectedItemIds.clear();
                         _exitSelectionMode();
                       } else {
@@ -585,46 +594,50 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                       }
                     });
                   },
-                  child: Text(
-                    _selectedItemIds.length == totalCount ? "Deselect" : "Select All",
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: Text(
+                      isAllSelected ? "Deselect" : "Select All",
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
                     ),
                   ),
                 ),
 
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
 
-                // Delete Button
+                // Compact Delete Button
                 InkWell(
                   onTap: () => _confirmDeleteSelected(context),
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: AppColors.danger,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x40FF3B30),
-                          blurRadius: 10,
-                          offset: Offset(0, 3),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
                         ),
                       ],
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(LucideIcons.trash2, color: Colors.white, size: 16),
-                        SizedBox(width: 6),
+                        Icon(LucideIcons.trash2, color: Colors.white, size: 14),
+                        SizedBox(width: 5),
                         Text(
                           "Delete",
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            fontSize: 12.5,
                           ),
                         ),
                       ],

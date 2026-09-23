@@ -22,7 +22,10 @@ dependencies:
   google_fonts: ^6.2.1
   cached_network_image: ^3.3.1
   flutter_animate: ^4.5.0
-  lucide_icons: ^0.257.0
+  # Local copy (vendor/lucide_icons): the published 0.257.0 release extends
+  # IconData, which is a final class in current Flutter and fails to compile.
+  lucide_icons:
+    path: vendor/lucide_icons
   
   # Deep Link & Share Intent
   receive_sharing_intent: ^1.4.5

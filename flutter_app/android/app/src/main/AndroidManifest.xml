@@ -42,5 +42,11 @@
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
+
+        <!-- Tells Flutter this app uses the Android v2 embedding.
+             Without this meta-data, builds fail with "deleted Android v1 embedding". -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
     </application>
 </manifest>

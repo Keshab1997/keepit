@@ -313,35 +313,36 @@ class MindCardDetailSheet extends ConsumerWidget {
     required VoidCallback onTap,
     bool isDestructive = false,
   }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
         color: isDestructive ? const Color(0x14FF3B30) : const Color(0x66F9F9FB),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDestructive ? const Color(0x33FF3B30) : const Color(0x66FFFFFF),
-          width: 0.8,
-        ),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-        leading: Icon(
-          icon,
-          color: isDestructive ? AppColors.danger : AppColors.textPrimary,
-          size: 20,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: isDestructive ? AppColors.danger : AppColors.textPrimary,
-          ),
-        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
+          side: BorderSide(
+            color: isDestructive ? const Color(0x33FF3B30) : const Color(0x66FFFFFF),
+            width: 0.8,
+          ),
         ),
-        onTap: onTap,
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          leading: Icon(
+            icon,
+            color: isDestructive ? AppColors.danger : AppColors.textPrimary,
+            size: 20,
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: isDestructive ? AppColors.danger : AppColors.textPrimary,
+            ),
+          ),
+          onTap: onTap,
+        ),
       ),
     );
   }

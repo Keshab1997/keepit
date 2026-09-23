@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -29,128 +30,182 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
     final items = state.filteredItems;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Bar: Search My Mind & Floating Plus Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  // Search Pill
-                  Expanded(
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.cardBorder, width: 0.8),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x05000000), // Pure hex to avoid deprecation warnings
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (val) {
-                          ref.read(mindFeedProvider.notifier).setSearchQuery(val);
-                        },
-                        decoration: InputDecoration(
-                          hintText: "Search my mind...",
-                          hintStyle: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 15,
-                          ),
-                          prefixIcon: const Icon(
-                            LucideIcons.menu,
-                            color: AppColors.textSecondary,
-                            size: 20,
-                          ),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(LucideIcons.x, size: 16),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    ref.read(mindFeedProvider.notifier).setSearchQuery('');
-                                  },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  // Radiant Plus Button
-                  InkWell(
-                    onTap: () => _showAddUrlDialog(context, ref),
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x4DFF5B37),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        LucideIcons.plus,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ],
+      backgroundColor: Colors.transparent, // Background shows atmospheric glow
+      body: Stack(
+        children: [
+          // Background Atmospheric Glassmorphism Gradient Glows
+          Positioned(
+            top: -60,
+            right: -40,
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0x33FF5B37),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
-
-            // Main Masonry Grid
-            Expanded(
-              child: state.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : items.isEmpty
-                      ? const Center(
-                          child: Text(
-                            "Nothing in your mind yet.\nShare a reel or link to get started!",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.textSecondary, height: 1.5),
-                          ),
-                        )
-                      : MasonryGridView.count(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            return MindCardWidget(
-                              item: item,
-                              onTap: () {
-                                MindCardDetailSheet.show(context, item);
-                              },
-                              onLongPress: () {
-                                MindCardDetailSheet.show(context, item);
-                              },
-                            );
-                          },
-                        ),
+          ),
+          Positioned(
+            bottom: 120,
+            left: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0x24833AB4),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+
+          SafeArea(
+            child: Column(
+              children: [
+                // Top Bar: Glassmorphic Floating Search Bar & Plus Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      // Glass Search Pill
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                            child: Container(
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: const Color(0xCCFFFFFF),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xB3FFFFFF), width: 1.2),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x0A000000),
+                                    blurRadius: 14,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: (val) {
+                                  ref.read(mindFeedProvider.notifier).setSearchQuery(val);
+                                },
+                                decoration: InputDecoration(
+                                  hintText: "Search my mind...",
+                                  hintStyle: const TextStyle(
+                                    color: AppColors.textMuted,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  prefixIcon: const Icon(
+                                    LucideIcons.search,
+                                    color: AppColors.textSecondary,
+                                    size: 19,
+                                  ),
+                                  suffixIcon: _searchController.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(LucideIcons.x, size: 16),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            ref.read(mindFeedProvider.notifier).setSearchQuery('');
+                                          },
+                                        )
+                                      : null,
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      // Radiant Glass Plus Button
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                          child: InkWell(
+                            onTap: () => _showAddUrlDialog(context, ref),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0x66FFFFFF), width: 1.2),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x40FF5B37),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                LucideIcons.plus,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Main Masonry Grid Feed
+                Expanded(
+                  child: state.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : items.isEmpty
+                          ? const Center(
+                              child: Text(
+                                "Nothing in your mind yet.\nShare a reel or link to get started!",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+                              ),
+                            )
+                          : MasonryGridView.count(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 14,
+                              crossAxisSpacing: 14,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              itemCount: items.length,
+                              itemBuilder: (context, index) {
+                                final item = items[index];
+                                return MindCardWidget(
+                                  item: item,
+                                  onTap: () {
+                                    MindCardDetailSheet.show(context, item);
+                                  },
+                                  onLongPress: () {
+                                    MindCardDetailSheet.show(context, item);
+                                  },
+                                );
+                              },
+                            ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -159,39 +214,50 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen> {
     final urlController = TextEditingController();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Save to Mind", style: TextStyle(fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: urlController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: "Paste Instagram reel, video, or article link...",
-            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: AlertDialog(
+          backgroundColor: const Color(0xF2FFFFFF), // Glass popup
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: const BorderSide(color: Color(0x80FFFFFF), width: 1.2),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final link = urlController.text.trim();
-              if (link.isNotEmpty) {
-                ref.read(mindFeedProvider.notifier).addUrl(link);
-                Navigator.pop(ctx);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          title: const Text("Save to Mind", style: TextStyle(fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: urlController,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: "Paste Instagram reel, video, or link...",
+              filled: true,
+              fillColor: const Color(0x80F1F2F6),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
             ),
-            child: const Text("Save"),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Cancel", style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final link = urlController.text.trim();
+                if (link.isNotEmpty) {
+                  ref.read(mindFeedProvider.notifier).addUrl(link);
+                  Navigator.pop(ctx);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text("Save"),
+            ),
+          ],
+        ),
       ),
     );
   }

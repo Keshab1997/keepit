@@ -142,9 +142,9 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                 }
                 Navigator.pop(ctx);
                 _exitSelectionMode();
-                MindToast.showSuccessToast(
+                MindToast.showDeleteToast(
                   context,
-                  title: count == 1 ? "Deleted 1 item" : "Deleted $count items",
+                  title: count == 1 ? "1 item deleted" : "$count items deleted",
                 );
               },
               style: ElevatedButton.styleFrom(

@@ -662,6 +662,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                       ref.read(mindFeedProvider.notifier).deleteItem(item.id);
                       Navigator.pop(ctx);
                       Navigator.pop(context);
+                      MindToast.showDeleteToast(context, title: "Deleted from mind");
                     },
                   ),
                 ],

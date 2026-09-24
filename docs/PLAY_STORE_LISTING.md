@@ -6,7 +6,7 @@
 `Your visual second brain. Save reels, articles, notes & recall them effortlessly.`
 
 **Category:** Productivity · **Tags:** Bookmark manager, Note taking, Productivity
-**Contact email:** keshabsarkar1997@gmail.com
+**Contact email:** keshabsarkar2018@gmail.com
 **Website:** https://keshab1997.github.io/keepit/
 **Privacy policy:** https://keshab1997.github.io/keepit/privacy-policy.html
 

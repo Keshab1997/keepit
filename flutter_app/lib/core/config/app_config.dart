@@ -9,7 +9,7 @@ class AppConfig {
   static const String tagline = 'Your visual second brain';
   static const String packageName = 'com.keshab.keepit';
 
-  static const String supportEmail = 'keshabsarkar1997@gmail.com';
+  static const String supportEmail = 'keshabsarkar2018@gmail.com';
 
   static const String _pagesBase = 'https://keshab1997.github.io/keepit';
   static const String privacyPolicyUrl = '$_pagesBase/privacy-policy.html';

@@ -6,7 +6,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/notifications/serendipity_planner.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/mind_toast.dart';
 import '../../core/utils/notification_service.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/mind_feed_controller.dart';
@@ -70,22 +69,6 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
     );
     if (picked != null) {
       await _apply(_settings.copyWith(hour: picked.hour, minute: picked.minute));
-    }
-  }
-
-  Future<void> _sendTest(List<MindItem> items) async {
-    final candidates = items.where((i) => !i.isWatched).toList();
-    if (candidates.isEmpty) {
-      MindToast.showDuplicateToast(context, title: 'Nothing unwatched to remind you about');
-      return;
-    }
-    final ok = await _service.showTestNotification((candidates..shuffle()).first);
-    await _refreshPermission();
-    if (!mounted) return;
-    if (ok) {
-      MindToast.showSuccessToast(context, title: 'Test notification sent!');
-    } else {
-      MindToast.showDeleteToast(context, title: 'Notifications are blocked in system settings');
     }
   }
 
@@ -217,24 +200,7 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
                   ],
                 ),
 
-              const SizedBox(height: 22),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _sendTest(items),
-                  icon: const Icon(LucideIcons.send, size: 16, color: AppColors.primary),
-                  label: const Text(
-                    'Send a test notification',
-                    style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.primary),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: const BorderSide(color: Color(0x66FF5B37)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
               const Text(
                 'Tip: use “Mark Watched” or “In 1 Week” right on the notification — no need to open the app.',
                 textAlign: TextAlign.center,

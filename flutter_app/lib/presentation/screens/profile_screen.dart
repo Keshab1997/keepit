@@ -1006,7 +1006,7 @@ class _VersionFooter extends ConsumerWidget {
         ),
         const SizedBox(height: 2),
         const Text(
-          'Made with ❤️ in Kolkata',
+          'Made with ❤️ by Keshab Studios',
           style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
         ),
       ],

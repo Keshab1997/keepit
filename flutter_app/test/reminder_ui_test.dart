@@ -84,13 +84,6 @@ void main() {
     expect(find.text('Reminder time'), findsOneWidget);
     expect(find.text('Sunday Mind Digest'), findsWidgets);
     expect(find.text('COMING UP'), findsOneWidget);
-    // The test button sits below the fold of the lazily-built sheet list.
-    await tester.scrollUntilVisible(
-      find.text('Send a test notification'),
-      200,
-      scrollable: find.byType(Scrollable).last,
-    );
-    expect(find.text('Send a test notification'), findsOneWidget);
 
     // Let debounce timers / animations settle before teardown.
     await tester.pump(const Duration(seconds: 2));

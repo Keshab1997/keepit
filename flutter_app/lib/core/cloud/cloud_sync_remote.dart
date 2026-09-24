@@ -50,9 +50,10 @@ abstract class CloudSyncRemote {
 
 /// Firestore layout:
 /// ```
-/// users/{uid}                   { lastSyncAt, platform }
 /// users/{uid}/items/{itemId}    { ...item, updatedAtMs, deleted, serverUpdatedAt }
 /// ```
+/// The parent user document is intentionally not written during normal sync:
+/// each extra write increases the bill without helping item reconciliation.
 /// Security rules (firestore.rules) allow access only to the owner.
 class FirestoreSyncRemote implements CloudSyncRemote {
   FirestoreSyncRemote({FirebaseFirestore? firestore})
@@ -131,10 +132,9 @@ class FirestoreSyncRemote implements CloudSyncRemote {
       }
       await batch.commit();
     }
-    await _db.collection('users').doc(uid).set({
-      'lastSyncAt': FieldValue.serverTimestamp(),
-      'schema': 1,
-    }, SetOptions(merge: true));
+    // Do not write a per-sync user metadata document. Item writes already
+    // contain the server cursor used for incremental pulls, so this avoids one
+    // extra billed write for every sync run.
   }
 
   @override

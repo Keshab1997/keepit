@@ -91,6 +91,12 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
 
   static const String _autoSyncKey = 'auto_sync_enabled';
 
+  /// Remote polling is deliberately infrequent to avoid paying for an empty
+  /// Firestore query every time the app resumes. Local edits still sync after
+  /// the normal debounce, and the Profile screen's "Sync now" always forces a
+  /// check immediately.
+  static const Duration _remotePollInterval = Duration(minutes: 5);
+
   StreamSubscription<AppUser?>? _authSub;
   Timer? _debounce;
   Future<SyncReport?>? _running;
@@ -152,9 +158,18 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
     _debounce = Timer(const Duration(seconds: 4), () => syncNow(silent: true));
   }
 
-  /// Called when the app returns to the foreground.
+  /// Called when the app returns to the foreground. Polling every resume is
+  /// wasteful when the user only switches apps briefly, so remote checks are
+  /// capped at one per [_remotePollInterval].
   void onAppResumed() {
-    if (state.signedIn && state.autoSync) syncNow(silent: true);
+    if (!state.signedIn || !state.autoSync || !_shouldPollRemote()) return;
+    syncNow(silent: true);
+  }
+
+  bool _shouldPollRemote() {
+    final last = state.lastSyncAt;
+    if (last == null) return true;
+    return DateTime.now().difference(last) >= _remotePollInterval;
   }
 
   Future<SyncReport?> syncNow({bool silent = false}) {

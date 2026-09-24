@@ -103,6 +103,7 @@ Check Firestore: `users/<uid>/items/*` should contain your items.
 - Layout: `users/{uid}/items/{itemId}` = item fields + `updatedAtMs`, `deleted`, `serverUpdatedAt`.
 - Pull: `serverUpdatedAt > lastCursor` (incremental). Push: dirty items (`isSynced == false`) + local tombstones.
 - Conflicts: **last write wins** by `updatedAt`. Deletes are tombstones so other devices learn about them.
-- Auto sync: 4 s after any local change, on app resume, and on sign-in. Can be turned off in Profile.
+- Auto sync: 4 s after any local change and on sign-in. Foreground remote polling is capped at once per 5 minutes to avoid billed empty reads; Profile → Sync now always checks immediately. Can be turned off in Profile.
+- Cost control: normal sync writes only changed item documents; it does not write a separate per-sync user metadata document.
 - Demo cards (ids 1-4) are never uploaded.
 - Code: `lib/core/cloud/*`, `lib/presentation/controllers/cloud_sync_controller.dart`, tests in `test/sync_engine_test.dart`.

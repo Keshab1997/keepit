@@ -16,7 +16,7 @@ add the config files below and rebuild.
 ## 2. Add the Android app
 
 1. Project overview → **Add app → Android**.
-2. **Android package name:** `com.keshab.keepit` (must match `applicationId` in
+2. **Android package name:** `com.keshabstudios.keepit` (must match `applicationId` in
    `flutter_app/android/app/build.gradle.kts`).
 3. **App nickname:** KeepIt Android.
 4. **Debug signing certificate SHA-1:** required for Google Sign-In. Get it with:
@@ -71,7 +71,7 @@ After adding a fingerprint, **download google-services.json again** and replace 
 
 ## 5. (Optional) iOS
 
-1. Add an **iOS app** with bundle ID `com.keshab.keepit` → download `GoogleService-Info.plist`
+1. Add an **iOS app** with bundle ID `com.keshabstudios.keepit` → download `GoogleService-Info.plist`
    → drag it into `ios/Runner` in Xcode (git-ignored).
 2. In `ios/Runner/Info.plist`, replace `com.googleusercontent.apps.REPLACE_WITH_REVERSED_CLIENT_ID`
    with the `REVERSED_CLIENT_ID` value from the plist.

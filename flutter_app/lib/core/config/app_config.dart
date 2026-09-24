@@ -7,7 +7,7 @@ class AppConfig {
 
   static const String appName = 'KeepIt';
   static const String tagline = 'Your visual second brain';
-  static const String packageName = 'com.keshab.keepit';
+  static const String packageName = 'com.keshabstudios.keepit';
 
   static const String supportEmail = 'keshabsarkar2018@gmail.com';
 

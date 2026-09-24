@@ -5,7 +5,7 @@ Everything in the codebase is ready; the steps below are the things only **you**
 
 ## 0. Already done in code ✅
 
-- ✅ Unique package name `com.keshab.keepit`, version from `pubspec.yaml` (`1.0.0+1`)
+- ✅ Unique package name `com.keshabstudios.keepit`, version from `pubspec.yaml` (`1.0.0+1`)
 - ✅ Brand app icon: Android legacy + adaptive + themed (monochrome), iOS, web; notification icon
 - ✅ Release signing wired to `android/key.properties` (falls back to debug for local runs)
 - ✅ R8 minify + resource shrinking, with ProGuard rules for notifications

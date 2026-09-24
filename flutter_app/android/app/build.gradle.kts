@@ -24,7 +24,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.keshab.keepit"
+    namespace = "com.keshabstudios.keepit"
     // receive_sharing_intent AAR requires consumers to compile against SDK 37+.
     // AGP 9.1.0's max recommended is 36; suppressed via
     // android.suppressUnsupportedCompileSdk=37 in gradle.properties.
@@ -40,7 +40,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.keshab.keepit"
+        applicationId = "com.keshabstudios.keepit"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

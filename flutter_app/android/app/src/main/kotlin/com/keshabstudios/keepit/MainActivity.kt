@@ -1,4 +1,4 @@
-package com.keshab.keepit
+package com.keshabstudios.keepit
 
 import io.flutter.embedding.android.FlutterActivity
 

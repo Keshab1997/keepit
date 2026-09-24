@@ -26,7 +26,7 @@ All IDs and caps live in one place:
 1. **Create an AdMob account** — https://apps.admob.com (sign in with the Google account that
    should receive payments).
 2. **Register the app**: Apps → Add app → "Yes, it's listed on a store" (or "No" while
-   testing) → package name `com.keshab.keepit`. You get an **App ID**
+   testing) → package name `com.keshabstudios.keepit`. You get an **App ID**
    (`ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY`).
 3. **Create 3 ad units** for that app: Banner (anchored adaptive), Interstitial, Rewarded.
    Note each **Ad unit ID** (`ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ`).

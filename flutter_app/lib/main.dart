@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -21,6 +22,10 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Local .env (git-ignored). Optional so CI and tests without the file
+  // still boot; features that need a key report "not configured".
+  await dotenv.load(isOptional: true);
 
   // 1. Initialize Hive Local Database
   await Hive.initFlutter();

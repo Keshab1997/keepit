@@ -1,23 +1,30 @@
 import 'dart:convert';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 /// Uploads images to ImgBB and returns the public image URL.
 ///
-/// The key is supplied at build/run time so it never lives in source control:
+/// The key is read from the local `.env` file (git-ignored) at runtime:
 ///
 /// ```bash
-/// flutter run --dart-define=IMGBB_API_KEY=your_key
+/// IMGBB_API_KEY=your_key
 /// ```
+///
+/// A `--dart-define=IMGBB_API_KEY=...` value still works as a fallback
+/// (e.g. for CI), and the `.env` key wins when both are present.
 ///
 /// ImgBB URLs are public. KeepIt stores only the returned URL in Hive and
 /// Firestore; the image bytes never go into a Firestore document.
 class ImgBbUploader {
   ImgBbUploader._();
 
-  static const String _apiKey = String.fromEnvironment('IMGBB_API_KEY');
-  static const Uri _endpoint = Uri.parse('https://api.imgbb.com/1/upload');
+  static String get _apiKey =>
+      dotenv.env['IMGBB_API_KEY'] ??
+      const String.fromEnvironment('IMGBB_API_KEY');
+
+  static final Uri _endpoint = Uri.parse('https://api.imgbb.com/1/upload');
   static const int _maxBytes = 32 * 1024 * 1024;
 
   static bool get isConfigured => _apiKey.trim().isNotEmpty;

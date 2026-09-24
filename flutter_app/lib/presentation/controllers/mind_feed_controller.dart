@@ -57,7 +57,7 @@ class MindFeedState {
 
       final matchesTag = !hasTagFilter ||
           item.tags.any((t) => t.toLowerCase() == tag) ||
-          item.type.name.toLowerCase().contains(tag!);
+          item.type.name.toLowerCase().contains(tag);
 
       return matchesQuery && matchesTag;
     }).toList();

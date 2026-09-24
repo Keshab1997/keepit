@@ -49,5 +49,9 @@ app.*.map.json
 /ios/Runner/GoogleService-Info.plist
 /android/key.properties
 
+# Local environment (flutter_dotenv) — never reveal API keys
+/.env
+/.env.*.local
+
 # Widget Preview related
 .widget_preview/

@@ -52,6 +52,9 @@ dependencies:
   package_info_plus: ^10.2.1
   share_plus: ^13.3.0
 
+  # Loads local config from .env (git-ignored): IMGBB_API_KEY etc.
+  flutter_dotenv: ^5.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -64,3 +67,4 @@ flutter:
 
   assets:
     - assets/onboarding/
+    - .env

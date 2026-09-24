@@ -193,6 +193,44 @@ void main() {
     expect(remote.users[uid]!['a']!.data['title'], 'Local v2');
   });
 
+  test('stale remote edit never overwrites a newer synced local copy', () async {
+    final remote = FakeRemote();
+    final local = await device();
+    await local.saveItem(
+      mk('a', title: 'Newer local', updated: DateTime.utc(2026, 9, 10)),
+    );
+    await SyncEngine(local: local, remote: remote).sync(uid);
+
+    // Simulate a delayed/stale write arriving from another device.
+    remote.putFromOtherDevice(
+      uid,
+      mk('a', title: 'Stale remote', updated: DateTime.utc(2026, 9, 2)),
+    );
+    final report = await SyncEngine(local: local, remote: remote).sync(uid);
+
+    expect(local.getItem('a')?.title, 'Newer local');
+    expect(local.getItem('a')?.isSynced, isTrue);
+    expect(report.pushed, 1);
+    expect(remote.users[uid]!['a']!.data['title'], 'Newer local');
+  });
+
+  test('stale remote deletion never removes a newer local copy', () async {
+    final remote = FakeRemote();
+    final local = await device();
+    await local.saveItem(
+      mk('a', title: 'Keep this', updated: DateTime.utc(2026, 9, 10)),
+    );
+    await SyncEngine(local: local, remote: remote).sync(uid);
+
+    remote.deleteFromOtherDevice(uid, 'a', DateTime.utc(2026, 9, 2));
+    final report = await SyncEngine(local: local, remote: remote).sync(uid);
+
+    expect(local.getItem('a')?.title, 'Keep this');
+    expect(local.getItem('a')?.isSynced, isTrue);
+    expect(report.pushed, 1);
+    expect(remote.users[uid]!['a']!.deleted, isFalse);
+  });
+
   test('local deletions propagate as tombstones to other devices', () async {
     final remote = FakeRemote();
     final phone = await device();

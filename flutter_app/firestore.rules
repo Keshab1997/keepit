@@ -21,9 +21,10 @@ service cloud.firestore {
           && request.resource.data.deleted is bool
           && request.resource.size() < 60
           // Keep documents small (no raw media, just metadata).
-          && (!('description' in request.resource.data)
-              || request.resource.data.description == null
-              || request.resource.data.description.size() < 20000);
+          && (!('content' in request.resource.data)
+              || request.resource.data.content == null
+              || (request.resource.data.content is string
+                  && request.resource.data.content.size() < 20000));
       }
     }
 

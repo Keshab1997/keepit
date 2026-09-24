@@ -180,17 +180,21 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   }
 
   Future<void> toggleWatched(String id) async {
+    MindItem? updated;
     final updatedList = state.items.map((item) {
       if (item.id == id) {
-        final updated = item.copyWith(
+        updated = item.copyWith(
           isWatched: !item.isWatched,
-          updatedAt: DateTime.now(),
+          updatedAt: DateTime.now().toUtc(),
         );
-        _localDataSource.updateItem(updated);
-        return updated;
+        return updated!;
       }
       return item;
     }).toList();
+    if (updated == null) return;
+    // Persist before notifying sync; otherwise the debounce can race the Hive
+    // write and upload the previous version.
+    await _localDataSource.updateItem(updated!);
     state = state.copyWith(items: updatedList);
     _changed();
   }
@@ -201,7 +205,10 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     MindItem? updated;
     final updatedList = state.items.map((item) {
       if (item.id == id && item.isWatched != watched) {
-        updated = item.copyWith(isWatched: watched, updatedAt: DateTime.now());
+        updated = item.copyWith(
+          isWatched: watched,
+          updatedAt: DateTime.now().toUtc(),
+        );
         return updated!;
       }
       return item;
@@ -213,17 +220,21 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   }
 
   Future<void> toggleTopMind(String id) async {
+    MindItem? updated;
     final updatedList = state.items.map((item) {
       if (item.id == id) {
-        final updated = item.copyWith(
+        updated = item.copyWith(
           isTopMind: !item.isTopMind,
-          updatedAt: DateTime.now(),
+          updatedAt: DateTime.now().toUtc(),
         );
-        _localDataSource.updateItem(updated);
-        return updated;
+        return updated!;
       }
       return item;
     }).toList();
+    if (updated == null) return;
+    // Persist before notifying sync; otherwise the debounce can race the Hive
+    // write and upload the previous version.
+    await _localDataSource.updateItem(updated!);
     state = state.copyWith(items: updatedList);
     _changed();
   }

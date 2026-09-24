@@ -77,14 +77,24 @@ class SyncEngine {
 
       if (r.deleted) {
         if (localItem != null) {
-          final localNewer =
-              !localItem.isSynced && _ms(localItem.updatedAt) > r.updatedAtMs;
-          if (!localNewer) {
+          final localMs = _ms(localItem.updatedAt);
+          if (localMs > r.updatedAtMs) {
+            // A stale remote tombstone must not erase a newer local version.
+            // If the local version was previously marked synced, mark it dirty
+            // so the newer value repairs the cloud record below.
+            if (localItem.isSynced) {
+              await local.saveItem(localItem);
+            }
+          } else {
+            // Equal timestamps are resolved in favour of the deletion.
             await local.deleteItem(r.id, recordTombstone: false);
             deletedLocally++;
           }
         }
-        if (localTombstone != null) settledTombstones.add(r.id);
+        if (localTombstone != null &&
+            r.updatedAtMs >= localTombstone) {
+          settledTombstones.add(r.id);
+        }
         continue;
       }
 
@@ -105,13 +115,17 @@ class SyncEngine {
       }
 
       final localMs = _ms(localItem.updatedAt);
-      if (r.updatedAtMs > localMs ||
-          (localItem.isSynced && r.updatedAtMs != localMs)) {
+      if (r.updatedAtMs > localMs) {
         await local.saveItem(remoteItem, synced: true);
         pulled++;
       } else if (r.updatedAtMs == localMs && !localItem.isSynced) {
         // Same version already in the cloud (e.g. pushed from here before a crash).
         await local.saveItem(localItem, synced: true);
+      } else if (r.updatedAtMs < localMs && localItem.isSynced) {
+        // The cloud can contain a stale write when another device had a clock
+        // skew or a delayed retry. Keep the newer local version and repair the
+        // cloud instead of overwriting the phone with stale data.
+        await local.saveItem(localItem);
       }
       // else: local is newer and unsynced → pushed below.
     }

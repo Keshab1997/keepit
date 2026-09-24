@@ -1,0 +1,28 @@
+name: Android Release
+
+# Optional: pushing a tag (git tag v1.0.1 && git push origin v1.0.1) builds a
+# signed AAB artifact. It does not publish a GitHub Release — use
+# Publish Android Release for that. Needs the keystore secrets.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  release-aab:
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.3.0
+    with:
+      flutter-channel: stable
+      working-directory: flutter_app
+      build-apk: false
+      build-aab: true
+      artifact-retention-days: 30
+    secrets:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}

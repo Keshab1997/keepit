@@ -1,0 +1,36 @@
+name: Publish Android Release
+
+# Actions → Publish Android Release → Run workflow.
+# Builds a signed APK + AAB, tags v<pubspec version-name>, writes English
+# release notes from the commit titles since the previous tag, publishes the
+# GitHub Release and uploads the versioned APK/AAB plus SHA256SUMS.txt.
+#
+# Bump flutter_app/pubspec.yaml (version: 1.0.1+2) in a PR before running this.
+# Needs the keystore secrets in this repository's Settings → Secrets.
+
+on:
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: Create the GitHub Release as a draft?
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: Mark this as a prerelease?
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    uses: Keshab1997/flutter-builder/.github/workflows/publish-release.yml@v1.3.0
+    with:
+      app-name: KeepIt
+      working-directory: flutter_app
+      release-draft: ${{ inputs.draft }}
+      release-prerelease: ${{ inputs.prerelease }}
+    secrets: inherit

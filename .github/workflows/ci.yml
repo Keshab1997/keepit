@@ -1,0 +1,31 @@
+name: Flutter CI
+
+# Runs the shared builder workflow from Keshab1997/flutter-builder, so every
+# project gets the same Dart format / analyze / test setup. The Flutter app
+# lives in the flutter_app/ subdirectory of this repository.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.3.0
+    with:
+      flutter-channel: stable
+      working-directory: flutter_app
+      run-format-check: true
+      run-analyze: true
+      run-tests: true
+      build-apk: false
+      build-aab: false

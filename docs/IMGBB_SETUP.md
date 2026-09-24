@@ -24,6 +24,18 @@ recoverable from a mobile binary, so use an ImgBB key dedicated to KeepIt and
 monitor/rotate it if necessary. ImgBB URLs are public; do not use this mode for
 private images.
 
+## GitHub Secret
+
+You may store the key as a repository secret named `IMGBB_API_KEY`:
+
+**Repository → Settings and variables → Actions → New repository secret**
+
+A secret does not automatically reach a local APK. For a local build, pass it
+explicitly with `--dart-define` as shown above. If you later add a custom
+GitHub Actions build step, inject the secret there as the same Dart define. Do
+not hardcode it in Dart or commit it. The resulting mobile binary can still
+contain/reveal the key because ImgBB requires a client key for direct upload.
+
 ## User flow
 
 - Tap **+** in the Mind feed, then choose **Image** to select from the gallery.

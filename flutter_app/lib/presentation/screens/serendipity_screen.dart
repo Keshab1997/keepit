@@ -37,9 +37,8 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
     // Keep the spark in sync with live data (it may have been marked watched
     // from a notification action or deleted elsewhere).
     if (_sparkedItem != null) {
-      _sparkedItem = unwatchedItems
-          .where((i) => i.id == _sparkedItem!.id)
-          .firstOrNull;
+      _sparkedItem =
+          unwatchedItems.where((i) => i.id == _sparkedItem!.id).firstOrNull;
     }
     if (_sparkedItem == null && unwatchedItems.isNotEmpty) {
       _sparkedItem = unwatchedItems.first;
@@ -157,10 +156,9 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                         if (unwatchedItems.isNotEmpty) {
                           final random = Random();
                           setState(() {
-                            _sparkedItem =
-                                unwatchedItems[random.nextInt(
-                                  unwatchedItems.length,
-                                )];
+                            _sparkedItem = unwatchedItems[random.nextInt(
+                              unwatchedItems.length,
+                            )];
                           });
                         }
                       },

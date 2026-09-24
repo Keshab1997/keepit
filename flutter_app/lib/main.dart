@@ -71,8 +71,7 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
   /// Very first launch shows the onboarding; the flag lives in the Hive meta
   /// box so it never appears again (unless local data is wiped).
   Future<void> _checkFirstRun() async {
-    final seen =
-        ref
+    final seen = ref
             .read(localDataSourceProvider)
             .getMeta<bool>(LocalMindDataSource.onboardingSeenKey) ??
         false;
@@ -129,8 +128,8 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
           home: showOnboarding == null
               ? const _BrandSplash()
               : showOnboarding
-              ? const OnboardingScreen()
-              : const HomeScreen(),
+                  ? const OnboardingScreen()
+                  : const HomeScreen(),
         ),
       ),
     );

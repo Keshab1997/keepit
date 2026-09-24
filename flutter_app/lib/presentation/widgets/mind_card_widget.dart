@@ -26,7 +26,8 @@ class MindCardWidget extends StatelessWidget {
         onLongPress: onLongPress,
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xF5FFFFFF), // High performance opaque frosted tint (No GPU expensive backdrop filter)
+            color: const Color(
+                0xF5FFFFFF), // High performance opaque frosted tint (No GPU expensive backdrop filter)
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: item.isTopMind
@@ -55,13 +56,13 @@ class MindCardWidget extends StatelessWidget {
                   alignment: Alignment.center,
                   children: [
                     AspectRatio(
-                      aspectRatio: item.type == ItemType.instagramReel
-                          ? 0.82
-                          : 1.25,
+                      aspectRatio:
+                          item.type == ItemType.instagramReel ? 0.82 : 1.25,
                       child: CachedNetworkImage(
                         imageUrl: item.thumbnailUrl!,
                         fit: BoxFit.cover,
-                        memCacheWidth: 450, // Optimize memory downsampling for 120 FPS buttery scrolling
+                        memCacheWidth:
+                            450, // Optimize memory downsampling for 120 FPS buttery scrolling
                         memCacheHeight: 600,
                         fadeInDuration: const Duration(milliseconds: 150),
                         placeholder: (context, url) => Container(

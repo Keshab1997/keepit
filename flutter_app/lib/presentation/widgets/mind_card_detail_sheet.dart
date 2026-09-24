@@ -37,16 +37,13 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final liveItem = ref
-        .watch(mindFeedProvider)
-        .items
-        .firstWhere(
+    final liveItem = ref.watch(mindFeedProvider).items.firstWhere(
           (element) => element.id == widget.item.id,
           orElse: () => widget.item,
         );
 
-    final formattedDate = DateFormat('MMM d, yyyy • h:mm a')
-        .format(liveItem.createdAt);
+    final formattedDate =
+        DateFormat('MMM d, yyyy • h:mm a').format(liveItem.createdAt);
     final hasDescription =
         liveItem.content != null && liveItem.content!.trim().isNotEmpty;
 
@@ -195,16 +192,16 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                       errorBuilder:
                                           (context, error, stackTrace) =>
                                               Container(
-                                                height: 260,
-                                                color: AppColors.tagBg,
-                                                child: const Center(
-                                                  child: Icon(
-                                                    LucideIcons.image,
-                                                    size: 48,
-                                                    color: AppColors.textMuted,
-                                                  ),
-                                                ),
-                                              ),
+                                        height: 260,
+                                        color: AppColors.tagBg,
+                                        child: const Center(
+                                          child: Icon(
+                                            LucideIcons.image,
+                                            size: 48,
+                                            color: AppColors.textMuted,
+                                          ),
+                                        ),
+                                      ),
                                     )
                                   else
                                     Container(
@@ -218,7 +215,6 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                         ),
                                       ),
                                     ),
-
                                   Positioned.fill(
                                     child: DecoratedBox(
                                       decoration: BoxDecoration(
@@ -239,7 +235,6 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                       ),
                                     ),
                                   ),
-
                                   ClipOval(
                                     child: BackdropFilter(
                                       filter: ImageFilter.blur(
@@ -275,7 +270,6 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                       ),
                                     ),
                                   ),
-
                                   Positioned(
                                     bottom: 16,
                                     child: ClipRRect(
@@ -637,9 +631,9 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                 ),
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                      horizontal: 10,
-                                                      vertical: 5,
-                                                    ),
+                                                  horizontal: 10,
+                                                  vertical: 5,
+                                                ),
                                                 decoration: BoxDecoration(
                                                   color: _isCopied
                                                       ? const Color(0x1F10B981)
@@ -674,7 +668,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                       color: _isCopied
                                                           ? AppColors.success
                                                           : AppColors
-                                                                .textSecondary,
+                                                              .textSecondary,
                                                     ),
                                                     const SizedBox(width: 5),
                                                     Text(
@@ -688,7 +682,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                         color: _isCopied
                                                             ? AppColors.success
                                                             : AppColors
-                                                                  .textSecondary,
+                                                                .textSecondary,
                                                       ),
                                                     ),
                                                   ],
@@ -857,9 +851,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Material(
-        color: isDestructive
-            ? const Color(0x14FF3B30)
-            : const Color(0x66F9F9FB),
+        color:
+            isDestructive ? const Color(0x14FF3B30) : const Color(0x66F9F9FB),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(

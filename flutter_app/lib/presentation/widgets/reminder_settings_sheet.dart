@@ -162,10 +162,8 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
                 ],
               ),
               const SizedBox(height: 18),
-
               if (_permissionGranted == false && _settings.enabled)
                 _permissionBanner(),
-
               _card(
                 children: [
                   _switchRow(
@@ -196,7 +194,6 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 22),
               const Text(
                 'COMING UP',
@@ -223,7 +220,6 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
                     ],
                   ],
                 ),
-
               const SizedBox(height: 18),
               const Text(
                 'Tip: use “Mark Watched” or “In 1 Week” right on the notification — no need to open the app.',
@@ -400,8 +396,8 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
         isDigest
             ? LucideIcons.sun
             : (reminder.snoozed
-                  ? LucideIcons.alarmClock
-                  : LucideIcons.sparkles),
+                ? LucideIcons.alarmClock
+                : LucideIcons.sparkles),
         true,
       ),
       title: Text(

@@ -535,8 +535,9 @@ class NotificationService {
     final payload = decodePayload(response.payload);
     final kind = payload['kind'] as String?;
     final itemId = payload['itemId'] as String?;
-    if (kind == ReminderKind.digest.name)
+    if (kind == ReminderKind.digest.name) {
       return const NotificationIntent.openDigest();
+    }
     if (itemId != null) return NotificationIntent.openItem(itemId);
     return null;
   }

@@ -392,8 +392,9 @@ class SerendipityPlanner {
 
     picks.sort((a, b) {
       if (a.snoozed != b.snoozed) return a.snoozed ? -1 : 1;
-      if (a.item.isTopMind != b.item.isTopMind)
+      if (a.item.isTopMind != b.item.isTopMind) {
         return a.item.isTopMind ? -1 : 1;
+      }
       final byDue = a.dueSince.compareTo(b.dueSince); // longest-waiting first
       if (byDue != 0) return byDue;
       return a.item.createdAt.compareTo(b.item.createdAt);

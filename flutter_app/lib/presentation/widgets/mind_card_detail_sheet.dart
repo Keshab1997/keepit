@@ -618,10 +618,11 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                 Future.delayed(
                                                   const Duration(seconds: 2),
                                                   () {
-                                                    if (mounted)
+                                                    if (mounted) {
                                                       setState(
                                                         () => _isCopied = false,
                                                       );
+                                                    }
                                                   },
                                                 );
                                               },

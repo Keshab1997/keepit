@@ -43,7 +43,7 @@ class _BannerAdSlotState extends State<BannerAdSlot> {
         request: AdService.instance.request,
         listener: BannerAdListener(
           onAdLoaded: (ad) {
-            if (mounted) setState(() => _ad = ad);
+            if (mounted) setState(() => _ad = ad as BannerAd);
           },
           onAdFailedToLoad: (ad, error) => ad.dispose(),
         ),

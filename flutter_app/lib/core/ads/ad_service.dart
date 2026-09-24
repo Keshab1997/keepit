@@ -45,7 +45,7 @@ class AdService {
 
   /// Non-personalized unless explicitly enabled in [AdConfig].
   AdRequest get request =>
-      AdRequest(nonPersonalizedAds: !AdConfig.personalizedAds);
+      const AdRequest(nonPersonalizedAds: !AdConfig.personalizedAds);
 
   /// Call once during startup. [prefs] (the Hive meta box) persists the
   /// frequency counters across launches; pass `null` for memory-only caps.
@@ -94,7 +94,7 @@ class AdService {
     InterstitialAd.load(
       adUnitId: AdConfig.interstitialUnitId,
       request: request,
-      adLoadCallback: AdLoadCallback<InterstitialAd>(
+      adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitial = ad;
           _loadingInterstitial = false;

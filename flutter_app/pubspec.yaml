@@ -38,7 +38,7 @@ dependencies:
   intl: ^0.19.0
 
   # Monetization (ads)
-  google_mobile_ads: ^5.3.1
+  google_mobile_ads: ^9.1.0
 
   # Firebase Sync & Push Notifications
   firebase_core: ^4.15.0

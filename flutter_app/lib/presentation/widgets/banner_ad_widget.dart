@@ -35,7 +35,7 @@ class _BannerAdSlotState extends State<BannerAdSlot> {
     try {
       final width = MediaQuery.of(context).size.width.truncate();
       final adaptive =
-          await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
+          await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
       final AdSize size = adaptive ?? AdSize.banner;
       final ad = BannerAd(
         size: size,

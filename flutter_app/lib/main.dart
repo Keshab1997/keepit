@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+
 import 'core/ads/ad_service.dart';
 import 'core/cloud/firebase_bootstrap.dart';
 import 'core/theme/app_colors.dart';
@@ -43,9 +44,7 @@ void main() async {
 
   runApp(
     ProviderScope(
-      overrides: [
-        localDataSourceProvider.overrideWithValue(localDataSource),
-      ],
+      overrides: [localDataSourceProvider.overrideWithValue(localDataSource)],
       child: const KeepItApp(),
     ),
   );
@@ -72,7 +71,8 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
   /// Very first launch shows the onboarding; the flag lives in the Hive meta
   /// box so it never appears again (unless local data is wiped).
   Future<void> _checkFirstRun() async {
-    final seen = ref
+    final seen =
+        ref
             .read(localDataSourceProvider)
             .getMeta<bool>(LocalMindDataSource.onboardingSeenKey) ??
         false;
@@ -82,7 +82,9 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
 
   void _initShareIntentListener() {
     // Listen to incoming shares while app is in memory
-    ReceiveSharingIntent.instance.getMediaStream().listen((List<SharedMediaFile> value) {
+    ReceiveSharingIntent.instance.getMediaStream().listen((
+      List<SharedMediaFile> value,
+    ) {
       if (value.isNotEmpty) {
         final path = value.first.path;
         _handleIncomingShare(path);
@@ -90,7 +92,9 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
     });
 
     // Handle incoming share when app is opened from dead state
-    ReceiveSharingIntent.instance.getInitialMedia().then((List<SharedMediaFile> value) {
+    ReceiveSharingIntent.instance.getInitialMedia().then((
+      List<SharedMediaFile> value,
+    ) {
       if (value.isNotEmpty) {
         final path = value.first.path;
         _handleIncomingShare(path);
@@ -125,8 +129,8 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
           home: showOnboarding == null
               ? const _BrandSplash()
               : showOnboarding
-                  ? const OnboardingScreen()
-                  : const HomeScreen(),
+              ? const OnboardingScreen()
+              : const HomeScreen(),
         ),
       ),
     );
@@ -150,7 +154,11 @@ class _BrandSplash extends StatelessWidget {
               height: 84,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFF8A65), Color(0xFFFF5B37), Color(0xFFE03C1C)],
+                  colors: [
+                    Color(0xFFFF8A65),
+                    Color(0xFFFF5B37),
+                    Color(0xFFE03C1C),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),

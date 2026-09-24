@@ -138,8 +138,9 @@ void main() {
     expect(find.text('Serendipity'), findsOneWidget);
   });
 
-  testWidgets('Get started on the last page also completes onboarding',
-      (tester) async {
+  testWidgets('Get started on the last page also completes onboarding', (
+    tester,
+  ) async {
     await pumpOnboarding(tester);
 
     for (var i = 0; i < 3; i++) {

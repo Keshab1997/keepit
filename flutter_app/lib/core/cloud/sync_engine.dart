@@ -59,8 +59,10 @@ class SyncEngine {
 
   Future<SyncReport> sync(String uid) async {
     final cursor = local.getMeta<int>(cursorKey(uid)) ?? 0;
-    final remoteChanges =
-        await remote.fetchChanges(uid, sinceServerMillis: cursor);
+    final remoteChanges = await remote.fetchChanges(
+      uid,
+      sinceServerMillis: cursor,
+    );
 
     var pulled = 0;
     var deletedLocally = 0;
@@ -128,11 +130,13 @@ class SyncEngine {
       await remote.push(
         uid,
         upserts: unsynced
-            .map((i) => RemoteRecord(
-                  id: i.id,
-                  data: i.toMap()..remove('isSynced'),
-                  updatedAtMs: _ms(i.updatedAt),
-                ))
+            .map(
+              (i) => RemoteRecord(
+                id: i.id,
+                data: i.toMap()..remove('isSynced'),
+                updatedAtMs: _ms(i.updatedAt),
+              ),
+            )
             .toList(),
         deletions: pendingDeletes,
       );
@@ -149,7 +153,8 @@ class SyncEngine {
       await local.clearTombstones(pendingDeletes.keys);
       // Demo tombstones never need pushing.
       await local.clearTombstones(
-          local.getTombstones().keys.where(demoItemIds.contains));
+        local.getTombstones().keys.where(demoItemIds.contains),
+      );
     }
 
     // Our own pushes will come back on the next pull (serverUpdatedAt > cursor);

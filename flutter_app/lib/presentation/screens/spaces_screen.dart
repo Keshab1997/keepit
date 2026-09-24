@@ -1,8 +1,10 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/mind_feed_controller.dart';
@@ -72,13 +74,18 @@ class SpaceItemScreen extends ConsumerWidget {
                   const SizedBox(height: 6),
                   const Text(
                     "Items matching this space will automatically organize here.",
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
             )
           : MasonryGridView.count(
-              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
               crossAxisCount: 2,
               mainAxisSpacing: 14,
               crossAxisSpacing: 14,
@@ -117,8 +124,17 @@ class SpacesScreen extends ConsumerWidget {
         'subtitle': 'Machine learning, tools & gadgets',
         'icon': LucideIcons.cpu,
         'color': const Color(0xFF3B82F6),
-        'filter': (MindItem item) => item.tags.any((t) =>
-            ['ai', 'tech', 'coding', 'chatgpt', 'dev', 'tools', 'software'].contains(t.toLowerCase())),
+        'filter': (MindItem item) => item.tags.any(
+          (t) => [
+            'ai',
+            'tech',
+            'coding',
+            'chatgpt',
+            'dev',
+            'tools',
+            'software',
+          ].contains(t.toLowerCase()),
+        ),
       },
       {
         'id': 'reels_video',
@@ -129,7 +145,9 @@ class SpacesScreen extends ConsumerWidget {
         'filter': (MindItem item) =>
             item.type == ItemType.instagramReel ||
             item.type == ItemType.youtubeVideo ||
-            item.tags.any((t) => ['reel', 'shorts', 'video'].contains(t.toLowerCase())),
+            item.tags.any(
+              (t) => ['reel', 'shorts', 'video'].contains(t.toLowerCase()),
+            ),
       },
       {
         'id': 'design_art',
@@ -137,8 +155,17 @@ class SpacesScreen extends ConsumerWidget {
         'subtitle': 'UI/UX, visual inspiration & creative',
         'icon': LucideIcons.palette,
         'color': const Color(0xFF8B5CF6),
-        'filter': (MindItem item) => item.tags.any((t) =>
-            ['design', 'ui', 'ux', 'cinematic', 'photo', 'visual', 'art'].contains(t.toLowerCase())),
+        'filter': (MindItem item) => item.tags.any(
+          (t) => [
+            'design',
+            'ui',
+            'ux',
+            'cinematic',
+            'photo',
+            'visual',
+            'art',
+          ].contains(t.toLowerCase()),
+        ),
       },
       {
         'id': 'reading_articles',
@@ -148,7 +175,14 @@ class SpacesScreen extends ConsumerWidget {
         'color': const Color(0xFF10B981),
         'filter': (MindItem item) =>
             item.type == ItemType.webArticle ||
-            item.tags.any((t) => ['article', 'read', 'guide', 'tutorial'].contains(t.toLowerCase())),
+            item.tags.any(
+              (t) => [
+                'article',
+                'read',
+                'guide',
+                'tutorial',
+              ].contains(t.toLowerCase()),
+            ),
       },
       {
         'id': 'productivity_hacks',
@@ -156,8 +190,16 @@ class SpacesScreen extends ConsumerWidget {
         'subtitle': 'Hacks, habits & useful contacts',
         'icon': LucideIcons.zap,
         'color': const Color(0xFFF59E0B),
-        'filter': (MindItem item) => item.tags.any((t) =>
-            ['productivity', 'useful', 'contacts', 'hack', 'mindset', 'habits'].contains(t.toLowerCase())),
+        'filter': (MindItem item) => item.tags.any(
+          (t) => [
+            'productivity',
+            'useful',
+            'contacts',
+            'hack',
+            'mindset',
+            'habits',
+          ].contains(t.toLowerCase()),
+        ),
       },
     ];
 
@@ -166,7 +208,11 @@ class SpacesScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text(
           'Spaces',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 24, letterSpacing: -0.5),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 24,
+            letterSpacing: -0.5,
+          ),
         ),
       ),
       body: ListView.separated(
@@ -205,7 +251,10 @@ class SpacesScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xF4FFFFFF),
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.2),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      width: 1.2,
+                    ),
                     boxShadow: const [
                       BoxShadow(
                         color: Color(0x0A000000),
@@ -222,7 +271,10 @@ class SpacesScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.25),
+                            width: 1,
+                          ),
                         ),
                         child: Icon(icon, color: color, size: 24),
                       ),
@@ -246,7 +298,10 @@ class SpacesScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: color.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(8),
@@ -275,7 +330,11 @@ class SpacesScreen extends ConsumerWidget {
                         ),
                       ),
 
-                      const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.textMuted),
+                      const Icon(
+                        LucideIcons.chevronRight,
+                        size: 18,
+                        color: AppColors.textMuted,
+                      ),
                     ],
                   ),
                 ),

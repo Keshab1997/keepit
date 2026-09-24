@@ -27,7 +27,12 @@ class ReminderSettings {
     this.weeklyDigest = true,
   });
 
-  ReminderSettings copyWith({bool? enabled, int? hour, int? minute, bool? weeklyDigest}) {
+  ReminderSettings copyWith({
+    bool? enabled,
+    int? hour,
+    int? minute,
+    bool? weeklyDigest,
+  }) {
     return ReminderSettings(
       enabled: enabled ?? this.enabled,
       hour: hour ?? this.hour,
@@ -37,11 +42,11 @@ class ReminderSettings {
   }
 
   Map<String, dynamic> toJson() => {
-        'enabled': enabled,
-        'hour': hour,
-        'minute': minute,
-        'weeklyDigest': weeklyDigest,
-      };
+    'enabled': enabled,
+    'hour': hour,
+    'minute': minute,
+    'weeklyDigest': weeklyDigest,
+  };
 
   factory ReminderSettings.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const ReminderSettings();
@@ -97,23 +102,23 @@ class PlannedReminder {
   /// Compact payload delivered back to the app when the notification (or one
   /// of its action buttons) is tapped.
   String get payload => jsonEncode({
-        'kind': kind.name,
-        if (itemId != null) 'itemId': itemId,
-        if (itemIds.isNotEmpty) 'itemIds': itemIds,
-      });
+    'kind': kind.name,
+    if (itemId != null) 'itemId': itemId,
+    if (itemIds.isNotEmpty) 'itemIds': itemIds,
+  });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'kind': kind.name,
-        'fireAt': fireAt.toIso8601String(),
-        'itemId': itemId,
-        'stage': stage,
-        'snoozed': snoozed,
-        'itemIds': itemIds,
-        'title': title,
-        'body': body,
-        'lines': lines,
-      };
+    'id': id,
+    'kind': kind.name,
+    'fireAt': fireAt.toIso8601String(),
+    'itemId': itemId,
+    'stage': stage,
+    'snoozed': snoozed,
+    'itemIds': itemIds,
+    'title': title,
+    'body': body,
+    'lines': lines,
+  };
 
   factory PlannedReminder.fromJson(Map<String, dynamic> json) {
     return PlannedReminder(
@@ -169,21 +174,27 @@ class SerendipityEngineState {
   }
 
   Map<String, dynamic> toJson() => {
-        'version': 1,
-        'settings': settings.toJson(),
-        'lastStage': lastStage,
-        'snoozes': snoozes.map((k, v) => MapEntry(k, v.toIso8601String())),
-        'plan': plan.map((p) => p.toJson()).toList(),
-      };
+    'version': 1,
+    'settings': settings.toJson(),
+    'lastStage': lastStage,
+    'snoozes': snoozes.map((k, v) => MapEntry(k, v.toIso8601String())),
+    'plan': plan.map((p) => p.toJson()).toList(),
+  };
 
   factory SerendipityEngineState.fromJson(Map<String, dynamic> json) {
     final rawStages = (json['lastStage'] as Map?) ?? const {};
     final rawSnoozes = (json['snoozes'] as Map?) ?? const {};
     final rawPlan = (json['plan'] as List?) ?? const [];
     return SerendipityEngineState(
-      settings: ReminderSettings.fromJson((json['settings'] as Map?)?.cast<String, dynamic>()),
-      lastStage: rawStages.map((k, v) => MapEntry(k as String, (v as num).toInt())),
-      snoozes: rawSnoozes.map((k, v) => MapEntry(k as String, DateTime.parse(v as String))),
+      settings: ReminderSettings.fromJson(
+        (json['settings'] as Map?)?.cast<String, dynamic>(),
+      ),
+      lastStage: rawStages.map(
+        (k, v) => MapEntry(k as String, (v as num).toInt()),
+      ),
+      snoozes: rawSnoozes.map(
+        (k, v) => MapEntry(k as String, DateTime.parse(v as String)),
+      ),
       plan: rawPlan
           .whereType<Map>()
           .map((e) => PlannedReminder.fromJson(e.cast<String, dynamic>()))
@@ -253,7 +264,11 @@ class SerendipityPlanner {
       snoozes.removeWhere((k, _) => !existingItemIds.contains(k));
     }
 
-    return state.copyWith(lastStage: lastStage, snoozes: snoozes, plan: stillPending);
+    return state.copyWith(
+      lastStage: lastStage,
+      snoozes: snoozes,
+      plan: stillPending,
+    );
   }
 
   /// Builds the reminder plan for the next [horizonDays] days.
@@ -290,7 +305,13 @@ class SerendipityPlanner {
 
       // Sunday Mind Digest (replaces that day's Spark).
       if (settings.weeklyDigest && day.weekday == DateTime.sunday) {
-        final fireAt = DateTime(day.year, day.month, day.day, digestHour, digestMinute);
+        final fireAt = DateTime(
+          day.year,
+          day.month,
+          day.day,
+          digestHour,
+          digestMinute,
+        );
         if (fireAt.isAfter(now)) {
           final digestItems = _pickDigestItems(candidates, fireAt);
           if (digestItems.isNotEmpty) {
@@ -300,7 +321,13 @@ class SerendipityPlanner {
         }
       }
 
-      final fireAt = DateTime(day.year, day.month, day.day, settings.hour, settings.minute);
+      final fireAt = DateTime(
+        day.year,
+        day.month,
+        day.day,
+        settings.hour,
+        settings.minute,
+      );
       if (!fireAt.isAfter(now)) continue;
 
       final pick = _pickSpark(candidates, lastStage, snoozes, fireAt);
@@ -347,7 +374,11 @@ class SerendipityPlanner {
       int? dueStage;
       DateTime? dueDate;
       for (var s = nextStage; s < stageDays.length; s++) {
-        final due = DateTime(created.year, created.month, created.day + stageDays[s]);
+        final due = DateTime(
+          created.year,
+          created.month,
+          created.day + stageDays[s],
+        );
         if (due.isAfter(fireDay)) break;
         dueStage = s;
         dueDate = due;
@@ -361,7 +392,8 @@ class SerendipityPlanner {
 
     picks.sort((a, b) {
       if (a.snoozed != b.snoozed) return a.snoozed ? -1 : 1;
-      if (a.item.isTopMind != b.item.isTopMind) return a.item.isTopMind ? -1 : 1;
+      if (a.item.isTopMind != b.item.isTopMind)
+        return a.item.isTopMind ? -1 : 1;
       final byDue = a.dueSince.compareTo(b.dueSince); // longest-waiting first
       if (byDue != 0) return byDue;
       return a.item.createdAt.compareTo(b.item.createdAt);
@@ -369,10 +401,15 @@ class SerendipityPlanner {
     return picks.first;
   }
 
-  static List<MindItem> _pickDigestItems(List<MindItem> candidates, DateTime fireAt) {
+  static List<MindItem> _pickDigestItems(
+    List<MindItem> candidates,
+    DateTime fireAt,
+  ) {
     // Anything saved at least a day before the digest qualifies.
     final eligible = candidates
-        .where((i) => !i.createdAt.isAfter(fireAt.subtract(const Duration(days: 1))))
+        .where(
+          (i) => !i.createdAt.isAfter(fireAt.subtract(const Duration(days: 1))),
+        )
         .toList();
     eligible.sort((a, b) {
       if (a.isTopMind != b.isTopMind) return a.isTopMind ? -1 : 1;
@@ -425,7 +462,11 @@ class SerendipityPlanner {
     );
   }
 
-  static PlannedReminder _buildDigest(DateTime day, DateTime fireAt, List<MindItem> items) {
+  static PlannedReminder _buildDigest(
+    DateTime day,
+    DateTime fireAt,
+    List<MindItem> items,
+  ) {
     final lines = items.map((i) => '• ${_truncate(i.title, 60)}').toList();
     final count = items.length;
     final body = count == 1
@@ -476,7 +517,14 @@ class SerendipityPlanner {
   static String _byline(MindItem item) {
     final author = item.authorName?.trim();
     if (author == null || author.isEmpty) return '';
-    const generic = {'youtube', 'instagram', 'keepit', 'keepit mind', 'web', 'unknown'};
+    const generic = {
+      'youtube',
+      'instagram',
+      'keepit',
+      'keepit mind',
+      'web',
+      'unknown',
+    };
     if (generic.contains(author.toLowerCase())) return '';
     return ' by $author';
   }
@@ -491,7 +539,8 @@ class SerendipityPlanner {
 
   /// Stable per-calendar-day number (UTC-based so DST never shifts it).
   static int _dayNumber(DateTime day) =>
-      DateTime.utc(day.year, day.month, day.day).millisecondsSinceEpoch ~/ Duration.millisecondsPerDay;
+      DateTime.utc(day.year, day.month, day.day).millisecondsSinceEpoch ~/
+      Duration.millisecondsPerDay;
 }
 
 class _SparkPick {

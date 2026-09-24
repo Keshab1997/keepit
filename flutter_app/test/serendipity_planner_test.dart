@@ -32,64 +32,102 @@ MindItem item(
 void main() {
   // Wednesday 24 Sep 2026, 09:00 local.
   final now = DateTime(2026, 9, 24, 9, 0);
-  const noDigest = SerendipityEngineState(settings: ReminderSettings(weeklyDigest: false));
+  const noDigest = SerendipityEngineState(
+    settings: ReminderSettings(weeklyDigest: false),
+  );
 
   group('SerendipityPlanner.plan', () {
-    test('first spark lands exactly 3 days after saving, at the chosen time', () {
-      final items = [item('a', created: DateTime(2026, 9, 23, 18, 0))];
-      final plan = SerendipityPlanner.plan(items: items, state: noDigest, now: now);
+    test(
+      'first spark lands exactly 3 days after saving, at the chosen time',
+      () {
+        final items = [item('a', created: DateTime(2026, 9, 23, 18, 0))];
+        final plan = SerendipityPlanner.plan(
+          items: items,
+          state: noDigest,
+          now: now,
+        );
 
-      final sparks = plan.where((p) => p.itemId == 'a').toList();
-      expect(sparks.first.fireAt, DateTime(2026, 9, 26, 20, 30));
-      expect(sparks.first.stage, 0);
-      expect(sparks.first.title, contains('Remember this reel'));
-      expect(sparks.first.body, contains('3 days ago'));
-    });
+        final sparks = plan.where((p) => p.itemId == 'a').toList();
+        expect(sparks.first.fireAt, DateTime(2026, 9, 26, 20, 30));
+        expect(sparks.first.stage, 0);
+        expect(sparks.first.title, contains('Remember this reel'));
+        expect(sparks.first.body, contains('3 days ago'));
+      },
+    );
 
     test('never schedules more than one notification per day', () {
       final items = List.generate(
         10,
-        (i) => item('i$i', created: DateTime(2026, 9, 1).add(Duration(hours: i))),
+        (i) =>
+            item('i$i', created: DateTime(2026, 9, 1).add(Duration(hours: i))),
       );
       final plan = SerendipityPlanner.plan(
         items: items,
         state: const SerendipityEngineState(),
         now: now,
       );
-      final days = plan.map((p) => DateTime(p.fireAt.year, p.fireAt.month, p.fireAt.day)).toList();
+      final days = plan
+          .map((p) => DateTime(p.fireAt.year, p.fireAt.month, p.fireAt.day))
+          .toList();
       expect(days.toSet().length, days.length);
       expect(plan.length, lessThanOrEqualTo(SerendipityPlanner.horizonDays));
     });
 
     test('skips watched items and returns nothing when disabled', () {
       final items = [item('w', created: DateTime(2026, 9, 1), watched: true)];
-      expect(SerendipityPlanner.plan(items: items, state: noDigest, now: now), isEmpty);
+      expect(
+        SerendipityPlanner.plan(items: items, state: noDigest, now: now),
+        isEmpty,
+      );
 
       final unwatched = [item('u', created: DateTime(2026, 9, 1))];
-      const disabled = SerendipityEngineState(settings: ReminderSettings(enabled: false));
-      expect(SerendipityPlanner.plan(items: unwatched, state: disabled, now: now), isEmpty);
+      const disabled = SerendipityEngineState(
+        settings: ReminderSettings(enabled: false),
+      );
+      expect(
+        SerendipityPlanner.plan(items: unwatched, state: disabled, now: now),
+        isEmpty,
+      );
     });
 
     test('does not schedule today if the reminder time has already passed', () {
       final late = DateTime(2026, 9, 24, 21, 0);
       final items = [item('a', created: DateTime(2026, 9, 1))];
-      final plan = SerendipityPlanner.plan(items: items, state: noDigest, now: late);
+      final plan = SerendipityPlanner.plan(
+        items: items,
+        state: noDigest,
+        now: late,
+      );
       expect(plan.first.fireAt.day, 25);
     });
 
-    test('overdue items jump to the latest due stage (no stale-stage spam)', () {
-      // Saved 50 days ago, never reminded: day-3 and day-14 are stale,
-      // day-45 is the latest due stage.
-      final items = [item('old', created: now.subtract(const Duration(days: 50)))];
-      final plan = SerendipityPlanner.plan(items: items, state: noDigest, now: now);
-      expect(plan, hasLength(1));
-      expect(plan.first.stage, 2);
-      expect(plan.first.title, contains('hidden gem'));
-    });
+    test(
+      'overdue items jump to the latest due stage (no stale-stage spam)',
+      () {
+        // Saved 50 days ago, never reminded: day-3 and day-14 are stale,
+        // day-45 is the latest due stage.
+        final items = [
+          item('old', created: now.subtract(const Duration(days: 50))),
+        ];
+        final plan = SerendipityPlanner.plan(
+          items: items,
+          state: noDigest,
+          now: now,
+        );
+        expect(plan, hasLength(1));
+        expect(plan.first.stage, 2);
+        expect(plan.first.title, contains('hidden gem'));
+      },
+    );
 
     test('an item progresses through stages 3 → 14 across the horizon', () {
       final items = [item('a', created: DateTime(2026, 9, 20))];
-      final plan = SerendipityPlanner.plan(items: items, state: noDigest, now: now, horizon: 30);
+      final plan = SerendipityPlanner.plan(
+        items: items,
+        state: noDigest,
+        now: now,
+        horizon: 30,
+      );
       expect(plan.map((p) => p.stage).toList(), [0, 1]);
       // Day-3 was due yesterday (23rd) → catches up tonight; day-14 on Oct 4.
       expect(plan[0].fireAt, DateTime(2026, 9, 24, 20, 30));
@@ -102,16 +140,25 @@ void main() {
         item('normal', created: created),
         item('top', created: created.add(const Duration(hours: 5)), top: true),
       ];
-      final plan = SerendipityPlanner.plan(items: items, state: noDigest, now: now);
+      final plan = SerendipityPlanner.plan(
+        items: items,
+        state: noDigest,
+        now: now,
+      );
       expect(plan.first.itemId, 'top');
       expect(plan[1].itemId, 'normal');
     });
 
     test('Sunday Mind Digest replaces the spark on Sundays at 10:00', () {
       final items = [
-        for (var i = 0; i < 5; i++) item('d$i', created: DateTime(2026, 9, 10 + i), title: 'Digest $i'),
+        for (var i = 0; i < 5; i++)
+          item('d$i', created: DateTime(2026, 9, 10 + i), title: 'Digest $i'),
       ];
-      final plan = SerendipityPlanner.plan(items: items, state: const SerendipityEngineState(), now: now);
+      final plan = SerendipityPlanner.plan(
+        items: items,
+        state: const SerendipityEngineState(),
+        now: now,
+      );
       final digests = plan.where((p) => p.kind == ReminderKind.digest).toList();
       expect(digests, isNotEmpty);
       final d = digests.first;
@@ -132,7 +179,11 @@ void main() {
         lastStage: {'snoozed': 1},
         snoozes: {'snoozed': DateTime(2026, 9, 28, 12, 0)},
       );
-      final plan = SerendipityPlanner.plan(items: items, state: state, now: now);
+      final plan = SerendipityPlanner.plan(
+        items: items,
+        state: state,
+        now: now,
+      );
       final snoozedPlans = plan.where((p) => p.itemId == 'snoozed').toList();
       expect(snoozedPlans, hasLength(1));
       expect(snoozedPlans.first.snoozed, isTrue);
@@ -142,18 +193,38 @@ void main() {
 
     test('uses stable per-day ids inside the planner id range', () {
       final items = [item('a', created: DateTime(2026, 9, 1))];
-      final p1 = SerendipityPlanner.plan(items: items, state: noDigest, now: now);
-      final p2 = SerendipityPlanner.plan(items: items, state: noDigest, now: now);
+      final p1 = SerendipityPlanner.plan(
+        items: items,
+        state: noDigest,
+        now: now,
+      );
+      final p2 = SerendipityPlanner.plan(
+        items: items,
+        state: noDigest,
+        now: now,
+      );
       expect(p1.map((p) => p.id), p2.map((p) => p.id));
       expect(p1.every((p) => SerendipityPlanner.isPlannedId(p.id)), isTrue);
-      expect(SerendipityPlanner.isPlannedId(SerendipityPlanner.testNotificationId), isFalse);
+      expect(
+        SerendipityPlanner.isPlannedId(SerendipityPlanner.testNotificationId),
+        isFalse,
+      );
     });
 
     test('drops generic author names from the copy', () {
       final items = [
-        item('yt', created: DateTime(2026, 9, 21), author: 'YouTube', type: ItemType.youtubeVideo),
+        item(
+          'yt',
+          created: DateTime(2026, 9, 21),
+          author: 'YouTube',
+          type: ItemType.youtubeVideo,
+        ),
       ];
-      final plan = SerendipityPlanner.plan(items: items, state: noDigest, now: now);
+      final plan = SerendipityPlanner.plan(
+        items: items,
+        state: noDigest,
+        now: now,
+      );
       expect(plan.first.body, isNot(contains('by YouTube')));
       expect(plan.first.title, contains('video'));
     });
@@ -180,7 +251,11 @@ void main() {
         body: '',
       );
       final state = SerendipityEngineState(plan: [past, future]);
-      final next = SerendipityPlanner.commitDelivered(state, now: now, existingItemIds: {'a', 'b'});
+      final next = SerendipityPlanner.commitDelivered(
+        state,
+        now: now,
+        existingItemIds: {'a', 'b'},
+      );
       expect(next.lastStage, {'a': 0});
       expect(next.plan.map((p) => p.id), [2]);
     });
@@ -202,7 +277,11 @@ void main() {
           ),
         ],
       );
-      final next = SerendipityPlanner.commitDelivered(state, now: now, existingItemIds: {'a'});
+      final next = SerendipityPlanner.commitDelivered(
+        state,
+        now: now,
+        existingItemIds: {'a'},
+      );
       expect(next.snoozes, isEmpty);
       expect(next.lastStage.containsKey('gone'), isFalse);
     });
@@ -211,7 +290,11 @@ void main() {
   group('State & payload serialisation', () {
     test('engine state round-trips through JSON', () {
       final state = SerendipityEngineState(
-        settings: const ReminderSettings(hour: 8, minute: 15, weeklyDigest: false),
+        settings: const ReminderSettings(
+          hour: 8,
+          minute: 15,
+          weeklyDigest: false,
+        ),
         lastStage: const {'a': 1},
         snoozes: {'b': DateTime(2026, 10, 1, 9)},
         plan: SerendipityPlanner.plan(
@@ -235,7 +318,8 @@ void main() {
     test('notification taps map to deep-link intents', () {
       final spark = NotificationService.intentFromResponse(
         NotificationResponse(
-          notificationResponseType: NotificationResponseType.selectedNotification,
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
           payload: jsonEncode({'kind': 'spark', 'itemId': 'abc'}),
         ),
       );
@@ -244,8 +328,12 @@ void main() {
 
       final digest = NotificationService.intentFromResponse(
         NotificationResponse(
-          notificationResponseType: NotificationResponseType.selectedNotification,
-          payload: jsonEncode({'kind': 'digest', 'itemIds': ['a', 'b']}),
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
+          payload: jsonEncode({
+            'kind': 'digest',
+            'itemIds': ['a', 'b'],
+          }),
         ),
       );
       expect(digest?.type, NotificationIntent.typeDigest);
@@ -253,7 +341,8 @@ void main() {
       // Legacy payload = raw item id.
       final legacy = NotificationService.intentFromResponse(
         const NotificationResponse(
-          notificationResponseType: NotificationResponseType.selectedNotification,
+          notificationResponseType:
+              NotificationResponseType.selectedNotification,
           payload: 'legacy-id',
         ),
       );
@@ -264,7 +353,8 @@ void main() {
       final payload = jsonEncode({'kind': 'spark', 'itemId': 'x'});
       final watched = NotificationService.recordFromResponse(
         NotificationResponse(
-          notificationResponseType: NotificationResponseType.selectedNotificationAction,
+          notificationResponseType:
+              NotificationResponseType.selectedNotificationAction,
           actionId: NotificationActions.markWatched,
           payload: payload,
         ),
@@ -275,7 +365,8 @@ void main() {
 
       final snooze = NotificationService.recordFromResponse(
         NotificationResponse(
-          notificationResponseType: NotificationResponseType.selectedNotificationAction,
+          notificationResponseType:
+              NotificationResponseType.selectedNotificationAction,
           actionId: NotificationActions.snoozeWeek,
           payload: payload,
         ),
@@ -286,7 +377,8 @@ void main() {
 
       final open = NotificationService.recordFromResponse(
         NotificationResponse(
-          notificationResponseType: NotificationResponseType.selectedNotificationAction,
+          notificationResponseType:
+              NotificationResponseType.selectedNotificationAction,
           actionId: NotificationActions.openItem,
           payload: payload,
         ),
@@ -298,19 +390,30 @@ void main() {
 
   group('SerendipityStore (file based)', () {
     late Directory dir;
-    setUp(() async => dir = await Directory.systemTemp.createTemp('keepit_store_'));
+    setUp(
+      () async => dir = await Directory.systemTemp.createTemp('keepit_store_'),
+    );
     tearDown(() async => dir.delete(recursive: true));
 
     test('persists state and drains the action queue exactly once', () async {
       final store = SerendipityStore(dir.path);
       expect((await store.loadState()).settings.enabled, isTrue);
 
-      await store.saveState(const SerendipityEngineState(settings: ReminderSettings(hour: 7)));
+      await store.saveState(
+        const SerendipityEngineState(settings: ReminderSettings(hour: 7)),
+      );
       expect((await SerendipityStore(dir.path).loadState()).settings.hour, 7);
 
-      await store.appendAction(NotificationActionRecord(type: 'watched', itemId: 'a', at: now));
       await store.appendAction(
-        NotificationActionRecord(type: 'snooze', itemId: 'b', until: now.add(const Duration(days: 7)), at: now),
+        NotificationActionRecord(type: 'watched', itemId: 'a', at: now),
+      );
+      await store.appendAction(
+        NotificationActionRecord(
+          type: 'snooze',
+          itemId: 'b',
+          until: now.add(const Duration(days: 7)),
+          at: now,
+        ),
       );
       final drained = await store.drainActions();
       expect(drained.map((a) => a.itemId), ['a', 'b']);
@@ -319,7 +422,8 @@ void main() {
     });
 
     test('survives a corrupt state file', () async {
-      await File('${dir.path}/${SerendipityStore.stateFileName}').writeAsString('{not json');
+      await File('${dir.path}/${SerendipityStore.stateFileName}')
+          .writeAsString('{not json');
       final state = await SerendipityStore(dir.path).loadState();
       expect(state.settings.enabled, isTrue);
     });

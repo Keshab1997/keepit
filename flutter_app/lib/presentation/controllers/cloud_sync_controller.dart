@@ -101,21 +101,24 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
     state = state.copyWith(autoSync: auto, pendingChanges: _pendingCount());
     if (!state.available) return;
 
-    _authSub = auth.authStateChanges().listen((user) {
-      final previous = state.user;
-      state = state.copyWith(
-        user: user,
-        clearUser: user == null,
-        lastSyncAt: user == null ? null : _lastSyncFor(user.uid),
-        clearLastSync: user == null,
-        status: user == null ? SyncStatus.idle : state.status,
-      );
-      if (user != null && previous?.uid != user.uid && state.autoSync) {
-        syncNow();
-      }
-    }, onError: (Object e) {
-      state = state.copyWith(status: SyncStatus.error, message: e.toString());
-    });
+    _authSub = auth.authStateChanges().listen(
+      (user) {
+        final previous = state.user;
+        state = state.copyWith(
+          user: user,
+          clearUser: user == null,
+          lastSyncAt: user == null ? null : _lastSyncFor(user.uid),
+          clearLastSync: user == null,
+          status: user == null ? SyncStatus.idle : state.status,
+        );
+        if (user != null && previous?.uid != user.uid && state.autoSync) {
+          syncNow();
+        }
+      },
+      onError: (Object e) {
+        state = state.copyWith(status: SyncStatus.error, message: e.toString());
+      },
+    );
   }
 
   DateTime? _lastSyncFor(String uid) {
@@ -177,10 +180,10 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
     _debounce?.cancel();
     state = state.copyWith(status: SyncStatus.syncing, clearMessage: true);
     try {
-      final report =
-          await SyncEngine(local: local, remote: remote).sync(user.uid).timeout(
-                const Duration(seconds: 45),
-              );
+      final report = await SyncEngine(
+        local: local,
+        remote: remote,
+      ).sync(user.uid).timeout(const Duration(seconds: 45));
       if (!mounted) return report;
       if (report.changedLocalData) await onLocalDataChanged();
       state = state.copyWith(
@@ -193,14 +196,17 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
     } on TimeoutException {
       if (mounted) {
         state = state.copyWith(
-            status: SyncStatus.error,
-            message: 'Sync timed out. Check your connection.');
+          status: SyncStatus.error,
+          message: 'Sync timed out. Check your connection.',
+        );
       }
     } catch (e) {
       debugPrint('KeepIt sync failed: $e');
       if (mounted) {
         state = state.copyWith(
-            status: SyncStatus.error, message: _friendlyError(e));
+          status: SyncStatus.error,
+          message: _friendlyError(e),
+        );
       }
     }
     return null;
@@ -317,12 +323,12 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
 
 final cloudSyncProvider =
     StateNotifierProvider<CloudSyncController, CloudSyncState>((ref) {
-  final controller = CloudSyncController(
-    auth: ref.watch(authServiceProvider),
-    remote: ref.watch(cloudSyncRemoteProvider),
-    local: ref.watch(localDataSourceProvider),
-    onLocalDataChanged: () =>
-        ref.read(mindFeedProvider.notifier).loadItems(seedDemo: false),
-  );
-  return controller;
-});
+      final controller = CloudSyncController(
+        auth: ref.watch(authServiceProvider),
+        remote: ref.watch(cloudSyncRemoteProvider),
+        local: ref.watch(localDataSourceProvider),
+        onLocalDataChanged: () =>
+            ref.read(mindFeedProvider.notifier).loadItems(seedDemo: false),
+      );
+      return controller;
+    });

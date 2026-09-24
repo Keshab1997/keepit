@@ -1,9 +1,11 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/mind_toast.dart';
 import '../../core/utils/external_link_launcher.dart';
@@ -26,7 +28,8 @@ class MindCardDetailSheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<MindCardDetailSheet> createState() => _MindCardDetailSheetState();
+  ConsumerState<MindCardDetailSheet> createState() =>
+      _MindCardDetailSheetState();
 }
 
 class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
@@ -34,13 +37,18 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final liveItem = ref.watch(mindFeedProvider).items.firstWhere(
+    final liveItem = ref
+        .watch(mindFeedProvider)
+        .items
+        .firstWhere(
           (element) => element.id == widget.item.id,
           orElse: () => widget.item,
         );
 
-    final formattedDate = DateFormat('MMM d, yyyy • h:mm a').format(liveItem.createdAt);
-    final hasDescription = liveItem.content != null && liveItem.content!.trim().isNotEmpty;
+    final formattedDate = DateFormat('MMM d, yyyy • h:mm a')
+        .format(liveItem.createdAt);
+    final hasDescription =
+        liveItem.content != null && liveItem.content!.trim().isNotEmpty;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.92,
@@ -54,8 +62,13 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
             child: Container(
               decoration: BoxDecoration(
                 color: const Color(0xF8FFFFFF),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.5),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(36),
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  width: 1.5,
+                ),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x26000000),
@@ -81,7 +94,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
 
                   // 2. Floating Action App Bar
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 8,
+                    ),
                     child: Row(
                       children: [
                         _buildCircleIconButton(
@@ -92,16 +108,26 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                         Expanded(
                           child: Center(
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xEBF1F3F6),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 0.8),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  width: 0.8,
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(_getSourceIcon(liveItem.type), size: 14, color: AppColors.primary),
+                                  Icon(
+                                    _getSourceIcon(liveItem.type),
+                                    size: 14,
+                                    color: AppColors.primary,
+                                  ),
                                   const SizedBox(width: 6),
                                   Flexible(
                                     child: Text(
@@ -123,7 +149,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                         const SizedBox(width: 10),
                         _buildCircleIconButton(
                           icon: LucideIcons.moreHorizontal,
-                          onPressed: () => _showActionsMenu(context, ref, liveItem),
+                          onPressed: () =>
+                              _showActionsMenu(context, ref, liveItem),
                         ),
                       ],
                     ),
@@ -165,20 +192,30 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                       width: double.infinity,
                                       height: 390,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => Container(
-                                        height: 260,
-                                        color: AppColors.tagBg,
-                                        child: const Center(
-                                          child: Icon(LucideIcons.image, size: 48, color: AppColors.textMuted),
-                                        ),
-                                      ),
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Container(
+                                                height: 260,
+                                                color: AppColors.tagBg,
+                                                child: const Center(
+                                                  child: Icon(
+                                                    LucideIcons.image,
+                                                    size: 48,
+                                                    color: AppColors.textMuted,
+                                                  ),
+                                                ),
+                                              ),
                                     )
                                   else
                                     Container(
                                       height: 220,
                                       color: AppColors.tagBg,
                                       child: const Center(
-                                        child: Icon(LucideIcons.link2, size: 48, color: AppColors.textMuted),
+                                        child: Icon(
+                                          LucideIcons.link2,
+                                          size: 48,
+                                          color: AppColors.textMuted,
+                                        ),
                                       ),
                                     ),
 
@@ -189,9 +226,13 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                           begin: Alignment.topCenter,
                                           end: Alignment.bottomCenter,
                                           colors: [
-                                            Colors.black.withValues(alpha: 0.15),
+                                            Colors.black.withValues(
+                                              alpha: 0.15,
+                                            ),
                                             Colors.transparent,
-                                            Colors.black.withValues(alpha: 0.65),
+                                            Colors.black.withValues(
+                                              alpha: 0.65,
+                                            ),
                                           ],
                                           stops: const [0.0, 0.45, 1.0],
                                         ),
@@ -201,14 +242,24 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
 
                                   ClipOval(
                                     child: BackdropFilter(
-                                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                                      filter: ImageFilter.blur(
+                                        sigmaX: 16,
+                                        sigmaY: 16,
+                                      ),
                                       child: Container(
                                         width: 72,
                                         height: 72,
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.35),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.35,
+                                          ),
                                           shape: BoxShape.circle,
-                                          border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 2),
+                                          border: Border.all(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.9,
+                                            ),
+                                            width: 2,
+                                          ),
                                           boxShadow: const [
                                             BoxShadow(
                                               color: Color(0x33000000),
@@ -230,18 +281,37 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(24),
                                       child: BackdropFilter(
-                                        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                                        filter: ImageFilter.blur(
+                                          sigmaX: 14,
+                                          sigmaY: 14,
+                                        ),
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 18,
+                                            vertical: 9,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.55),
-                                            borderRadius: BorderRadius.circular(24),
-                                            border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.0),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.55,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              24,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.4,
+                                              ),
+                                              width: 1.0,
+                                            ),
                                           ),
                                           child: const Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(LucideIcons.externalLink, color: Colors.white, size: 15),
+                                              Icon(
+                                                LucideIcons.externalLink,
+                                                color: Colors.white,
+                                                size: 15,
+                                              ),
                                               SizedBox(width: 8),
                                               Text(
                                                 "Tap to open in app",
@@ -283,7 +353,11 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                         // Timestamp & Pinned status
                         Row(
                           children: [
-                            const Icon(LucideIcons.clock, size: 13, color: AppColors.textMuted),
+                            const Icon(
+                              LucideIcons.clock,
+                              size: 13,
+                              color: AppColors.textMuted,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               formattedDate,
@@ -296,7 +370,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                             if (liveItem.isTopMind) ...[
                               const SizedBox(width: 10),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.primaryLight,
                                   borderRadius: BorderRadius.circular(8),
@@ -304,11 +381,19 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(LucideIcons.sparkles, size: 11, color: AppColors.primary),
+                                    Icon(
+                                      LucideIcons.sparkles,
+                                      size: 11,
+                                      color: AppColors.primary,
+                                    ),
                                     SizedBox(width: 4),
                                     Text(
                                       "Top of Mind",
-                                      style: TextStyle(color: AppColors.primary, fontSize: 10.5, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -327,11 +412,17 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 HapticFeedback.mediumImpact();
-                                ref.read(mindFeedProvider.notifier).toggleWatched(liveItem.id);
+                                ref
+                                    .read(mindFeedProvider.notifier)
+                                    .toggleWatched(liveItem.id);
                               },
                               icon: Icon(
-                                liveItem.isWatched ? LucideIcons.checkCheck : LucideIcons.eye,
-                                color: liveItem.isWatched ? AppColors.success : AppColors.primary,
+                                liveItem.isWatched
+                                    ? LucideIcons.checkCheck
+                                    : LucideIcons.eye,
+                                color: liveItem.isWatched
+                                    ? AppColors.success
+                                    : AppColors.primary,
                                 size: 20,
                               ),
                               label: Text(
@@ -341,7 +432,9 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
-                                  color: liveItem.isWatched ? AppColors.success : AppColors.primary,
+                                  color: liveItem.isWatched
+                                      ? AppColors.success
+                                      : AppColors.primary,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
@@ -380,7 +473,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.primaryLight,
                                 borderRadius: BorderRadius.circular(10),
@@ -402,11 +498,17 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                           runSpacing: 8,
                           children: liveItem.tags.map((tag) {
                             return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 13,
+                                vertical: 7,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xE8F1F3F6),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 0.8),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  width: 0.8,
+                                ),
                               ),
                               child: Text(
                                 '#$tag',
@@ -453,16 +555,25 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                   children: [
                                     // Header Strip of Description Card
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 12,
+                                      ),
                                       decoration: const BoxDecoration(
                                         color: Color(0x59F1F3F6),
-                                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(24),
+                                        ),
                                         border: Border(
-                                          bottom: BorderSide(color: Color(0x1AE5E7EB), width: 1.0),
+                                          bottom: BorderSide(
+                                            color: Color(0x1AE5E7EB),
+                                            width: 1.0,
+                                          ),
                                         ),
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Row(
                                             children: [
@@ -471,7 +582,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                 height: 28,
                                                 decoration: BoxDecoration(
                                                   color: AppColors.primaryLight,
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
                                                 ),
                                                 child: const Icon(
                                                   LucideIcons.fileText,
@@ -496,24 +608,52 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                           if (hasDescription)
                                             GestureDetector(
                                               onTap: () {
-                                                Clipboard.setData(ClipboardData(text: liveItem.content!));
+                                                Clipboard.setData(
+                                                  ClipboardData(
+                                                    text: liveItem.content!,
+                                                  ),
+                                                );
                                                 HapticFeedback.selectionClick();
-                                                setState(() => _isCopied = true);
-                                                MindToast.showSuccessToast(context, title: "Copied to clipboard!");
-                                                Future.delayed(const Duration(seconds: 2), () {
-                                                  if (mounted) setState(() => _isCopied = false);
-                                                });
+                                                setState(
+                                                  () => _isCopied = true,
+                                                );
+                                                MindToast.showSuccessToast(
+                                                  context,
+                                                  title: "Copied to clipboard!",
+                                                );
+                                                Future.delayed(
+                                                  const Duration(seconds: 2),
+                                                  () {
+                                                    if (mounted)
+                                                      setState(
+                                                        () => _isCopied = false,
+                                                      );
+                                                  },
+                                                );
                                               },
                                               child: AnimatedContainer(
-                                                duration: const Duration(milliseconds: 200),
-                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                duration: const Duration(
+                                                  milliseconds: 200,
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 5,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color: _isCopied ? const Color(0x1F10B981) : Colors.white,
-                                                  borderRadius: BorderRadius.circular(10),
+                                                  color: _isCopied
+                                                      ? const Color(0x1F10B981)
+                                                      : Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
                                                   border: Border.all(
                                                     color: _isCopied
-                                                        ? const Color(0x6610B981)
-                                                        : const Color(0x33E5E7EB),
+                                                        ? const Color(
+                                                            0x6610B981,
+                                                          )
+                                                        : const Color(
+                                                            0x33E5E7EB,
+                                                          ),
                                                     width: 1.0,
                                                   ),
                                                   boxShadow: const [
@@ -527,17 +667,28 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                 child: Row(
                                                   children: [
                                                     Icon(
-                                                      _isCopied ? LucideIcons.check : LucideIcons.copy,
+                                                      _isCopied
+                                                          ? LucideIcons.check
+                                                          : LucideIcons.copy,
                                                       size: 13,
-                                                      color: _isCopied ? AppColors.success : AppColors.textSecondary,
+                                                      color: _isCopied
+                                                          ? AppColors.success
+                                                          : AppColors
+                                                                .textSecondary,
                                                     ),
                                                     const SizedBox(width: 5),
                                                     Text(
-                                                      _isCopied ? "Copied" : "Copy",
+                                                      _isCopied
+                                                          ? "Copied"
+                                                          : "Copy",
                                                       style: TextStyle(
                                                         fontSize: 11.5,
-                                                        fontWeight: FontWeight.w700,
-                                                        color: _isCopied ? AppColors.success : AppColors.textSecondary,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: _isCopied
+                                                            ? AppColors.success
+                                                            : AppColors
+                                                                  .textSecondary,
                                                       ),
                                                     ),
                                                   ],
@@ -557,7 +708,9 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                             : "No caption found for this item. Tap the card preview above to view original post.",
                                         style: TextStyle(
                                           fontSize: 14,
-                                          color: hasDescription ? AppColors.textPrimary : AppColors.textMuted,
+                                          color: hasDescription
+                                              ? AppColors.textPrimary
+                                              : AppColors.textMuted,
                                           height: 1.6,
                                           fontWeight: FontWeight.w400,
                                           letterSpacing: -0.1,
@@ -582,7 +735,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
     );
   }
 
-  Widget _buildCircleIconButton({required IconData icon, required VoidCallback onPressed}) {
+  Widget _buildCircleIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(20),
@@ -592,7 +748,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
         decoration: BoxDecoration(
           color: const Color(0xEBF1F3F6),
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 0.8),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.8),
+            width: 0.8,
+          ),
         ),
         child: Icon(icon, size: 18, color: AppColors.textPrimary),
       ),
@@ -612,8 +771,13 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
                 color: const Color(0xF8FFFFFF),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.2),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  width: 1.2,
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -642,15 +806,22 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                       if (item.url != null) {
                         Clipboard.setData(ClipboardData(text: item.url!));
                         Navigator.pop(ctx);
-                        MindToast.showSuccessToast(context, title: "Link copied to clipboard!");
+                        MindToast.showSuccessToast(
+                          context,
+                          title: "Link copied to clipboard!",
+                        );
                       }
                     },
                   ),
                   _buildActionTile(
                     icon: LucideIcons.brain,
-                    title: item.isTopMind ? "Remove from Top of Mind" : "Pin to Top of Mind",
+                    title: item.isTopMind
+                        ? "Remove from Top of Mind"
+                        : "Pin to Top of Mind",
                     onTap: () {
-                      ref.read(mindFeedProvider.notifier).toggleTopMind(item.id);
+                      ref
+                          .read(mindFeedProvider.notifier)
+                          .toggleTopMind(item.id);
                       Navigator.pop(ctx);
                     },
                   ),
@@ -662,7 +833,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                       ref.read(mindFeedProvider.notifier).deleteItem(item.id);
                       Navigator.pop(ctx);
                       Navigator.pop(context);
-                      MindToast.showDeleteToast(context, title: "Deleted from mind");
+                      MindToast.showDeleteToast(
+                        context,
+                        title: "Deleted from mind",
+                      );
                     },
                   ),
                 ],
@@ -683,17 +857,24 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Material(
-        color: isDestructive ? const Color(0x14FF3B30) : const Color(0x66F9F9FB),
+        color: isDestructive
+            ? const Color(0x14FF3B30)
+            : const Color(0x66F9F9FB),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: isDestructive ? const Color(0x33FF3B30) : Colors.white.withValues(alpha: 0.6),
+            color: isDestructive
+                ? const Color(0x33FF3B30)
+                : Colors.white.withValues(alpha: 0.6),
             width: 0.8,
           ),
         ),
         clipBehavior: Clip.antiAlias,
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 3,
+          ),
           leading: Icon(
             icon,
             color: isDestructive ? AppColors.danger : AppColors.textPrimary,

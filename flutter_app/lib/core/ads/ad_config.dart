@@ -29,8 +29,7 @@ class AdConfig {
   static const String bannerUnitId = 'ca-app-pub-3940256099942544/6300978111';
   static const String interstitialUnitId =
       'ca-app-pub-3940256099942544/1033173712';
-  static const String rewardedUnitId =
-      'ca-app-pub-3940256099942544/5224354917';
+  static const String rewardedUnitId = 'ca-app-pub-3940256099942544/5224354917';
 
   // ---------------------------------------------------------------------------
   // Frequency caps (UX first)

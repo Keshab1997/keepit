@@ -26,11 +26,11 @@ class NotificationActionRecord {
   });
 
   Map<String, dynamic> toJson() => {
-        'type': type,
-        'itemId': itemId,
-        if (until != null) 'until': until!.toIso8601String(),
-        'at': at.toIso8601String(),
-      };
+    'type': type,
+    'itemId': itemId,
+    if (until != null) 'until': until!.toIso8601String(),
+    'at': at.toIso8601String(),
+  };
 
   static NotificationActionRecord? tryParse(String line) {
     try {
@@ -38,7 +38,9 @@ class NotificationActionRecord {
       return NotificationActionRecord(
         type: json['type'] as String,
         itemId: json['itemId'] as String,
-        until: json['until'] == null ? null : DateTime.parse(json['until'] as String),
+        until: json['until'] == null
+            ? null
+            : DateTime.parse(json['until'] as String),
         at: DateTime.parse(json['at'] as String),
       );
     } catch (_) {
@@ -78,8 +80,10 @@ class SerendipityStore {
     }
   }
 
-  File? get _stateFile => directoryPath == null ? null : File('$directoryPath/$stateFileName');
-  File? get _queueFile => directoryPath == null ? null : File('$directoryPath/$queueFileName');
+  File? get _stateFile =>
+      directoryPath == null ? null : File('$directoryPath/$stateFileName');
+  File? get _queueFile =>
+      directoryPath == null ? null : File('$directoryPath/$queueFileName');
 
   Future<SerendipityEngineState> loadState() async {
     final file = _stateFile;
@@ -88,7 +92,9 @@ class SerendipityStore {
       if (!await file.exists()) return const SerendipityEngineState();
       final raw = await file.readAsString();
       if (raw.trim().isEmpty) return const SerendipityEngineState();
-      return SerendipityEngineState.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return SerendipityEngineState.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
     } catch (_) {
       // Corrupt file: start fresh rather than crash the app.
       return const SerendipityEngineState();
@@ -132,7 +138,9 @@ class SerendipityStore {
 
     // Atomically move the queue aside so a concurrent append from the
     // background isolate lands in a fresh file instead of being lost.
-    final processing = File('${file.path}.${DateTime.now().microsecondsSinceEpoch}.processing');
+    final processing = File(
+      '${file.path}.${DateTime.now().microsecondsSinceEpoch}.processing',
+    );
     try {
       await file.rename(processing.path);
     } catch (_) {

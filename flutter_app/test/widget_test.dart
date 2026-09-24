@@ -59,8 +59,9 @@ void main() {
     }
   });
 
-  testWidgets('HomeScreen renders the bottom navigation tabs',
-      (WidgetTester tester) async {
+  testWidgets('HomeScreen renders the bottom navigation tabs', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [localDataSourceProvider.overrideWithValue(dataSource)],
@@ -94,7 +95,10 @@ void main() {
     await dataSource.saveItem(item);
     final items = await dataSource.getAllItems();
 
-    expect(items.any((i) => i.id == 'test-1' && i.title == 'Test note'), isTrue);
+    expect(
+      items.any((i) => i.id == 'test-1' && i.title == 'Test note'),
+      isTrue,
+    );
 
     await dataSource.deleteItem('test-1');
     final afterDelete = await dataSource.getAllItems();

@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class GlassContainer extends StatelessWidget {
@@ -18,7 +19,7 @@ class GlassContainer extends StatelessWidget {
     this.blur = 16.0,
     this.borderRadius = 20.0,
     this.backgroundColor = const Color(0xB3FFFFFF), // 70% opacity white frost
-    this.borderColor = const Color(0x66FFFFFF),     // Subtle glassy rim
+    this.borderColor = const Color(0x66FFFFFF), // Subtle glassy rim
     this.padding,
     this.margin,
     this.borderWidth = 1.0,
@@ -48,10 +49,7 @@ class GlassContainer extends StatelessWidget {
             decoration: BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(borderRadius),
-              border: Border.all(
-                color: borderColor,
-                width: borderWidth,
-              ),
+              border: Border.all(color: borderColor, width: borderWidth),
             ),
             child: child,
           ),
@@ -60,10 +58,7 @@ class GlassContainer extends StatelessWidget {
     );
 
     if (onTap != null) {
-      return GestureDetector(
-        onTap: onTap,
-        child: content,
-      );
+      return GestureDetector(onTap: onTap, child: content);
     }
     return content;
   }

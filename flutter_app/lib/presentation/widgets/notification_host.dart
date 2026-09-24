@@ -22,13 +22,18 @@ class NotificationHost extends ConsumerStatefulWidget {
   final Widget child;
   final GlobalKey<NavigatorState> navigatorKey;
 
-  const NotificationHost({super.key, required this.child, required this.navigatorKey});
+  const NotificationHost({
+    super.key,
+    required this.child,
+    required this.navigatorKey,
+  });
 
   @override
   ConsumerState<NotificationHost> createState() => _NotificationHostState();
 }
 
-class _NotificationHostState extends ConsumerState<NotificationHost> with WidgetsBindingObserver {
+class _NotificationHostState extends ConsumerState<NotificationHost>
+    with WidgetsBindingObserver {
   final NotificationService _service = NotificationService();
   StreamSubscription<NotificationIntent>? _intentSub;
   StreamSubscription<NotificationActionRecord>? _actionSub;
@@ -41,7 +46,9 @@ class _NotificationHostState extends ConsumerState<NotificationHost> with Widget
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _intentSub = _service.intents.listen(_handleIntent);
-    _actionSub = _service.foregroundActions.listen((a) => _applyActions([a], showToast: true));
+    _actionSub = _service.foregroundActions.listen(
+      (a) => _applyActions([a], showToast: true),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) => _boot());
   }
 
@@ -84,7 +91,10 @@ class _NotificationHostState extends ConsumerState<NotificationHost> with Widget
     if (actions.isNotEmpty) await _applyActions(actions, showToast: showToast);
   }
 
-  Future<void> _applyActions(List<NotificationActionRecord> actions, {required bool showToast}) async {
+  Future<void> _applyActions(
+    List<NotificationActionRecord> actions, {
+    required bool showToast,
+  }) async {
     final feed = ref.read(mindFeedProvider.notifier);
     var watched = 0;
     var snoozed = 0;
@@ -101,9 +111,17 @@ class _NotificationHostState extends ConsumerState<NotificationHost> with Widget
     final ctx = widget.navigatorKey.currentContext;
     if (!showToast || ctx == null || !ctx.mounted) return;
     if (watched > 0 && snoozed == 0) {
-      MindToast.showSuccessToast(ctx, title: watched == 1 ? 'Marked as watched!' : '$watched items marked watched');
+      MindToast.showSuccessToast(
+        ctx,
+        title: watched == 1
+            ? 'Marked as watched!'
+            : '$watched items marked watched',
+      );
     } else if (snoozed > 0 && watched == 0) {
-      MindToast.showSuccessToast(ctx, title: "Got it — we'll remind you in a week");
+      MindToast.showSuccessToast(
+        ctx,
+        title: "Got it — we'll remind you in a week",
+      );
     } else if (watched > 0 && snoozed > 0) {
       MindToast.showSuccessToast(ctx, title: 'Reminders updated');
     }
@@ -158,7 +176,10 @@ class _NotificationHostState extends ConsumerState<NotificationHost> with Widget
     if (ctx == null || !ctx.mounted) return;
 
     if (item == null) {
-      MindToast.showDeleteToast(ctx, title: 'That item is no longer in your mind');
+      MindToast.showDeleteToast(
+        ctx,
+        title: 'That item is no longer in your mind',
+      );
       return;
     }
 

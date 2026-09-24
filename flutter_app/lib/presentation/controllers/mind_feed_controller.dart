@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../domain/entities/mind_item.dart';
 import '../../data/datasources/local_mind_datasource.dart';
 import '../../core/ads/ad_service.dart';
@@ -38,12 +39,17 @@ class MindFeedState {
 
   List<MindItem> get filteredItems {
     return items.where((item) {
-      final matchesQuery = searchQuery.isEmpty ||
+      final matchesQuery =
+          searchQuery.isEmpty ||
           item.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
-          (item.content?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false) ||
-          item.tags.any((t) => t.toLowerCase().contains(searchQuery.toLowerCase()));
+          (item.content?.toLowerCase().contains(searchQuery.toLowerCase()) ??
+              false) ||
+          item.tags.any(
+            (t) => t.toLowerCase().contains(searchQuery.toLowerCase()),
+          );
 
-      final matchesTag = selectedTag == null ||
+      final matchesTag =
+          selectedTag == null ||
           selectedTag!.isEmpty ||
           selectedTag == 'all' ||
           item.tags.any((t) => t.toLowerCase() == selectedTag!.toLowerCase()) ||
@@ -54,11 +60,7 @@ class MindFeedState {
   }
 }
 
-enum SaveResult {
-  success,
-  duplicate,
-  empty,
-}
+enum SaveResult { success, duplicate, empty }
 
 class MindFeedController extends StateNotifier<MindFeedState> {
   final LocalMindDataSource _localDataSource;
@@ -84,7 +86,9 @@ class MindFeedController extends StateNotifier<MindFeedState> {
 
     var alreadySeeded = false;
     try {
-      alreadySeeded = _localDataSource.getMeta<bool>(LocalMindDataSource.demoSeededKey) ?? false;
+      alreadySeeded =
+          _localDataSource.getMeta<bool>(LocalMindDataSource.demoSeededKey) ??
+          false;
     } catch (_) {
       // Meta box unavailable — fall back to old behaviour.
     }
@@ -127,8 +131,10 @@ class MindFeedController extends StateNotifier<MindFeedState> {
 
     // Secondary duplicate check after metadata extraction
     if (newItem.url != null && newItem.url!.isNotEmpty) {
-      final secondaryDuplicate = state.items.any((item) =>
-          item.url != null && _areUrlsEquivalent(item.url!, newItem.url!));
+      final secondaryDuplicate = state.items.any(
+        (item) =>
+            item.url != null && _areUrlsEquivalent(item.url!, newItem.url!),
+      );
       if (secondaryDuplicate) {
         return SaveResult.duplicate;
       }
@@ -164,12 +170,15 @@ class MindFeedController extends StateNotifier<MindFeedState> {
       final parts = clean.split('?');
       final base = parts[0];
       final query = parts[1];
-      final cleanParams = query.split('&').where((param) {
-        return !param.startsWith('igsh=') &&
-            !param.startsWith('si=') &&
-            !param.startsWith('utm_') &&
-            !param.startsWith('fbclid=');
-      }).join('&');
+      final cleanParams = query
+          .split('&')
+          .where((param) {
+            return !param.startsWith('igsh=') &&
+                !param.startsWith('si=') &&
+                !param.startsWith('utm_') &&
+                !param.startsWith('fbclid=');
+          })
+          .join('&');
       clean = cleanParams.isNotEmpty ? '$base?$cleanParams' : base;
     }
     return clean;
@@ -239,7 +248,10 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   /// Sets or clears the active tag filter.
   /// If [tag] is null, empty, or 'all', or equals current tag -> resets to all items.
   void setSelectedTag(String? tag) {
-    if (tag == null || tag.isEmpty || tag.toLowerCase() == 'all' || tag.toLowerCase() == state.selectedTag?.toLowerCase()) {
+    if (tag == null ||
+        tag.isEmpty ||
+        tag.toLowerCase() == 'all' ||
+        tag.toLowerCase() == state.selectedTag?.toLowerCase()) {
       state = state.copyWith(clearTag: true);
     } else {
       state = state.copyWith(selectedTag: tag.toLowerCase(), clearTag: false);
@@ -272,7 +284,14 @@ class MindFeedController extends StateNotifier<MindFeedState> {
         thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
         authorName: 'TechStacker AI',
         type: ItemType.webArticle,
-        tags: ['build-tools', 'architecture', 'dev', 'coding', 'tech', 'article'],
+        tags: [
+          'build-tools',
+          'architecture',
+          'dev',
+          'coding',
+          'tech',
+          'article',
+        ],
         isWatched: true,
         dominantColorHex: '#4F46E5',
         createdAt: now.subtract(const Duration(days: 1)),
@@ -307,7 +326,8 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   }
 }
 
-final mindFeedProvider = StateNotifierProvider<MindFeedController, MindFeedState>((ref) {
-  final dataSource = ref.watch(localDataSourceProvider);
-  return MindFeedController(dataSource);
-});
+final mindFeedProvider =
+    StateNotifierProvider<MindFeedController, MindFeedState>((ref) {
+      final dataSource = ref.watch(localDataSourceProvider);
+      return MindFeedController(dataSource);
+    });

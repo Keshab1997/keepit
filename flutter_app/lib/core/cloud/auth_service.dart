@@ -12,15 +12,21 @@ class AppUser {
   final String? email;
   final String? photoUrl;
 
-  const AppUser(
-      {required this.uid, this.displayName, this.email, this.photoUrl});
+  const AppUser({
+    required this.uid,
+    this.displayName,
+    this.email,
+    this.photoUrl,
+  });
 
   String get initials {
     final source = (displayName?.trim().isNotEmpty ?? false)
         ? displayName!.trim()
         : (email ?? '?');
-    final parts =
-        source.split(RegExp(r'[\s@._]+')).where((p) => p.isNotEmpty).toList();
+    final parts = source
+        .split(RegExp(r'[\s@._]+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
     return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
@@ -91,8 +97,8 @@ class UnavailableAuthService implements AuthService {
 /// Google Sign-In → Firebase Auth.
 class FirebaseAuthService implements AuthService {
   FirebaseAuthService({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _google = googleSignIn ?? GoogleSignIn.instance;
+    : _auth = auth ?? FirebaseAuth.instance,
+      _google = googleSignIn ?? GoogleSignIn.instance;
 
   final FirebaseAuth _auth;
   final GoogleSignIn _google;
@@ -100,8 +106,9 @@ class FirebaseAuthService implements AuthService {
 
   /// Optional override: `--dart-define=GOOGLE_SERVER_CLIENT_ID=xxx.apps.googleusercontent.com`.
   /// Not needed on Android when google-services.json contains the web client.
-  static const String _serverClientId =
-      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+  static const String _serverClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+  );
 
   @override
   bool get isAvailable => true;
@@ -125,7 +132,8 @@ class FirebaseAuthService implements AuthService {
       final idToken = account.authentication.idToken;
       if (idToken == null) {
         throw const AuthFailure(
-            'Google did not return an ID token. Check the Firebase SHA-1 setup.');
+          'Google did not return an ID token. Check the Firebase SHA-1 setup.',
+        );
       }
       return idToken;
     } on GoogleSignInException catch (e) {
@@ -140,7 +148,8 @@ class FirebaseAuthService implements AuthService {
         );
       }
       throw AuthFailure(
-          'Google Sign-In failed: ${e.description ?? e.code.name}');
+        'Google Sign-In failed: ${e.description ?? e.code.name}',
+      );
     }
   }
 
@@ -149,7 +158,8 @@ class FirebaseAuthService implements AuthService {
     final idToken = await _googleIdToken();
     try {
       final result = await _auth.signInWithCredential(
-          GoogleAuthProvider.credential(idToken: idToken));
+        GoogleAuthProvider.credential(idToken: idToken),
+      );
       final user = _map(result.user);
       if (user == null) {
         throw const AuthFailure('Sign-in failed. Please try again.');
@@ -181,7 +191,8 @@ class FirebaseAuthService implements AuthService {
       if (e.code != 'requires-recent-login') throw AuthFailure(_friendly(e));
       final idToken = await _googleIdToken();
       await user.reauthenticateWithCredential(
-          GoogleAuthProvider.credential(idToken: idToken));
+        GoogleAuthProvider.credential(idToken: idToken),
+      );
       await user.delete();
     }
     try {

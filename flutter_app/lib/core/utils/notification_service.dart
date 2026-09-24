@@ -41,9 +41,14 @@ class NotificationActions {
 /// is not in the foreground. It only appends to the action queue file, which
 /// the main isolate drains the next time the app starts or resumes.
 @pragma('vm:entry-point')
-Future<void> keepItNotificationBackgroundHandler(NotificationResponse response) async {
+Future<void> keepItNotificationBackgroundHandler(
+  NotificationResponse response,
+) async {
   WidgetsFlutterBinding.ensureInitialized();
-  final record = NotificationService.recordFromResponse(response, DateTime.now());
+  final record = NotificationService.recordFromResponse(
+    response,
+    DateTime.now(),
+  );
   if (record == null) return;
   final store = await SerendipityStore.open();
   await store.appendAction(record);
@@ -69,10 +74,13 @@ class NotificationService {
       'Resurfaces forgotten reels, articles, and bookmarks at spaced intervals.';
   static const String _digestChannelId = 'keepit_digest_channel';
   static const String _digestChannelName = 'Sunday Mind Digest';
-  static const String _digestChannelDesc = 'A weekly round-up of unwatched items in your mind.';
+  static const String _digestChannelDesc =
+      'A weekly round-up of unwatched items in your mind.';
 
-  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
-  final StreamController<NotificationIntent> _intents = StreamController<NotificationIntent>.broadcast();
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
+  final StreamController<NotificationIntent> _intents =
+      StreamController<NotificationIntent>.broadcast();
   final StreamController<NotificationActionRecord> _foregroundActions =
       StreamController<NotificationActionRecord>.broadcast();
 
@@ -87,7 +95,8 @@ class NotificationService {
   Stream<NotificationIntent> get intents => _intents.stream;
 
   /// Emits "Mark Watched" / "Snooze" actions tapped while the app is running.
-  Stream<NotificationActionRecord> get foregroundActions => _foregroundActions.stream;
+  Stream<NotificationActionRecord> get foregroundActions =>
+      _foregroundActions.stream;
 
   ReminderSettings get settings => _state.settings;
   List<PlannedReminder> get upcoming => List.unmodifiable(_state.plan);
@@ -107,7 +116,8 @@ class NotificationService {
     _store = store ?? await SerendipityStore.open();
     _state = await _store.loadState();
 
-    final supported = !kIsWeb &&
+    final supported =
+        !kIsWeb &&
         (defaultTargetPlatform == TargetPlatform.android ||
             defaultTargetPlatform == TargetPlatform.iOS ||
             defaultTargetPlatform == TargetPlatform.macOS);
@@ -124,8 +134,14 @@ class NotificationService {
           DarwinNotificationCategory(
             NotificationActions.sparkCategory,
             actions: [
-              DarwinNotificationAction.plain(NotificationActions.markWatched, '✅ Mark Watched'),
-              DarwinNotificationAction.plain(NotificationActions.snoozeWeek, '⏰ Remind in 1 Week'),
+              DarwinNotificationAction.plain(
+                NotificationActions.markWatched,
+                '✅ Mark Watched',
+              ),
+              DarwinNotificationAction.plain(
+                NotificationActions.snoozeWeek,
+                '⏰ Remind in 1 Week',
+              ),
               DarwinNotificationAction.plain(
                 NotificationActions.openItem,
                 'Open',
@@ -138,17 +154,22 @@ class NotificationService {
 
       await _plugin.initialize(
         InitializationSettings(
-          android: const AndroidInitializationSettings('@drawable/ic_stat_keepit'),
+          android: const AndroidInitializationSettings(
+            '@drawable/ic_stat_keepit',
+          ),
           iOS: darwinSettings,
           macOS: darwinSettings,
         ),
         onDidReceiveNotificationResponse: _onForegroundResponse,
-        onDidReceiveBackgroundNotificationResponse: keepItNotificationBackgroundHandler,
+        onDidReceiveBackgroundNotificationResponse:
+            keepItNotificationBackgroundHandler,
       );
       _pluginReady = true;
 
       final launch = await _plugin.getNotificationAppLaunchDetails();
-      if (launch != null && launch.didNotificationLaunchApp && launch.notificationResponse != null) {
+      if (launch != null &&
+          launch.didNotificationLaunchApp &&
+          launch.notificationResponse != null) {
         final response = launch.notificationResponse!;
         final record = recordFromResponse(response, DateTime.now());
         if (record != null) {
@@ -172,17 +193,36 @@ class NotificationService {
   Future<bool> requestPermission() async {
     if (!_pluginReady) return false;
     try {
-      final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (android != null) {
         return await android.requestNotificationsPermission() ?? false;
       }
-      final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       if (ios != null) {
-        return await ios.requestPermissions(alert: true, badge: true, sound: true) ?? false;
+        return await ios.requestPermissions(
+              alert: true,
+              badge: true,
+              sound: true,
+            ) ??
+            false;
       }
-      final mac = _plugin.resolvePlatformSpecificImplementation<MacOSFlutterLocalNotificationsPlugin>();
+      final mac = _plugin
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >();
       if (mac != null) {
-        return await mac.requestPermissions(alert: true, badge: true, sound: true) ?? false;
+        return await mac.requestPermissions(
+              alert: true,
+              badge: true,
+              sound: true,
+            ) ??
+            false;
       }
     } catch (e) {
       debugPrint('KeepIt notification permission error: $e');
@@ -194,11 +234,20 @@ class NotificationService {
   Future<bool?> areNotificationsEnabled() async {
     if (!_pluginReady) return null;
     try {
-      final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (android != null) return await android.areNotificationsEnabled();
-      final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       if (ios != null) return (await ios.checkPermissions())?.isEnabled;
-      final mac = _plugin.resolvePlatformSpecificImplementation<MacOSFlutterLocalNotificationsPlugin>();
+      final mac = _plugin
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >();
       if (mac != null) return (await mac.checkPermissions())?.isEnabled;
     } catch (_) {}
     return null;
@@ -245,9 +294,15 @@ class NotificationService {
   }
 
   /// "Remind in 1 week" triggered from inside the app.
-  Future<void> snoozeItem(String itemId, List<MindItem> items, {Duration? duration}) {
+  Future<void> snoozeItem(
+    String itemId,
+    List<MindItem> items, {
+    Duration? duration,
+  }) {
     return _serialized(() async {
-      final until = DateTime.now().add(duration ?? SerendipityPlanner.snoozeDuration);
+      final until = DateTime.now().add(
+        duration ?? SerendipityPlanner.snoozeDuration,
+      );
       _state = _state.copyWith(snoozes: {..._state.snoozes, itemId: until});
       await _reschedule(items, DateTime.now());
     });
@@ -255,8 +310,16 @@ class NotificationService {
 
   Future<void> _reschedule(List<MindItem> items, DateTime now) async {
     final ids = items.map((i) => i.id).toSet();
-    _state = SerendipityPlanner.commitDelivered(_state, now: now, existingItemIds: ids);
-    final newPlan = SerendipityPlanner.plan(items: items, state: _state, now: now);
+    _state = SerendipityPlanner.commitDelivered(
+      _state,
+      now: now,
+      existingItemIds: ids,
+    );
+    final newPlan = SerendipityPlanner.plan(
+      items: items,
+      state: _state,
+      now: now,
+    );
     final byId = {for (final i in items) i.id: i};
 
     if (_pluginReady) {
@@ -280,14 +343,19 @@ class NotificationService {
     final ids = <int>{..._state.plan.map((p) => p.id)};
     try {
       final pending = await _plugin.pendingNotificationRequests();
-      ids.addAll(pending.map((p) => p.id).where(SerendipityPlanner.isPlannedId));
+      ids.addAll(
+        pending.map((p) => p.id).where(SerendipityPlanner.isPlannedId),
+      );
     } catch (_) {}
     for (final id in ids) {
       await _plugin.cancel(id);
     }
   }
 
-  Future<void> _schedule(PlannedReminder reminder, Map<String, MindItem> byId) async {
+  Future<void> _schedule(
+    PlannedReminder reminder,
+    Map<String, MindItem> byId,
+  ) async {
     // Convert the planned *local* wall-clock time into an absolute instant.
     // Using UTC avoids needing the device's IANA timezone name; the plan is
     // rebuilt on every launch/resume so DST changes self-correct.
@@ -302,7 +370,8 @@ class NotificationService {
         when,
         details,
         androidScheduleMode: mode,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
         payload: reminder.payload,
       );
     }
@@ -316,7 +385,10 @@ class NotificationService {
     }
   }
 
-  NotificationDetails _detailsFor(PlannedReminder reminder, Map<String, MindItem> byId) {
+  NotificationDetails _detailsFor(
+    PlannedReminder reminder,
+    Map<String, MindItem> byId,
+  ) {
     if (reminder.kind == ReminderKind.digest) {
       final android = AndroidNotificationDetails(
         _digestChannelId,
@@ -335,7 +407,9 @@ class NotificationService {
       return NotificationDetails(
         android: android,
         iOS: const DarwinNotificationDetails(threadIdentifier: 'keepit_digest'),
-        macOS: const DarwinNotificationDetails(threadIdentifier: 'keepit_digest'),
+        macOS: const DarwinNotificationDetails(
+          threadIdentifier: 'keepit_digest',
+        ),
       );
     }
 
@@ -351,12 +425,24 @@ class NotificationService {
       styleInformation: BigTextStyleInformation(
         reminder.body,
         contentTitle: reminder.title,
-        summaryText: item == null ? null : 'Serendipity • ${SerendipityPlanner.nounFor(item.type)}',
+        summaryText: item == null
+            ? null
+            : 'Serendipity • ${SerendipityPlanner.nounFor(item.type)}',
       ),
       actions: const [
-        AndroidNotificationAction(NotificationActions.markWatched, '✅ Mark Watched'),
-        AndroidNotificationAction(NotificationActions.snoozeWeek, '⏰ In 1 Week'),
-        AndroidNotificationAction(NotificationActions.openItem, 'Open', showsUserInterface: true),
+        AndroidNotificationAction(
+          NotificationActions.markWatched,
+          '✅ Mark Watched',
+        ),
+        AndroidNotificationAction(
+          NotificationActions.snoozeWeek,
+          '⏰ In 1 Week',
+        ),
+        AndroidNotificationAction(
+          NotificationActions.openItem,
+          'Open',
+          showsUserInterface: true,
+        ),
       ],
     );
     const darwin = DarwinNotificationDetails(
@@ -378,7 +464,8 @@ class NotificationService {
       fireAt: DateTime.now(),
       itemId: item.id,
       title: '🧠 Remember this ${SerendipityPlanner.nounFor(item.type)}?',
-      body: '"${item.title}" — you saved it ${SerendipityPlanner.ageLabel(item.createdAt, DateTime.now())}. '
+      body:
+          '"${item.title}" — you saved it ${SerendipityPlanner.ageLabel(item.createdAt, DateTime.now())}. '
           'Tap to revisit.',
     );
     try {
@@ -397,13 +484,14 @@ class NotificationService {
   }
 
   /// Backwards-compatible alias for the old API.
-  Future<void> showSerendipityNotification(MindItem item) => showTestNotification(item);
+  Future<void> showSerendipityNotification(MindItem item) =>
+      showTestNotification(item);
 
   Future<void> cancelAll() => _serialized(() async {
-        if (_pluginReady) await _cancelPlanned();
-        _state = _state.copyWith(plan: const []);
-        await _store.saveState(_state);
-      });
+    if (_pluginReady) await _cancelPlanned();
+    _state = _state.copyWith(plan: const []);
+    await _store.saveState(_state);
+  });
 
   // ---------------------------------------------------------------------------
   // Responses
@@ -412,9 +500,12 @@ class NotificationService {
   void _onForegroundResponse(NotificationResponse response) {
     final record = recordFromResponse(response, DateTime.now());
     if (record != null) {
-      if (record.type == NotificationActionRecord.snooze && record.until != null) {
+      if (record.type == NotificationActionRecord.snooze &&
+          record.until != null) {
         _serialized(() async {
-          _state = _state.copyWith(snoozes: {..._state.snoozes, record.itemId: record.until!});
+          _state = _state.copyWith(
+            snoozes: {..._state.snoozes, record.itemId: record.until!},
+          );
           await _store.saveState(_state);
         });
       }
@@ -427,15 +518,23 @@ class NotificationService {
 
   /// Maps an action-button response to a data change, or `null` if the
   /// response is a plain tap / "Open".
-  static NotificationActionRecord? recordFromResponse(NotificationResponse response, DateTime now) {
+  static NotificationActionRecord? recordFromResponse(
+    NotificationResponse response,
+    DateTime now,
+  ) {
     final actionId = response.actionId;
-    if (actionId != NotificationActions.markWatched && actionId != NotificationActions.snoozeWeek) {
+    if (actionId != NotificationActions.markWatched &&
+        actionId != NotificationActions.snoozeWeek) {
       return null;
     }
     final itemId = decodePayload(response.payload)['itemId'] as String?;
     if (itemId == null) return null;
     if (actionId == NotificationActions.markWatched) {
-      return NotificationActionRecord(type: NotificationActionRecord.watched, itemId: itemId, at: now);
+      return NotificationActionRecord(
+        type: NotificationActionRecord.watched,
+        itemId: itemId,
+        at: now,
+      );
     }
     return NotificationActionRecord(
       type: NotificationActionRecord.snooze,
@@ -449,7 +548,8 @@ class NotificationService {
     final payload = decodePayload(response.payload);
     final kind = payload['kind'] as String?;
     final itemId = payload['itemId'] as String?;
-    if (kind == ReminderKind.digest.name) return const NotificationIntent.openDigest();
+    if (kind == ReminderKind.digest.name)
+      return const NotificationIntent.openDigest();
     if (itemId != null) return NotificationIntent.openItem(itemId);
     return null;
   }

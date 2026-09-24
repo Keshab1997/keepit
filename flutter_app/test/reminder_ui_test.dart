@@ -42,7 +42,9 @@ void main() {
     } catch (_) {}
   });
 
-  testWidgets('Serendipity bell opens the reminder settings sheet', (tester) async {
+  testWidgets('Serendipity bell opens the reminder settings sheet', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);

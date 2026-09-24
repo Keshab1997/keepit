@@ -1,10 +1,15 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
 import 'app_colors.dart';
 
 class MindToast {
-  static void showDuplicateToast(BuildContext context, {String title = 'Already in your mind!'}) {
+  static void showDuplicateToast(
+    BuildContext context, {
+    String title = 'Already in your mind!',
+  }) {
     _showFloatingToast(
       context: context,
       icon: LucideIcons.bookmark,
@@ -16,7 +21,10 @@ class MindToast {
     );
   }
 
-  static void showSuccessToast(BuildContext context, {String title = 'Saved to KeepIt!'}) {
+  static void showSuccessToast(
+    BuildContext context, {
+    String title = 'Saved to KeepIt!',
+  }) {
     _showFloatingToast(
       context: context,
       icon: LucideIcons.sparkles,
@@ -28,7 +36,10 @@ class MindToast {
     );
   }
 
-  static void showDeleteToast(BuildContext context, {String title = 'Item removed'}) {
+  static void showDeleteToast(
+    BuildContext context, {
+    String title = 'Item removed',
+  }) {
     _showFloatingToast(
       context: context,
       icon: LucideIcons.trash2,
@@ -54,7 +65,8 @@ class MindToast {
     // Fallback to the navigator's overlay so toasts also work when called
     // with the Navigator's own context (e.g. navigatorKey.currentContext from
     // share-intent or notification handlers), which has no Overlay ancestor.
-    final overlay = Overlay.maybeOf(context) ?? Navigator.maybeOf(context)?.overlay;
+    final overlay =
+        Overlay.maybeOf(context) ?? Navigator.maybeOf(context)?.overlay;
     if (overlay == null) return;
 
     late OverlayEntry entry;
@@ -88,7 +100,10 @@ class MindToast {
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 13,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xF8FFFFFF),
                           borderRadius: BorderRadius.circular(22),
@@ -114,11 +129,7 @@ class MindToast {
                                 color: iconBgColor,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(
-                                icon,
-                                color: accentColor,
-                                size: 19,
-                              ),
+                              child: Icon(icon, color: accentColor, size: 19),
                             ),
                             const SizedBox(width: 13),
                             Expanded(

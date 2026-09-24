@@ -41,7 +41,10 @@ class ProfileScreen extends ConsumerWidget {
         title: const Text(
           'Profile',
           style: TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 24, letterSpacing: -0.5),
+            fontWeight: FontWeight.w800,
+            fontSize: 24,
+            letterSpacing: -0.5,
+          ),
         ),
       ),
       body: ListView(
@@ -55,90 +58,98 @@ class ProfileScreen extends ConsumerWidget {
           _CloudSyncCard(state: sync),
           const SizedBox(height: 22),
           const _SectionLabel('PREFERENCES'),
-          _Group(children: [
-            _Tile(
-              icon: LucideIcons.bellRing,
-              title: 'Serendipity reminders',
-              subtitle: NotificationService().settings.enabled
-                  ? 'On • daily at ${_fmtTime(context, NotificationService().settings.hour, NotificationService().settings.minute)}'
-                  : 'Off',
-              onTap: () => ReminderSettingsSheet.show(context),
-            ),
-          ]),
+          _Group(
+            children: [
+              _Tile(
+                icon: LucideIcons.bellRing,
+                title: 'Serendipity reminders',
+                subtitle: NotificationService().settings.enabled
+                    ? 'On • daily at ${_fmtTime(context, NotificationService().settings.hour, NotificationService().settings.minute)}'
+                    : 'Off',
+                onTap: () => ReminderSettingsSheet.show(context),
+              ),
+            ],
+          ),
           const SizedBox(height: 22),
           const _SectionLabel('YOUR DATA'),
-          _Group(children: [
-            _Tile(
-              icon: LucideIcons.download,
-              title: 'Export my data',
-              subtitle: 'Download all ${items.length} items as JSON',
-              onTap: () => _export(context, ref),
-            ),
-            if (!sync.signedIn)
+          _Group(
+            children: [
               _Tile(
-                icon: LucideIcons.trash2,
-                title: 'Delete all local data',
-                subtitle: 'Removes every item from this device',
-                destructive: true,
-                onTap: () => _confirmClearLocal(context, ref),
+                icon: LucideIcons.download,
+                title: 'Export my data',
+                subtitle: 'Download all ${items.length} items as JSON',
+                onTap: () => _export(context, ref),
               ),
-          ]),
+              if (!sync.signedIn)
+                _Tile(
+                  icon: LucideIcons.trash2,
+                  title: 'Delete all local data',
+                  subtitle: 'Removes every item from this device',
+                  destructive: true,
+                  onTap: () => _confirmClearLocal(context, ref),
+                ),
+            ],
+          ),
           const SizedBox(height: 22),
           const _SectionLabel('SUPPORT & LEGAL'),
-          _Group(children: [
-            _Tile(
-              icon: LucideIcons.star,
-              title: 'Rate KeepIt',
-              subtitle: 'Enjoying the app? Leave a review',
-              onTap: () => _open(context, AppConfig.playStoreUrl),
-            ),
-            _Tile(
-              icon: LucideIcons.heart,
-              title: 'Support KeepIt',
-              subtitle: 'Watch a short, optional ad — free for you',
-              onTap: () => _showRewardedAd(context),
-            ),
-            _Tile(
-              icon: LucideIcons.mail,
-              title: 'Contact support',
-              subtitle: AppConfig.supportEmail,
-              onTap: () => _emailSupport(context, ref),
-            ),
-            _Tile(
-              icon: LucideIcons.shield,
-              title: 'Privacy policy',
-              onTap: () => _open(context, AppConfig.privacyPolicyUrl),
-            ),
-            _Tile(
-              icon: LucideIcons.fileText,
-              title: 'Terms of service',
-              onTap: () => _open(context, AppConfig.termsUrl),
-            ),
-            _Tile(
-              icon: LucideIcons.scale,
-              title: 'Open-source licenses',
-              onTap: () => _showLicenses(context, ref),
-            ),
-          ]),
+          _Group(
+            children: [
+              _Tile(
+                icon: LucideIcons.star,
+                title: 'Rate KeepIt',
+                subtitle: 'Enjoying the app? Leave a review',
+                onTap: () => _open(context, AppConfig.playStoreUrl),
+              ),
+              _Tile(
+                icon: LucideIcons.heart,
+                title: 'Support KeepIt',
+                subtitle: 'Watch a short, optional ad — free for you',
+                onTap: () => _showRewardedAd(context),
+              ),
+              _Tile(
+                icon: LucideIcons.mail,
+                title: 'Contact support',
+                subtitle: AppConfig.supportEmail,
+                onTap: () => _emailSupport(context, ref),
+              ),
+              _Tile(
+                icon: LucideIcons.shield,
+                title: 'Privacy policy',
+                onTap: () => _open(context, AppConfig.privacyPolicyUrl),
+              ),
+              _Tile(
+                icon: LucideIcons.fileText,
+                title: 'Terms of service',
+                onTap: () => _open(context, AppConfig.termsUrl),
+              ),
+              _Tile(
+                icon: LucideIcons.scale,
+                title: 'Open-source licenses',
+                onTap: () => _showLicenses(context, ref),
+              ),
+            ],
+          ),
           if (sync.signedIn) ...[
             const SizedBox(height: 22),
             const _SectionLabel('ACCOUNT'),
-            _Group(children: [
-              _Tile(
-                icon: LucideIcons.logOut,
-                title: 'Sign out',
-                onTap: sync.busy ? null : () => _confirmSignOut(context, ref),
-              ),
-              _Tile(
-                icon: LucideIcons.userX,
-                title: 'Delete account',
-                subtitle: 'Permanently delete your account and cloud data',
-                destructive: true,
-                onTap: sync.busy
-                    ? null
-                    : () => _confirmDeleteAccount(context, ref),
-              ),
-            ]),
+            _Group(
+              children: [
+                _Tile(
+                  icon: LucideIcons.logOut,
+                  title: 'Sign out',
+                  onTap: sync.busy ? null : () => _confirmSignOut(context, ref),
+                ),
+                _Tile(
+                  icon: LucideIcons.userX,
+                  title: 'Delete account',
+                  subtitle: 'Permanently delete your account and cloud data',
+                  destructive: true,
+                  onTap: sync.busy
+                      ? null
+                      : () => _confirmDeleteAccount(context, ref),
+                ),
+              ],
+            ),
           ],
           const SizedBox(height: 28),
           const _VersionFooter(),
@@ -152,14 +163,17 @@ class ProfileScreen extends ConsumerWidget {
           .formatTimeOfDay(TimeOfDay(hour: h, minute: m));
 
   static Future<void> _open(BuildContext context, String url) async {
-    final ok =
-        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)
-            .catchError((_) => false);
+    final ok = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    ).catchError((_) => false);
     if (!ok && context.mounted) {
       await Clipboard.setData(ClipboardData(text: url));
       if (context.mounted) {
-        MindToast.showDuplicateToast(context,
-            title: 'Link copied to clipboard');
+        MindToast.showDuplicateToast(
+          context,
+          title: 'Link copied to clipboard',
+        );
       }
     }
   }
@@ -184,8 +198,9 @@ class ProfileScreen extends ConsumerWidget {
 
   static Future<void> _emailSupport(BuildContext context, WidgetRef ref) async {
     final info = ref.read(packageInfoProvider).valueOrNull;
-    final version =
-        info == null ? '' : ' v${info.version} (${info.buildNumber})';
+    final version = info == null
+        ? ''
+        : ' v${info.version} (${info.buildNumber})';
     final uri = Uri(
       scheme: 'mailto',
       path: AppConfig.supportEmail,
@@ -194,10 +209,13 @@ class ProfileScreen extends ConsumerWidget {
     final ok = await launchUrl(uri).catchError((_) => false);
     if (!ok && context.mounted) {
       await Clipboard.setData(
-          const ClipboardData(text: AppConfig.supportEmail));
+        const ClipboardData(text: AppConfig.supportEmail),
+      );
       if (context.mounted) {
-        MindToast.showDuplicateToast(context,
-            title: 'Email copied to clipboard');
+        MindToast.showDuplicateToast(
+          context,
+          title: 'Email copied to clipboard',
+        );
       }
     }
   }
@@ -222,19 +240,21 @@ class ProfileScreen extends ConsumerWidget {
     showLicensePage(
       context: context,
       applicationName: AppConfig.appName,
-      applicationVersion:
-          info == null ? null : '${info.version} (${info.buildNumber})',
+      applicationVersion: info == null
+          ? null
+          : '${info.version} (${info.buildNumber})',
       applicationLegalese: '© ${DateTime.now().year} Keshab Sarkar',
     );
   }
 
   static Future<void> _confirmClearLocal(
-      BuildContext context, WidgetRef ref) async {
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final ok = await _confirm(
       context,
       title: 'Delete all local data?',
-      message:
-          'Every saved item on this device will be permanently removed. This cannot be undone.',
+      message: 'Every saved item on this device will be permanently removed. This cannot be undone.',
       confirmLabel: 'Delete everything',
       destructive: true,
     );
@@ -246,12 +266,15 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   static Future<void> _confirmSignOut(
-      BuildContext context, WidgetRef ref) async {
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final choice = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
@@ -259,8 +282,10 @@ class ProfileScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Sign out?',
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+              const Text(
+                'Sign out?',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 6),
               const Text(
                 'Your items are safely stored in the cloud. What should happen to the copy on this phone?',
@@ -282,8 +307,11 @@ class ProfileScreen extends ConsumerWidget {
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: const Center(
-                    child: Text('Cancel',
-                        style: TextStyle(color: AppColors.textSecondary))),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ),
               ),
             ],
           ),
@@ -306,7 +334,9 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   static Future<void> _confirmDeleteAccount(
-      BuildContext context, WidgetRef ref) async {
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final ok = await _confirm(
       context,
       title: 'Delete your account?',
@@ -331,8 +361,10 @@ class ProfileScreen extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        MindToast.showDeleteToast(context,
-            title: 'Could not delete account. Try again.');
+        MindToast.showDeleteToast(
+          context,
+          title: 'Could not delete account. Try again.',
+        );
       }
     }
   }
@@ -380,7 +412,10 @@ class _AccountCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(26),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x33FF5B37), blurRadius: 24, offset: Offset(0, 10))
+            color: Color(0x33FF5B37),
+            blurRadius: 24,
+            offset: Offset(0, 10),
+          ),
         ],
       ),
       child: Row(
@@ -398,9 +433,10 @@ class _AccountCard extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800),
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -408,8 +444,9 @@ class _AccountCard extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.88),
-                      fontSize: 12.5),
+                    color: Colors.white.withValues(alpha: 0.88),
+                    fontSize: 12.5,
+                  ),
                 ),
               ],
             ),
@@ -427,11 +464,14 @@ class _AccountCard extends ConsumerWidget {
                 children: [
                   Icon(LucideIcons.cloud, size: 14, color: Colors.white),
                   SizedBox(width: 5),
-                  Text('Synced',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700)),
+                  Text(
+                    'Synced',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -459,8 +499,10 @@ class _SignInButton extends ConsumerWidget {
                 try {
                   await ref.read(cloudSyncProvider.notifier).signIn();
                   if (context.mounted) {
-                    MindToast.showSuccessToast(context,
-                        title: 'Signed in — syncing your mind');
+                    MindToast.showSuccessToast(
+                      context,
+                      title: 'Signed in — syncing your mind',
+                    );
                   }
                 } on AuthFailure catch (e) {
                   if (context.mounted && !e.cancelled) {
@@ -468,8 +510,10 @@ class _SignInButton extends ConsumerWidget {
                   }
                 } catch (_) {
                   if (context.mounted) {
-                    MindToast.showDeleteToast(context,
-                        title: 'Sign-in failed. Try again.');
+                    MindToast.showDeleteToast(
+                      context,
+                      title: 'Sign-in failed. Try again.',
+                    );
                   }
                 }
               },
@@ -480,16 +524,22 @@ class _SignInButton extends ConsumerWidget {
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColors.primary))
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                )
               : const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _GoogleG(size: 16),
                     SizedBox(width: 7),
-                    Text('Sign in',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary)),
+                    Text(
+                      'Sign in',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ],
                 ),
         ),
@@ -511,13 +561,18 @@ class _Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white.withValues(alpha: 0.22),
-        border:
-            Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.7),
+          width: 2,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: photo != null
-          ? Image.network(photo,
-              fit: BoxFit.cover, errorBuilder: (_, __, ___) => _fallback())
+          ? Image.network(
+              photo,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _fallback(),
+            )
           : _fallback(),
     );
   }
@@ -526,11 +581,14 @@ class _Avatar extends StatelessWidget {
     return Center(
       child: user == null
           ? const Icon(LucideIcons.user, color: Colors.white, size: 26)
-          : Text(user!.initials,
+          : Text(
+              user!.initials,
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800)),
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
     );
   }
 }
@@ -549,15 +607,18 @@ class _GoogleG extends StatelessWidget {
           Color(0xFF34A853),
           Color(0xFFFBBC05),
           Color(0xFFEA4335),
-          Color(0xFF4285F4)
+          Color(0xFF4285F4),
         ],
       ).createShader(rect),
-      child: Text('G',
-          style: TextStyle(
-              fontSize: size,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              height: 1)),
+      child: Text(
+        'G',
+        style: TextStyle(
+          fontSize: size,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          height: 1,
+        ),
+      ),
     );
   }
 }
@@ -566,33 +627,41 @@ class _StatsRow extends StatelessWidget {
   final int total;
   final int watched;
   final int pinned;
-  const _StatsRow(
-      {required this.total, required this.watched, required this.pinned});
+  const _StatsRow({
+    required this.total,
+    required this.watched,
+    required this.pinned,
+  });
 
   @override
   Widget build(BuildContext context) {
     Widget stat(String value, String label, IconData icon) => Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFEDEEF2)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEDEEF2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 17, color: AppColors.primary),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
-            child: Column(
-              children: [
-                Icon(icon, size: 17, color: AppColors.primary),
-                const SizedBox(height: 6),
-                Text(value,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w800)),
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 11.5, color: AppColors.textSecondary)),
-              ],
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11.5,
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
-        );
+          ],
+        ),
+      ),
+    );
     return Row(
       children: [
         stat('$total', 'Saved', LucideIcons.bookmark),
@@ -619,116 +688,137 @@ class _CloudSyncCard extends ConsumerWidget {
       return const _InfoCard(
         icon: LucideIcons.cloudOff,
         title: 'Cloud sync not set up yet',
-        message:
-            'KeepIt works fully offline. Cloud backup & multi-device sync will be available once this build is connected to Firebase.',
+        message: 'KeepIt works fully offline. Cloud backup & multi-device sync will be available once this build is connected to Firebase.',
       );
     }
     if (!state.signedIn) {
       return const _InfoCard(
         icon: LucideIcons.uploadCloud,
         title: 'Back up & sync your mind',
-        message:
-            'Sign in with Google to back up your saves and keep them in sync across devices. Your data stays private to your account.',
+        message: 'Sign in with Google to back up your saves and keep them in sync across devices. Your data stays private to your account.',
       );
     }
 
     final controller = ref.read(cloudSyncProvider.notifier);
     final syncing = state.status == SyncStatus.syncing;
-    final (IconData icon, Color color, String headline) =
-        switch (state.status) {
+    final (
+      IconData icon,
+      Color color,
+      String headline,
+    ) = switch (state.status) {
       SyncStatus.syncing => (
-          LucideIcons.refreshCw,
-          AppColors.primary,
-          'Syncing…'
-        ),
+        LucideIcons.refreshCw,
+        AppColors.primary,
+        'Syncing…',
+      ),
       SyncStatus.error => (
-          LucideIcons.alertCircle,
-          AppColors.danger,
-          'Sync problem'
-        ),
+        LucideIcons.alertCircle,
+        AppColors.danger,
+        'Sync problem',
+      ),
       _ => (LucideIcons.checkCircle2, AppColors.success, 'Up to date'),
     };
 
-    return _Group(children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(9),
-              decoration: BoxDecoration(
+    return _Group(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12)),
-              child: syncing
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: color))
-                  : Icon(icon, size: 18, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(headline,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: syncing
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: color,
+                        ),
+                      )
+                    : Icon(icon, size: 18, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      headline,
                       style: const TextStyle(
-                          fontSize: 14.5, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 2),
-                  Text(
-                    _subtitle(),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: state.status == SyncStatus.error
-                          ? AppColors.danger
-                          : AppColors.textSecondary,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      _subtitle(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: state.status == SyncStatus.error
+                            ? AppColors.danger
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            FilledButton.tonal(
-              onPressed: syncing
-                  ? null
-                  : () async {
-                      HapticFeedback.lightImpact();
-                      final report = await controller.syncNow();
-                      if (!context.mounted) return;
-                      if (report != null) {
-                        MindToast.showSuccessToast(context,
-                            title: report.summary);
-                      }
-                    },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryLight,
-                foregroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+              const SizedBox(width: 8),
+              FilledButton.tonal(
+                onPressed: syncing
+                    ? null
+                    : () async {
+                        HapticFeedback.lightImpact();
+                        final report = await controller.syncNow();
+                        if (!context.mounted) return;
+                        if (report != null) {
+                          MindToast.showSuccessToast(
+                            context,
+                            title: report.summary,
+                          );
+                        }
+                      },
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primaryLight,
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                ),
+                child: const Text(
+                  'Sync now',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
-              child: const Text('Sync now',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-      const Divider(
-          height: 1, indent: 14, endIndent: 14, color: Color(0xFFF0F1F4)),
-      SwitchListTile.adaptive(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-        value: state.autoSync,
-        activeTrackColor: AppColors.primary,
-        onChanged: controller.setAutoSync,
-        title: const Text('Auto sync',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-        subtitle: const Text(
-          'Sync automatically after changes and when you open the app',
-          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        const Divider(
+          height: 1,
+          indent: 14,
+          endIndent: 14,
+          color: Color(0xFFF0F1F4),
         ),
-      ),
-    ]);
+        SwitchListTile.adaptive(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+          value: state.autoSync,
+          activeTrackColor: AppColors.primary,
+          onChanged: controller.setAutoSync,
+          title: const Text(
+            'Auto sync',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          ),
+          subtitle: const Text(
+            'Sync automatically after changes and when you open the app',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+        ),
+      ],
+    );
   }
 
   String _subtitle() {
@@ -737,8 +827,9 @@ class _CloudSyncCard extends ConsumerWidget {
     }
     final last = state.lastSyncAt;
     final pending = state.pendingChanges;
-    final lastLabel =
-        last == null ? 'Never synced' : 'Last synced ${_relative(last)}';
+    final lastLabel = last == null
+        ? 'Never synced'
+        : 'Last synced ${_relative(last)}';
     return pending > 0 ? '$lastLabel • $pending pending' : lastLabel;
   }
 
@@ -761,17 +852,17 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(left: 4, bottom: 8),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.2,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(left: 4, bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 11.5,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.2,
+        color: AppColors.textSecondary,
+      ),
+    ),
+  );
 }
 
 class _Group extends StatelessWidget {
@@ -784,7 +875,8 @@ class _Group extends StatelessWidget {
     for (var i = 0; i < children.length; i++) {
       if (i > 0 && children[i] is _Tile && children[i - 1] is _Tile) {
         spaced.add(
-            const Divider(height: 1, indent: 58, color: Color(0xFFF0F1F4)));
+          const Divider(height: 1, indent: 58, color: Color(0xFFF0F1F4)),
+        );
       }
       spaced.add(children[i]);
     }
@@ -807,12 +899,13 @@ class _Tile extends StatelessWidget {
   final VoidCallback? onTap;
   final bool destructive;
 
-  const _Tile(
-      {required this.icon,
-      required this.title,
-      this.subtitle,
-      this.onTap,
-      this.destructive = false});
+  const _Tile({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.onTap,
+    this.destructive = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -827,16 +920,28 @@ class _Tile extends StatelessWidget {
         ),
         child: Icon(icon, size: 17, color: color),
       ),
-      title: Text(title,
-          style: TextStyle(
-              fontSize: 14, fontWeight: FontWeight.w700, color: color)),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
       subtitle: subtitle == null
           ? null
-          : Text(subtitle!,
+          : Text(
+              subtitle!,
               style: const TextStyle(
-                  fontSize: 12, color: AppColors.textSecondary)),
-      trailing: const Icon(LucideIcons.chevronRight,
-          size: 17, color: AppColors.textMuted),
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
+      trailing: const Icon(
+        LucideIcons.chevronRight,
+        size: 17,
+        color: AppColors.textMuted,
+      ),
       onTap: onTap,
     );
   }
@@ -846,8 +951,11 @@ class _InfoCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String message;
-  const _InfoCard(
-      {required this.icon, required this.title, required this.message});
+  const _InfoCard({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -864,8 +972,9 @@ class _InfoCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12)),
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Icon(icon, size: 18, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
@@ -873,15 +982,22 @@ class _InfoCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 14.5, fontWeight: FontWeight.w800)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(message,
-                    style: const TextStyle(
-                        fontSize: 12.5,
-                        color: AppColors.textSecondary,
-                        height: 1.4)),
+                Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           ),
@@ -896,11 +1012,12 @@ class _SheetButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool destructive;
-  const _SheetButton(
-      {required this.label,
-      required this.icon,
-      required this.onTap,
-      this.destructive = false});
+  const _SheetButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.destructive = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -910,17 +1027,21 @@ class _SheetButton extends StatelessWidget {
       child: OutlinedButton.icon(
         onPressed: onTap,
         icon: Icon(icon, size: 17, color: color),
-        label: Text(label,
-            style: TextStyle(fontWeight: FontWeight.w700, color: color)),
+        label: Text(
+          label,
+          style: TextStyle(fontWeight: FontWeight.w700, color: color),
+        ),
         style: OutlinedButton.styleFrom(
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           side: BorderSide(
-              color: destructive
-                  ? const Color(0x55FF3B30)
-                  : const Color(0xFFE5E7EB)),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            color: destructive
+                ? const Color(0x55FF3B30)
+                : const Color(0xFFE5E7EB),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       ),
     );
@@ -963,20 +1084,27 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
     return AlertDialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      title: Text(widget.title,
-          style: const TextStyle(fontWeight: FontWeight.w800)),
+      title: Text(
+        widget.title,
+        style: const TextStyle(fontWeight: FontWeight.w800),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.message,
-              style:
-                  const TextStyle(color: AppColors.textSecondary, height: 1.4)),
+          Text(
+            widget.message,
+            style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+          ),
           if (needs != null) ...[
             const SizedBox(height: 14),
-            Text('Type $needs to confirm',
-                style: const TextStyle(
-                    fontSize: 12.5, fontWeight: FontWeight.w700)),
+            Text(
+              'Type $needs to confirm',
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: 6),
             TextField(
               controller: _controller,
@@ -986,8 +1114,9 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
               decoration: InputDecoration(
                 isDense: true,
                 hintText: needs,
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -995,13 +1124,15 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel')),
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
           onPressed: enabled ? () => Navigator.pop(context, true) : null,
           style: FilledButton.styleFrom(
-            backgroundColor:
-                widget.destructive ? AppColors.danger : AppColors.primary,
+            backgroundColor: widget.destructive
+                ? AppColors.danger
+                : AppColors.primary,
           ),
           child: Text(widget.confirmLabel),
         ),
@@ -1025,9 +1156,10 @@ class _VersionFooter extends ConsumerWidget {
               ? AppConfig.appName
               : '${AppConfig.appName} v${info.version} (${info.buildNumber})',
           style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textSecondary,
+          ),
         ),
         const SizedBox(height: 2),
         const Text(

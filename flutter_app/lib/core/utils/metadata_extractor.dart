@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import 'package:uuid/uuid.dart';
+
 import '../../domain/entities/mind_item.dart';
 
 class MetadataExtractor {
@@ -23,9 +25,13 @@ class MetadataExtractor {
       if (videoId != null) {
         ytThumb = 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
         try {
-          final oembedRes = await http.get(
-            Uri.parse('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=$videoId&format=json'),
-          ).timeout(const Duration(seconds: 4));
+          final oembedRes = await http
+              .get(
+                Uri.parse(
+                  'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=$videoId&format=json',
+                ),
+              )
+              .timeout(const Duration(seconds: 4));
           if (oembedRes.statusCode == 200) {
             final json = jsonDecode(oembedRes.body);
             ytTitle = json['title'] ?? ytTitle;
@@ -35,14 +41,17 @@ class MetadataExtractor {
 
         try {
           final scraped = await _scrapeOpenGraph(cleanUrl);
-          if (scraped['description'] != null && scraped['description']!.isNotEmpty) {
+          if (scraped['description'] != null &&
+              scraped['description']!.isNotEmpty) {
             description = scraped['description']!;
           }
         } catch (_) {}
       }
 
       final cleanTitle = _cleanTitle(ytTitle);
-      final cleanDesc = description.isNotEmpty ? description : 'Watch full video by $author on YouTube.';
+      final cleanDesc = description.isNotEmpty
+          ? description
+          : 'Watch full video by $author on YouTube.';
 
       final tags = _generateAccurateTags(
         title: cleanTitle,
@@ -67,7 +76,8 @@ class MetadataExtractor {
     }
 
     // 2. Instagram Handler (Reels & Posts)
-    if (cleanUrl.contains('instagram.com/reel') || cleanUrl.contains('instagram.com/p/')) {
+    if (cleanUrl.contains('instagram.com/reel') ||
+        cleanUrl.contains('instagram.com/p/')) {
       String? igThumb;
       String author = 'Instagram';
       String rawCaption = '';
@@ -77,12 +87,15 @@ class MetadataExtractor {
         final oembedUri = Uri.parse(
           'https://api.instagram.com/oembed/?url=${Uri.encodeComponent(cleanUrl)}',
         );
-        final oembedRes = await http.get(oembedUri).timeout(const Duration(seconds: 4));
+        final oembedRes = await http
+            .get(oembedUri)
+            .timeout(const Duration(seconds: 4));
         if (oembedRes.statusCode == 200) {
           final json = jsonDecode(oembedRes.body);
           author = json['author_name'] ?? author;
           igThumb = json['thumbnail_url'];
-          if (json['title'] != null && json['title'].toString().trim().isNotEmpty) {
+          if (json['title'] != null &&
+              json['title'].toString().trim().isNotEmpty) {
             rawCaption = json['title'].toString().trim();
           }
         }
@@ -100,19 +113,25 @@ class MetadataExtractor {
           final candidateTitle = scraped['title'] ?? '';
 
           // Prefer the text that doesn't say "likes, comments"
-          if (!_isInstagramMetricClutter(candidateTitle) && candidateTitle.isNotEmpty && candidateTitle != 'Instagram') {
+          if (!_isInstagramMetricClutter(candidateTitle) &&
+              candidateTitle.isNotEmpty &&
+              candidateTitle != 'Instagram') {
             rawCaption = candidateTitle;
-          } else if (!_isInstagramMetricClutter(candidateDesc) && candidateDesc.isNotEmpty) {
+          } else if (!_isInstagramMetricClutter(candidateDesc) &&
+              candidateDesc.isNotEmpty) {
             rawCaption = candidateDesc;
           } else {
             // Strip the "X likes, Y comments:" prefix from description
-            rawCaption = _stripInstagramMetricPrefix(candidateDesc.isNotEmpty ? candidateDesc : candidateTitle);
+            rawCaption = _stripInstagramMetricPrefix(
+              candidateDesc.isNotEmpty ? candidateDesc : candidateTitle,
+            );
           }
         } catch (_) {}
       }
 
       // Fallback to text shared from Instagram share sheet
-      if ((rawCaption.isEmpty || _isInstagramMetricClutter(rawCaption)) && rawText != cleanUrl) {
+      if ((rawCaption.isEmpty || _isInstagramMetricClutter(rawCaption)) &&
+          rawText != cleanUrl) {
         final sharedWithoutUrl = rawText.replaceAll(cleanUrl, '').trim();
         if (sharedWithoutUrl.isNotEmpty) {
           rawCaption = sharedWithoutUrl;
@@ -162,7 +181,9 @@ class MetadataExtractor {
       final scraped = await _scrapeOpenGraph(cleanUrl);
       final rawTitle = scraped['title'] ?? uri?.host ?? 'Saved Link';
       final cleanTitle = _cleanTitle(rawTitle);
-      final description = scraped['description'] ?? 'Article saved from ${uri?.host}. Tap to view original content.';
+      final description =
+          scraped['description'] ??
+          'Article saved from ${uri?.host}. Tap to view original content.';
 
       final tags = _generateAccurateTags(
         title: cleanTitle,
@@ -226,13 +247,23 @@ class MetadataExtractor {
     final colonIndex = result.indexOf(':');
     if (colonIndex != -1 && colonIndex < 120) {
       final prefix = result.substring(0, colonIndex).toLowerCase();
-      if (prefix.contains('like') || prefix.contains('comment') || prefix.contains('instagram')) {
+      if (prefix.contains('like') ||
+          prefix.contains('comment') ||
+          prefix.contains('instagram')) {
         result = result.substring(colonIndex + 1).trim();
       }
     }
 
     // Pattern 2: Regex remove "X likes, Y comments" directly if still present
-    result = result.replaceAll(RegExp(r'^[\d,KMkm\.\s]+likes?,\s*[\d,KMkm\.\s]+comments?[^:]*[:\s-]*', caseSensitive: false), '').trim();
+    result = result
+        .replaceAll(
+          RegExp(
+            r'^[\d,KMkm\.\s]+likes?,\s*[\d,KMkm\.\s]+comments?[^:]*[:\s-]*',
+            caseSensitive: false,
+          ),
+          '',
+        )
+        .trim();
 
     // Pattern 3: Remove leading quotes
     if (result.startsWith('"') && result.endsWith('"') && result.length > 2) {
@@ -294,7 +325,8 @@ class MetadataExtractor {
     final uri = Uri.tryParse(url);
     if (uri != null) {
       final segments = uri.pathSegments;
-      if (segments.length >= 2 && (segments[0] == 'reel' || segments[0] == 'p')) {
+      if (segments.length >= 2 &&
+          (segments[0] == 'reel' || segments[0] == 'p')) {
         // Can't reliably get author from /reel/ID, default to Creator
         return 'Creator';
       }
@@ -307,7 +339,15 @@ class MetadataExtractor {
 
   static String _cleanTitle(String title) {
     var clean = title.trim();
-    clean = clean.replaceAll(RegExp(r'\s*[-|•]\s*(YouTube|Instagram|Medium).*$', caseSensitive: false), '').trim();
+    clean = clean
+        .replaceAll(
+          RegExp(
+            r'\s*[-|•]\s*(YouTube|Instagram|Medium).*$',
+            caseSensitive: false,
+          ),
+          '',
+        )
+        .trim();
     return clean.isNotEmpty ? clean : 'Saved Item';
   }
 
@@ -333,17 +373,137 @@ class MetadataExtractor {
 
     // 2. High-precision semantic knowledge map
     final Map<String, List<String>> topicMap = {
-      'ai': ['ai', 'chatgpt', 'openai', 'claude', 'gemini', 'deepseek', 'gpt', 'llm', 'machine learning', 'robot', 'automation', 'neural'],
-      'tech': ['tech', 'technology', 'gadget', 'apple', 'iphone', 'android', 'software', 'hardware', 'app', 'update'],
-      'coding': ['code', 'coding', 'flutter', 'dart', 'python', 'javascript', 'react', 'github', 'developer', 'programming', 'backend', 'api'],
-      'productivity': ['productivity', 'hack', 'useful', 'tools', 'tips', 'organize', 'workflow', 'time', 'study', 'focus'],
-      'design': ['design', 'ui', 'ux', 'figma', 'typography', 'graphic', 'minimal', 'animation', 'aesthetic', 'branding', 'logo'],
-      'finance': ['money', 'finance', 'invest', 'crypto', 'stocks', 'business', 'startup', 'wealth', 'earning', 'income', 'trading'],
-      'marketing': ['marketing', 'growth', 'seo', 'social media', 'creator', 'monetize', 'viral', 'audience', 'content'],
-      'photography': ['camera', 'photo', 'cinematic', 'video', 'editing', 'lightroom', 'visual', 'color grading', 'reels'],
-      'mindset': ['motivation', 'mindset', 'habits', 'books', 'psychology', 'philosophy', 'quotes', 'success', 'life'],
-      'fitness': ['workout', 'gym', 'health', 'fitness', 'diet', 'exercise', 'muscle', 'yoga', 'protein'],
-      'tutorial': ['how to', 'guide', 'tutorial', 'learn', 'step by step', 'course', 'tips & tricks'],
+      'ai': [
+        'ai',
+        'chatgpt',
+        'openai',
+        'claude',
+        'gemini',
+        'deepseek',
+        'gpt',
+        'llm',
+        'machine learning',
+        'robot',
+        'automation',
+        'neural',
+      ],
+      'tech': [
+        'tech',
+        'technology',
+        'gadget',
+        'apple',
+        'iphone',
+        'android',
+        'software',
+        'hardware',
+        'app',
+        'update',
+      ],
+      'coding': [
+        'code',
+        'coding',
+        'flutter',
+        'dart',
+        'python',
+        'javascript',
+        'react',
+        'github',
+        'developer',
+        'programming',
+        'backend',
+        'api',
+      ],
+      'productivity': [
+        'productivity',
+        'hack',
+        'useful',
+        'tools',
+        'tips',
+        'organize',
+        'workflow',
+        'time',
+        'study',
+        'focus',
+      ],
+      'design': [
+        'design',
+        'ui',
+        'ux',
+        'figma',
+        'typography',
+        'graphic',
+        'minimal',
+        'animation',
+        'aesthetic',
+        'branding',
+        'logo',
+      ],
+      'finance': [
+        'money',
+        'finance',
+        'invest',
+        'crypto',
+        'stocks',
+        'business',
+        'startup',
+        'wealth',
+        'earning',
+        'income',
+        'trading',
+      ],
+      'marketing': [
+        'marketing',
+        'growth',
+        'seo',
+        'social media',
+        'creator',
+        'monetize',
+        'viral',
+        'audience',
+        'content',
+      ],
+      'photography': [
+        'camera',
+        'photo',
+        'cinematic',
+        'video',
+        'editing',
+        'lightroom',
+        'visual',
+        'color grading',
+        'reels',
+      ],
+      'mindset': [
+        'motivation',
+        'mindset',
+        'habits',
+        'books',
+        'psychology',
+        'philosophy',
+        'quotes',
+        'success',
+        'life',
+      ],
+      'fitness': [
+        'workout',
+        'gym',
+        'health',
+        'fitness',
+        'diet',
+        'exercise',
+        'muscle',
+        'yoga',
+        'protein',
+      ],
+      'tutorial': [
+        'how to',
+        'guide',
+        'tutorial',
+        'learn',
+        'step by step',
+        'course',
+        'tips & tricks',
+      ],
       'news': ['news', 'announcement', 'launch', 'breaking', 'feature'],
     };
 
@@ -377,11 +537,47 @@ class MetadataExtractor {
 
   static bool _isStopWord(String word) {
     const stopWords = {
-      'this', 'that', 'with', 'from', 'your', 'have', 'more', 'what', 'when',
-      'there', 'their', 'which', 'about', 'some', 'only', 'very', 'super',
-      'watch', 'share', 'instagram', 'youtube', 'http', 'https', 'www', 'com',
-      'video', 'post', 'click', 'link', 'check', 'view', 'full', 'open', 'like',
-      'comment', 'subscribe', 'follow', 'reels', 'shorts', 'likes', 'comments',
+      'this',
+      'that',
+      'with',
+      'from',
+      'your',
+      'have',
+      'more',
+      'what',
+      'when',
+      'there',
+      'their',
+      'which',
+      'about',
+      'some',
+      'only',
+      'very',
+      'super',
+      'watch',
+      'share',
+      'instagram',
+      'youtube',
+      'http',
+      'https',
+      'www',
+      'com',
+      'video',
+      'post',
+      'click',
+      'link',
+      'check',
+      'view',
+      'full',
+      'open',
+      'like',
+      'comment',
+      'subscribe',
+      'follow',
+      'reels',
+      'shorts',
+      'likes',
+      'comments',
     };
     return stopWords.contains(word);
   }
@@ -405,13 +601,15 @@ class MetadataExtractor {
   }
 
   static Future<Map<String, String?>> _scrapeOpenGraph(String url) async {
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-        'Accept': 'text/html,application/xhtml+xml',
-      },
-    ).timeout(const Duration(seconds: 5));
+    final response = await http
+        .get(
+          Uri.parse(url),
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+            'Accept': 'text/html,application/xhtml+xml',
+          },
+        )
+        .timeout(const Duration(seconds: 5));
 
     if (response.statusCode != 200) {
       return {};
@@ -419,19 +617,34 @@ class MetadataExtractor {
 
     final doc = html_parser.parse(response.body);
 
-    final title = doc.querySelector('meta[property="og:title"]')?.attributes['content'] ??
-        doc.querySelector('meta[name="twitter:title"]')?.attributes['content'] ??
+    final title =
+        doc.querySelector('meta[property="og:title"]')?.attributes['content'] ??
+        doc
+            .querySelector('meta[name="twitter:title"]')
+            ?.attributes['content'] ??
         doc.querySelector('title')?.text;
 
-    final image = doc.querySelector('meta[property="og:image"]')?.attributes['content'] ??
-        doc.querySelector('meta[name="twitter:image"]')?.attributes['content'] ??
-        doc.querySelector('meta[property="og:image:url"]')?.attributes['content'];
+    final image =
+        doc.querySelector('meta[property="og:image"]')?.attributes['content'] ??
+        doc
+            .querySelector('meta[name="twitter:image"]')
+            ?.attributes['content'] ??
+        doc
+            .querySelector('meta[property="og:image:url"]')
+            ?.attributes['content'];
 
-    final description = doc.querySelector('meta[property="og:description"]')?.attributes['content'] ??
-        doc.querySelector('meta[name="twitter:description"]')?.attributes['content'] ??
+    final description =
+        doc
+            .querySelector('meta[property="og:description"]')
+            ?.attributes['content'] ??
+        doc
+            .querySelector('meta[name="twitter:description"]')
+            ?.attributes['content'] ??
         doc.querySelector('meta[name="description"]')?.attributes['content'];
 
-    final siteName = doc.querySelector('meta[property="og:site_name"]')?.attributes['content'];
+    final siteName = doc
+        .querySelector('meta[property="og:site_name"]')
+        ?.attributes['content'];
 
     return {
       'title': title?.trim(),

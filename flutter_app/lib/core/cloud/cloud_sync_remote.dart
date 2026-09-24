@@ -29,12 +29,17 @@ class RemoteRecord {
 /// Storage backend for sync. Abstracted so [SyncEngine] is unit-testable.
 abstract class CloudSyncRemote {
   /// Records written after [sinceServerMillis] (all records when 0).
-  Future<List<RemoteRecord>> fetchChanges(String uid,
-      {int sinceServerMillis = 0});
+  Future<List<RemoteRecord>> fetchChanges(
+    String uid, {
+    int sinceServerMillis = 0,
+  });
 
   /// Upserts items and writes tombstones for deleted ids.
-  Future<void> push(String uid,
-      {List<RemoteRecord> upserts, Map<String, int> deletions});
+  Future<void> push(
+    String uid, {
+    List<RemoteRecord> upserts,
+    Map<String, int> deletions,
+  });
 
   /// Removes every cloud document of the user (account deletion).
   Future<void> deleteAllUserData(String uid);
@@ -51,7 +56,7 @@ abstract class CloudSyncRemote {
 /// Security rules (firestore.rules) allow access only to the owner.
 class FirestoreSyncRemote implements CloudSyncRemote {
   FirestoreSyncRemote({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _db;
 
@@ -62,8 +67,10 @@ class FirestoreSyncRemote implements CloudSyncRemote {
       _db.collection('users').doc(uid).collection('items');
 
   @override
-  Future<List<RemoteRecord>> fetchChanges(String uid,
-      {int sinceServerMillis = 0}) async {
+  Future<List<RemoteRecord>> fetchChanges(
+    String uid, {
+    int sinceServerMillis = 0,
+  }) async {
     Query<Map<String, dynamic>> query = _items(uid);
     if (sinceServerMillis > 0) {
       query = query.where(
@@ -106,12 +113,14 @@ class FirestoreSyncRemote implements CloudSyncRemote {
     }
     deletions.forEach((id, deletedAtMs) {
       // Tombstone (not a real delete) so other devices learn about it.
-      ops.add((b) => b.set(_items(uid).doc(id), {
-            'id': id,
-            'deleted': true,
-            'updatedAtMs': deletedAtMs,
-            'serverUpdatedAt': FieldValue.serverTimestamp(),
-          }));
+      ops.add(
+        (b) => b.set(_items(uid).doc(id), {
+          'id': id,
+          'deleted': true,
+          'updatedAtMs': deletedAtMs,
+          'serverUpdatedAt': FieldValue.serverTimestamp(),
+        }),
+      );
     });
     if (ops.isEmpty) return;
 
@@ -122,10 +131,10 @@ class FirestoreSyncRemote implements CloudSyncRemote {
       }
       await batch.commit();
     }
-    await _db.collection('users').doc(uid).set(
-      {'lastSyncAt': FieldValue.serverTimestamp(), 'schema': 1},
-      SetOptions(merge: true),
-    );
+    await _db.collection('users').doc(uid).set({
+      'lastSyncAt': FieldValue.serverTimestamp(),
+      'schema': 1,
+    }, SetOptions(merge: true));
   }
 
   @override
@@ -146,8 +155,10 @@ class FirestoreSyncRemote implements CloudSyncRemote {
 
   @override
   Future<int> countItems(String uid) async {
-    final agg =
-        await _items(uid).where('deleted', isEqualTo: false).count().get();
+    final agg = await _items(uid)
+        .where('deleted', isEqualTo: false)
+        .count()
+        .get();
     return agg.count ?? 0;
   }
 }

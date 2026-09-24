@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../domain/entities/mind_item.dart';
 
@@ -54,7 +55,9 @@ class MindCardWidget extends StatelessWidget {
                   alignment: Alignment.center,
                   children: [
                     AspectRatio(
-                      aspectRatio: item.type == ItemType.instagramReel ? 0.82 : 1.25,
+                      aspectRatio: item.type == ItemType.instagramReel
+                          ? 0.82
+                          : 1.25,
                       child: CachedNetworkImage(
                         imageUrl: item.thumbnailUrl!,
                         fit: BoxFit.cover,
@@ -77,7 +80,11 @@ class MindCardWidget extends StatelessWidget {
                         errorWidget: (context, url, error) => Container(
                           color: AppColors.tagBg,
                           child: const Center(
-                            child: Icon(LucideIcons.image, color: AppColors.textMuted, size: 28),
+                            child: Icon(
+                              LucideIcons.image,
+                              color: AppColors.textMuted,
+                              size: 28,
+                            ),
                           ),
                         ),
                       ),
@@ -105,11 +112,17 @@ class MindCardWidget extends StatelessWidget {
                       top: 10,
                       left: 10,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.55),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 0.8),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            width: 0.8,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -123,7 +136,11 @@ class MindCardWidget extends StatelessWidget {
                               const SizedBox(width: 4),
                               const Text(
                                 'Reel',
-                                style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ],
@@ -149,19 +166,27 @@ class MindCardWidget extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 12),
+                          child: const Icon(
+                            LucideIcons.sparkles,
+                            color: Colors.white,
+                            size: 12,
+                          ),
                         ),
                       ),
 
                     // Play Button for Videos
-                    if (item.type == ItemType.instagramReel || item.type == ItemType.youtubeVideo)
+                    if (item.type == ItemType.instagramReel ||
+                        item.type == ItemType.youtubeVideo)
                       Container(
                         width: 46,
                         height: 46,
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.45),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.85), width: 1.5),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            width: 1.5,
+                          ),
                         ),
                         child: const Icon(
                           LucideIcons.play,
@@ -176,16 +201,26 @@ class MindCardWidget extends StatelessWidget {
                         bottom: 8,
                         right: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xE610B981),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 0.8),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              width: 0.8,
+                            ),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(LucideIcons.checkCheck, size: 11, color: Colors.white),
+                              Icon(
+                                LucideIcons.checkCheck,
+                                size: 11,
+                                color: Colors.white,
+                              ),
                               SizedBox(width: 4),
                               Text(
                                 'Watched',
@@ -254,11 +289,17 @@ class MindCardWidget extends StatelessWidget {
                         runSpacing: 5,
                         children: item.tags.take(3).map((tag) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF1F3F6),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0x33E5E7EB), width: 0.6),
+                              border: Border.all(
+                                color: const Color(0x33E5E7EB),
+                                width: 0.6,
+                              ),
                             ),
                             child: Text(
                               '#$tag',

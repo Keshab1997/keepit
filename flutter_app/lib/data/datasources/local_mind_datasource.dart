@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+
 import '../../domain/entities/mind_item.dart';
 
 class LocalMindDataSource {

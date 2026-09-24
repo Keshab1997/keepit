@@ -34,8 +34,7 @@ class _BannerAdSlotState extends State<BannerAdSlot> {
     if (!AdConfig.enableBanner || !adsPlatformSupported) return;
     try {
       final width = MediaQuery.of(context).size.width.truncate();
-      final adaptive =
-          await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
+      final adaptive = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
       final AdSize size = adaptive ?? AdSize.banner;
       final ad = BannerAd(
         size: size,

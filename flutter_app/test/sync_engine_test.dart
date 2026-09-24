@@ -40,29 +40,35 @@ class FakeRemote implements CloudSyncRemote {
   }
 
   @override
-  Future<List<RemoteRecord>> fetchChanges(String uid,
-          {int sinceServerMillis = 0}) async =>
+  Future<List<RemoteRecord>> fetchChanges(
+    String uid, {
+    int sinceServerMillis = 0,
+  }) async =>
       _u(uid).values.where((r) => r.serverMillis > sinceServerMillis).toList();
 
   @override
-  Future<void> push(String uid,
-      {List<RemoteRecord> upserts = const [],
-      Map<String, int> deletions = const {}}) async {
+  Future<void> push(
+    String uid, {
+    List<RemoteRecord> upserts = const [],
+    Map<String, int> deletions = const {},
+  }) async {
     pushCalls++;
     for (final r in upserts) {
       _u(uid)[r.id] = RemoteRecord(
-          id: r.id,
-          data: r.data,
-          updatedAtMs: r.updatedAtMs,
-          serverMillis: ++_clock);
+        id: r.id,
+        data: r.data,
+        updatedAtMs: r.updatedAtMs,
+        serverMillis: ++_clock,
+      );
     }
     deletions.forEach((id, at) {
       _u(uid)[id] = RemoteRecord(
-          id: id,
-          data: const {},
-          updatedAtMs: at,
-          deleted: true,
-          serverMillis: ++_clock);
+        id: id,
+        data: const {},
+        updatedAtMs: at,
+        deleted: true,
+        serverMillis: ++_clock,
+      );
     });
   }
 
@@ -74,8 +80,12 @@ class FakeRemote implements CloudSyncRemote {
       _u(uid).values.where((r) => !r.deleted).length;
 }
 
-MindItem mk(String id,
-    {String? title, DateTime? updated, bool watched = false}) {
+MindItem mk(
+  String id, {
+  String? title,
+  DateTime? updated,
+  bool watched = false,
+}) {
   final t = updated ?? DateTime.utc(2026, 9, 1, 12);
   return MindItem(
     id: id,
@@ -150,11 +160,14 @@ void main() {
     await SyncEngine(local: local, remote: remote).sync(uid);
 
     remote.putFromOtherDevice(
-        uid,
-        mk('a',
-            title: 'Edited elsewhere',
-            updated: DateTime.utc(2026, 9, 5),
-            watched: true));
+      uid,
+      mk(
+        'a',
+        title: 'Edited elsewhere',
+        updated: DateTime.utc(2026, 9, 5),
+        watched: true,
+      ),
+    );
     final report = await SyncEngine(local: local, remote: remote).sync(uid);
 
     expect(report.pulled, 1);
@@ -166,9 +179,12 @@ void main() {
     final remote = FakeRemote();
     final local = await device();
     remote.putFromOtherDevice(
-        uid, mk('a', title: 'Remote v1', updated: DateTime.utc(2026, 9, 2)));
+      uid,
+      mk('a', title: 'Remote v1', updated: DateTime.utc(2026, 9, 2)),
+    );
     await local.saveItem(
-        mk('a', title: 'Local v2', updated: DateTime.utc(2026, 9, 3)));
+      mk('a', title: 'Local v2', updated: DateTime.utc(2026, 9, 3)),
+    );
 
     final report = await SyncEngine(local: local, remote: remote).sync(uid);
 
@@ -200,35 +216,42 @@ void main() {
     expect(tablet.getTombstones(), isEmpty);
   });
 
-  test('local delete newer than a remote edit keeps the item deleted',
-      () async {
-    final remote = FakeRemote();
-    final local = await device();
-    await local.saveItem(mk('a'));
-    await SyncEngine(local: local, remote: remote).sync(uid);
+  test(
+    'local delete newer than a remote edit keeps the item deleted',
+    () async {
+      final remote = FakeRemote();
+      final local = await device();
+      await local.saveItem(mk('a'));
+      await SyncEngine(local: local, remote: remote).sync(uid);
 
-    remote.putFromOtherDevice(
-        uid, mk('a', title: 'Old edit', updated: DateTime.utc(2026, 9, 2)));
-    await local.deleteItem('a'); // tombstone = now (2026+) > remote edit
-    await SyncEngine(local: local, remote: remote).sync(uid);
+      remote.putFromOtherDevice(
+        uid,
+        mk('a', title: 'Old edit', updated: DateTime.utc(2026, 9, 2)),
+      );
+      await local.deleteItem('a'); // tombstone = now (2026+) > remote edit
+      await SyncEngine(local: local, remote: remote).sync(uid);
 
-    expect(local.getItem('a'), isNull);
-    expect(remote.users[uid]!['a']!.deleted, isTrue);
-  });
+      expect(local.getItem('a'), isNull);
+      expect(remote.users[uid]!['a']!.deleted, isTrue);
+    },
+  );
 
-  test('remote tombstone does not delete a newer unsynced local edit',
-      () async {
-    final remote = FakeRemote();
-    final local = await device();
-    remote.deleteFromOtherDevice(uid, 'a', DateTime.utc(2026, 9, 2));
-    await local.saveItem(
-        mk('a', title: 'Re-edited', updated: DateTime.utc(2026, 9, 10)));
+  test(
+    'remote tombstone does not delete a newer unsynced local edit',
+    () async {
+      final remote = FakeRemote();
+      final local = await device();
+      remote.deleteFromOtherDevice(uid, 'a', DateTime.utc(2026, 9, 2));
+      await local.saveItem(
+        mk('a', title: 'Re-edited', updated: DateTime.utc(2026, 9, 10)),
+      );
 
-    await SyncEngine(local: local, remote: remote).sync(uid);
+      await SyncEngine(local: local, remote: remote).sync(uid);
 
-    expect(local.getItem('a')?.title, 'Re-edited');
-    expect(remote.users[uid]!['a']!.deleted, isFalse);
-  });
+      expect(local.getItem('a')?.title, 'Re-edited');
+      expect(remote.users[uid]!['a']!.deleted, isFalse);
+    },
+  );
 
   test('demo items are never uploaded', () async {
     final remote = FakeRemote();
@@ -247,21 +270,22 @@ void main() {
   });
 
   test(
-      'incremental sync only fetches changes after the cursor and is idempotent',
-      () async {
-    final remote = FakeRemote();
-    final local = await device();
-    await local.saveItem(mk('a'));
-    final engine = SyncEngine(local: local, remote: remote);
-    await engine.sync(uid);
-    final second = await engine.sync(uid);
-    final third = await engine.sync(uid);
+    'incremental sync only fetches changes after the cursor and is idempotent',
+    () async {
+      final remote = FakeRemote();
+      final local = await device();
+      await local.saveItem(mk('a'));
+      final engine = SyncEngine(local: local, remote: remote);
+      await engine.sync(uid);
+      final second = await engine.sync(uid);
+      final third = await engine.sync(uid);
 
-    expect(second.pulled, 0);
-    expect(second.pushed, 0);
-    expect(third.summary, 'Everything is up to date');
-    expect(remote.pushCalls, 1);
-  });
+      expect(second.pulled, 0);
+      expect(second.pushed, 0);
+      expect(third.summary, 'Everything is up to date');
+      expect(remote.pushCalls, 1);
+    },
+  );
 
   test('markAllUnsynced lets local data merge into a new account', () async {
     final remote = FakeRemote();
@@ -270,8 +294,10 @@ void main() {
     await SyncEngine(local: local, remote: remote).sync(uid);
     await local.markAllUnsynced();
 
-    final report =
-        await SyncEngine(local: local, remote: remote).sync('user-2');
+    final report = await SyncEngine(
+      local: local,
+      remote: remote,
+    ).sync('user-2');
     expect(report.pushed, 1);
     expect(remote.users['user-2']!.keys, ['a']);
   });
@@ -289,8 +315,10 @@ void main() {
   });
 
   test('data export produces valid JSON with every item', () {
-    final json = DataExport.buildJson([mk('a'), mk('b')],
-        now: DateTime.utc(2026, 9, 24));
+    final json = DataExport.buildJson([
+      mk('a'),
+      mk('b'),
+    ], now: DateTime.utc(2026, 9, 24));
     final decoded = jsonDecode(json) as Map<String, dynamic>;
     expect(decoded['format'], 'keepit-export');
     expect(decoded['count'], 2);
@@ -301,7 +329,9 @@ void main() {
 
   test('AppUser initials', () {
     expect(
-        const AppUser(uid: '1', displayName: 'Keshab Sarkar').initials, 'KS');
+      const AppUser(uid: '1', displayName: 'Keshab Sarkar').initials,
+      'KS',
+    );
     expect(const AppUser(uid: '1', email: 'keshab@gmail.com').initials, 'KG');
     expect(const AppUser(uid: '1', displayName: 'Keshab').initials, 'K');
     expect(const AppUser(uid: '1').initials, '?');

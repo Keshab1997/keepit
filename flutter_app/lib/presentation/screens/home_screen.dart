@@ -28,9 +28,18 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(homeTabProvider);
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
+    return PopScope(
+      // Back from a secondary tab returns to Everything instead of popping
+      // the root route and closing the app. Back from Everything keeps the
+      // normal Android behavior and exits the root route.
+      canPop: currentIndex == HomeTab.everything,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || currentIndex == HomeTab.everything) return;
+        ref.read(homeTabProvider.notifier).state = HomeTab.everything;
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Column(
         children: [
           Expanded(child: _pages[currentIndex]),
           // Banner on content tabs only, pinned above the navigation bar.
@@ -129,6 +138,7 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

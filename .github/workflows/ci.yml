@@ -20,12 +20,17 @@ concurrency:
 
 jobs:
   ci:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.3.0
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.4.0
     with:
       flutter-channel: stable
       working-directory: flutter_app
       run-format-check: true
       run-analyze: true
       run-tests: true
+      # v1.4.0 quality gates
+      code-coverage: true
+      max-artifact-size-mb: 150
+      test-matrix: stable,beta
+      # No APK/AAB on ordinary pushes; use Manual Android Build for those.
       build-apk: false
       build-aab: false

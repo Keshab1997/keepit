@@ -12,7 +12,7 @@ and Android SDKs on demand.
 
 | File | Runs when | What it does |
 |---|---|---|
-| `ci.yml` | push / PR to `main`, or manual | `dart format` check → `flutter analyze --fatal-infos` → `flutter test` |
+| `ci.yml` | push / PR to `main`, or manual | `dart format` check → `flutter analyze --fatal-infos` → `flutter test` + coverage %, plus the same validation on the `beta` Flutter channel |
 | `manual-build.yml` | Actions → **Manual Android Build** → Run workflow | release **APK** or **AAB**, uploaded as an artifact |
 | `publish-release.yml` | Actions → **Publish Android Release** → Run workflow | signed APK + AAB, `v<version>` tag, English release notes, GitHub Release, `SHA256SUMS.txt` |
 | `release.yml` | `git push` of a `v*` tag | signed **AAB** artifact only (no GitHub Release) |

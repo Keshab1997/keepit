@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/mind_item.dart';
 import '../../data/datasources/local_mind_datasource.dart';
 import '../../core/ads/ad_service.dart';
+import '../../core/utils/imgbb_uploader.dart';
 import '../../core/utils/metadata_extractor.dart';
 
 final localDataSourceProvider = Provider<LocalMindDataSource>((ref) {
@@ -145,6 +148,43 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     // permitting) right after a successful save. See AdService.
     AdService.instance.onItemSaved();
     return SaveResult.success;
+  }
+
+  /// Uploads a local image to ImgBB and stores only its public URL in the
+  /// local database. The URL then syncs through Firestore like any other item;
+  /// raw image bytes never enter Firestore.
+  Future<SaveResult> addImage(XFile image) async {
+    final imageUrl = await ImgBbUploader.upload(image);
+    final now = DateTime.now().toUtc();
+    final title = _imageTitle(image.name);
+    final newItem = MindItem(
+      id: const Uuid().v4(),
+      title: title,
+      url: imageUrl,
+      content: 'Image saved to KeepIt.',
+      thumbnailUrl: imageUrl,
+      type: ItemType.image,
+      tags: const ['image', 'visual'],
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await _localDataSource.saveItem(newItem);
+    state = state.copyWith(items: [newItem, ...state.items]);
+    _changed();
+    AdService.instance.onItemSaved();
+    return SaveResult.success;
+  }
+
+  /// Handles an image shared from another app. On mobile the share plugin
+  /// provides a local path, which [XFile] can read on demand.
+  Future<SaveResult> addImagePath(String path) => addImage(XFile(path));
+
+  static String _imageTitle(String filename) {
+    final clean = filename.trim();
+    if (clean.isEmpty) return 'Saved image';
+    final withoutExtension = clean.replaceFirst(RegExp(r'\.[^.]+$'), '');
+    return withoutExtension.isEmpty ? 'Saved image' : withoutExtension;
   }
 
   String _extractCleanUrl(String text) {

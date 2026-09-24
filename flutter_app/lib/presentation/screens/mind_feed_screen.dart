@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -754,6 +755,30 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
     );
   }
 
+  Future<void> _pickAndSaveImage(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 92,
+      maxWidth: 3000,
+      maxHeight: 3000,
+    );
+    if (picked == null || !context.mounted) return;
+
+    try {
+      await ref.read(mindFeedProvider.notifier).addImage(picked);
+      if (context.mounted) {
+        MindToast.showSuccessToast(context, title: 'Image uploaded to ImgBB');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        MindToast.showDeleteToast(context, title: e.toString());
+      }
+    }
+  }
+
   void _showAddUrlDialog(BuildContext context, WidgetRef ref) {
     final urlController = TextEditingController();
     showDialog(
@@ -798,6 +823,21 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
             ),
           ),
           actions: [
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _pickAndSaveImage(context, ref);
+              },
+              icon: const Icon(LucideIcons.image, size: 16),
+              label: const Text('Image'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: const Text(

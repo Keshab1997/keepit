@@ -8,6 +8,8 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>KeepIt</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>KeepIt uses your photo library so you can save images to your visual mind.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

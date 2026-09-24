@@ -102,17 +102,33 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
   }
 
   Future<void> _handleIncomingShare(String sharedText) async {
-    final result = await ref.read(mindFeedProvider.notifier).addUrl(sharedText);
-    if (!mounted) return;
-    final context = navigatorKey.currentContext;
-    if (context != null && context.mounted) {
-      if (result == SaveResult.duplicate) {
-        MindToast.showDuplicateToast(context);
-      } else if (result == SaveResult.success) {
-        MindToast.showSuccessToast(context);
+    try {
+      final notifier = ref.read(mindFeedProvider.notifier);
+      final result = _looksLikeImagePath(sharedText)
+          ? await notifier.addImagePath(sharedText)
+          : await notifier.addUrl(sharedText);
+      if (!mounted) return;
+      final context = navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        if (result == SaveResult.duplicate) {
+          MindToast.showDuplicateToast(context);
+        } else if (result == SaveResult.success) {
+          MindToast.showSuccessToast(context);
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final context = navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        MindToast.showDeleteToast(context, title: e.toString());
       }
     }
   }
+
+  static bool _looksLikeImagePath(String value) => RegExp(
+        r'\.(?:jpe?g|png|webp|gif|heic|heif)(?:[?#].*)?$',
+        caseSensitive: false,
+      ).hasMatch(value.trim());
 
   @override
   Widget build(BuildContext context) {

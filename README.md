@@ -41,6 +41,7 @@ Every day we scroll past dozens of insightful Instagram Reels, YouTube Shorts, T
 | [docs/PLAY_CONSOLE_ANSWERS.md](docs/PLAY_CONSOLE_ANSWERS.md) | Data safety, content rating, account deletion answers |
 | [docs/PLAY_STORE_LISTING.md](docs/PLAY_STORE_LISTING.md) | Store title, descriptions, release notes |
 | [docs/ADMOB_SETUP.md](docs/ADMOB_SETUP.md) | AdMob account, ad units, replacing the test IDs, "contains ads" declaration |
+| [docs/IMGBB_SETUP.md](docs/IMGBB_SETUP.md) | Optional public image uploads with ImgBB; only URLs sync through Firestore |
 | `store_assets/` | 512 icon, 1024×500 feature graphic, `generate_assets.py` (regenerates all app icons) |
 | `docs/*.html` | Privacy policy, Terms, Delete-account pages (GitHub Pages) |
 

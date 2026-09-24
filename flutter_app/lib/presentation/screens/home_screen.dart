@@ -11,6 +11,10 @@ import 'profile_screen.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
+  /// Index of the Profile tab — the banner is hidden there (legal links +
+  /// account actions should stay ad-free).
+  static const int _profileTab = 3;
+
   static const List<Widget> _pages = [
     MindFeedScreen(),
     SpacesScreen(),
@@ -23,7 +27,14 @@ class HomeScreen extends ConsumerWidget {
     final currentIndex = ref.watch(homeTabProvider);
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: _pages[currentIndex],
+      body: Column(
+        children: [
+          Expanded(child: _pages[currentIndex]),
+          // Banner on content tabs only, pinned above the navigation bar.
+          if (AdConfig.enableBanner && currentIndex != _profileTab)
+            const BannerAdSlot(),
+        ],
+      ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,

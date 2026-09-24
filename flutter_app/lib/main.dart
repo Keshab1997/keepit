@@ -29,6 +29,14 @@ void main() async {
   //    NotificationHost once the saved items are loaded).
   await NotificationService().init();
 
+  // 4. Ads (AdMob) — optional monetization. Best-effort: a failure here must
+  //    never block startup. Frequency counters persist in the Hive meta box.
+  try {
+    await AdService.instance.init(prefs: localDataSource.meta);
+  } catch (_) {
+    // Ads are optional; keep booting.
+  }
+
   runApp(
     ProviderScope(
       overrides: [

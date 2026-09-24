@@ -40,6 +40,7 @@ Every day we scroll past dozens of insightful Instagram Reels, YouTube Shorts, T
 | [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md) | Create Firebase project, SHA fingerprints, Google Sign-In, Firestore rules |
 | [docs/PLAY_CONSOLE_ANSWERS.md](docs/PLAY_CONSOLE_ANSWERS.md) | Data safety, content rating, account deletion answers |
 | [docs/PLAY_STORE_LISTING.md](docs/PLAY_STORE_LISTING.md) | Store title, descriptions, release notes |
+| [docs/ADMOB_SETUP.md](docs/ADMOB_SETUP.md) | AdMob account, ad units, replacing the test IDs, "contains ads" declaration |
 | `store_assets/` | 512 icon, 1024×500 feature graphic, `generate_assets.py` (regenerates all app icons) |
 | `docs/*.html` | Privacy policy, Terms, Delete-account pages (GitHub Pages) |
 
@@ -70,6 +71,7 @@ graph TD
 - **Backend Sync:** Firebase Authentication, Cloud Firestore, Cloud Storage, Cloud Functions.
 - **Chrome Extension:** Manifest V3, TypeScript/JavaScript, TailwindCSS popup, Background Service Worker.
 - **Notification Engine:** Firebase Cloud Messaging (FCM) + Flutter Local Notifications (zoned schedule for spaced repetition).
+- **Ads:** Google AdMob (`google_mobile_ads`) — anchored adaptive banner, rate-capped interstitial (post-save), opt-in rewarded "Support KeepIt". Non-personalized by default.
 
 ---
 

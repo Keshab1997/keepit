@@ -9,6 +9,7 @@
 **Contact email:** keshabsarkar2018@gmail.com
 **Website:** https://keshab1997.github.io/keepit/
 **Privacy policy:** https://keshab1997.github.io/keepit/privacy-policy.html
+**Contains ads:** Yes (banner + occasional interstitial + optional rewarded)
 
 **Graphics:** icon `store_assets/play_store_icon_512.png` · feature graphic
 `store_assets/feature_graphic_1024x500.png` · 4–8 phone screenshots (take on device).
@@ -42,7 +43,7 @@ KeepIt works fully offline with no account.
 
 🔒 PRIVATE BY DESIGN
 • Local-first: your data lives on your phone
-• No ads, no trackers, no selling data
+• Light, non-personalized ads (Google AdMob) keep KeepIt free — your data is never sold
 • Export everything as JSON anytime
 • Delete your account and data in one tap
 

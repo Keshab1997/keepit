@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/mind_item.dart';
 import '../../data/datasources/local_mind_datasource.dart';
+import '../../core/ads/ad_service.dart';
 import '../../core/utils/metadata_extractor.dart';
 
 final localDataSourceProvider = Provider<LocalMindDataSource>((ref) {
@@ -136,6 +137,9 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     await _localDataSource.saveItem(newItem);
     state = state.copyWith(items: [newItem, ...state.items]);
     _changed();
+    // Reward-moment ad: an interstitial may appear (frequency caps
+    // permitting) right after a successful save. See AdService.
+    AdService.instance.onItemSaved();
     return SaveResult.success;
   }
 

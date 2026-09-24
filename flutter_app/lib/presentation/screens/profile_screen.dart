@@ -92,6 +92,12 @@ class ProfileScreen extends ConsumerWidget {
               onTap: () => _open(context, AppConfig.playStoreUrl),
             ),
             _Tile(
+              icon: LucideIcons.heart,
+              title: 'Support KeepIt',
+              subtitle: 'Watch a short, optional ad — free for you',
+              onTap: () => _showRewardedAd(context),
+            ),
+            _Tile(
               icon: LucideIcons.mail,
               title: 'Contact support',
               subtitle: AppConfig.supportEmail,
@@ -154,6 +160,24 @@ class ProfileScreen extends ConsumerWidget {
         MindToast.showDuplicateToast(context,
             title: 'Link copied to clipboard');
       }
+    }
+  }
+
+  /// Opt-in rewarded ad: the user chooses to watch a short video to support
+  /// development. Never shown automatically.
+  static Future<void> _showRewardedAd(BuildContext context) async {
+    final earned = await AdService.instance.showRewarded();
+    if (!context.mounted) return;
+    if (earned) {
+      MindToast.showSuccessToast(
+        context,
+        title: 'Thank you for supporting KeepIt! ❤️',
+      );
+    } else {
+      MindToast.showDuplicateToast(
+        context,
+        title: 'Ad not ready — try again in a moment',
+      );
     }
   }
 

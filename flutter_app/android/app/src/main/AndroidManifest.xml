@@ -25,6 +25,13 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         
+        <!-- AdMob app ID. Currently Google's official TEST app id — replace
+             with your own (ca-app-pub-xxxxxxxx~yyyy) before release.
+             See docs/ADMOB_SETUP.md. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
         <activity
             android:name="io.flutter.embedding.android.FlutterActivity"
             android:exported="true"

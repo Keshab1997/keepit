@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -9,8 +8,32 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:keepit/data/datasources/local_mind_datasource.dart';
 import 'package:keepit/domain/entities/mind_item.dart';
 import 'package:keepit/presentation/controllers/mind_feed_controller.dart';
-import 'package:keepit/presentation/screens/home_screen.dart';
 import 'package:keepit/presentation/screens/onboarding_screen.dart';
+
+/// Keeps the sync/meta box in memory for the widget tests.
+///
+/// A Hive write issued from a widget test's fake-async zone never completes,
+/// so the onboarding flag write — and the navigation that waits for it —
+/// could never be observed. Saved items still live in a real Hive box, so
+/// HomeScreen and MindFeedController behave exactly as they do in the app.
+class _InMemoryMetaDataSource extends LocalMindDataSource {
+  final Map<String, Object?> _metaValues = <String, Object?>{};
+
+  @override
+  T? getMeta<T>(String key) {
+    final value = _metaValues[key];
+    return value is T ? value : null;
+  }
+
+  @override
+  Future<void> putMeta(String key, Object? value) async {
+    if (value == null) {
+      _metaValues.remove(key);
+    } else {
+      _metaValues[key] = value;
+    }
+  }
+}
 
 void main() {
   late Directory tempDir;
@@ -19,11 +42,10 @@ void main() {
   setUpAll(() async {
     tempDir = await Directory.systemTemp.createTemp('keepit_onboarding_');
     Hive.init(tempDir.path);
-    dataSource = LocalMindDataSource();
+    dataSource = _InMemoryMetaDataSource();
     await dataSource.init();
-    // Pre-seed one item so MindFeedController skips its demo-data seeding:
-    // seeding writes to Hive from inside the test's fake-async zone, where
-    // those writes never complete.
+    // Seed one item so MindFeedController skips its demo-data seeding, which
+    // would write to Hive from inside the test's fake-async zone.
     await dataSource.saveItem(
       MindItem(
         id: 'onboarding-seed',
@@ -67,31 +89,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
   }
 
-  /// Clears the "onboarding seen" flag. A Hive write issued from the test's
-  /// fake-async zone never completes, so the delete is fired on the real event
-  /// loop and given real time to flush. Note that the write future itself must
-  /// not be awaited here: awaiting it inside runAsync never returns.
-  Future<void> resetSeenFlag(WidgetTester tester) async {
-    unawaited(
-      dataSource.putMeta(LocalMindDataSource.onboardingSeenKey, null),
-    );
-    await tester.runAsync(() async {
-      await Future<void>.delayed(const Duration(milliseconds: 300));
-    });
-  }
-
-  /// Finishing onboarding persists the flag in Hive (real async file I/O) and
-  /// only then navigates, so drain the real event loop and pump until the
-  /// home screen is really on screen instead of guessing a frame count.
-  Future<void> settleUntilHome(WidgetTester tester) async {
-    for (var i = 0; i < 20; i++) {
-      if (find.byType(HomeScreen).evaluate().isNotEmpty) return;
-      await tester.pump(const Duration(milliseconds: 50));
-      await tester.runAsync(() async {
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-      });
-    }
+  /// Finishing onboarding navigates once the flag is stored.
+  Future<void> finishOnboarding(WidgetTester tester) async {
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(milliseconds: 100));
   }
 
@@ -122,10 +123,9 @@ void main() {
 
   testWidgets('Skip stores the flag and opens the home screen', (tester) async {
     await pumpOnboarding(tester);
-    await resetSeenFlag(tester);
 
     await tester.tap(find.text('Skip'));
-    await settleUntilHome(tester);
+    await finishOnboarding(tester);
 
     // Flag persisted, so onboarding never shows again.
     expect(
@@ -141,7 +141,6 @@ void main() {
   testWidgets('Get started on the last page also completes onboarding',
       (tester) async {
     await pumpOnboarding(tester);
-    await resetSeenFlag(tester);
 
     for (var i = 0; i < 3; i++) {
       await tester.tap(find.text('Next'));
@@ -150,7 +149,7 @@ void main() {
     expect(find.text('Get started'), findsOneWidget);
 
     await tester.tap(find.text('Get started'));
-    await settleUntilHome(tester);
+    await finishOnboarding(tester);
 
     expect(
       onboardingSeenFlag(),

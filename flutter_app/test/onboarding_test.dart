@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -66,13 +67,17 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
   }
 
-  /// Clears the "onboarding seen" flag. This has to happen on the real event
-  /// loop: a Hive write issued from the test's fake-async zone never
-  /// completes, which would leave the flag stuck for the next test.
+  /// Clears the "onboarding seen" flag. A Hive write issued from the test's
+  /// fake-async zone never completes, so the delete is fired on the real event
+  /// loop and given real time to flush. Note that the write future itself must
+  /// not be awaited here: awaiting it inside runAsync never returns.
   Future<void> resetSeenFlag(WidgetTester tester) async {
-    await tester.runAsync(
-      () => dataSource.putMeta(LocalMindDataSource.onboardingSeenKey, null),
+    unawaited(
+      dataSource.putMeta(LocalMindDataSource.onboardingSeenKey, null),
     );
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
   }
 
   /// Finishing onboarding persists the flag in Hive (real async file I/O) and

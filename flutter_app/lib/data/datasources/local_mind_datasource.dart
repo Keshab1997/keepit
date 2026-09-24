@@ -11,6 +11,9 @@ class LocalMindDataSource {
   /// sample cards never come back.
   static const String demoSeededKey = 'demo_seeded';
 
+  /// Set once the first-launch onboarding has been shown (finished or skipped).
+  static const onboardingSeenKey = 'onboarding_seen';
+
   Box? _box;
   Box? _meta;
 

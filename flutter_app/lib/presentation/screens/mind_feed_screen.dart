@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -24,6 +25,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  Timer? _searchDebounce;
   final ValueNotifier<double> _scrollProgressNotifier = ValueNotifier<double>(
     0.0,
   );
@@ -197,6 +199,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
     _jiggleController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchDebounce?.cancel();
     _searchController.dispose();
     _scrollProgressNotifier.dispose();
     super.dispose();
@@ -410,7 +413,10 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                                 padding:
                                     const EdgeInsets.fromLTRB(16, 6, 16, 20),
                                 itemCount: items.length,
-                                addAutomaticKeepAlives: true,
+                                // Do not retain every off-screen card; image cards
+                                // can be large and CachedNetworkImage already caches
+                                // the decoded thumbnail.
+                                addAutomaticKeepAlives: false,
                                 addRepaintBoundaries: true,
                                 itemBuilder: (context, index) {
                                   final item = items[index];
@@ -525,11 +531,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
       child: Row(
         children: [
           Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: Container(
+            child: Container(
                   height: 50,
                   decoration: BoxDecoration(
                     color: AppColors.glassWhite,
@@ -549,7 +551,17 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                   child: TextField(
                     controller: _searchController,
                     onChanged: (val) {
-                      ref.read(mindFeedProvider.notifier).setSearchQuery(val);
+                      _searchDebounce?.cancel();
+                      _searchDebounce = Timer(
+                        const Duration(milliseconds: 180),
+                        () {
+                          if (mounted) {
+                            ref
+                                .read(mindFeedProvider.notifier)
+                                .setSearchQuery(val);
+                          }
+                        },
+                      );
                     },
                     decoration: InputDecoration(
                       hintText: "Search my mind...",
@@ -567,6 +579,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                           ? IconButton(
                               icon: const Icon(LucideIcons.x, size: 16),
                               onPressed: () {
+                                _searchDebounce?.cancel();
                                 _searchController.clear();
                                 ref
                                     .read(mindFeedProvider.notifier)
@@ -578,8 +591,6 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                       contentPadding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
-                ),
-              ),
             ),
           ),
           const SizedBox(width: 10),

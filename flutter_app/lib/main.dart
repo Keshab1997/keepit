@@ -27,14 +27,16 @@ void main() async {
   final localDataSource = LocalMindDataSource();
   await localDataSource.init();
 
-  // 2. Firebase (optional — the app runs fully offline without it)
-  await FirebaseBootstrap.init();
+  // Firebase and notifications are independent after Hive is ready. Start
+  // them together so a slow optional service does not delay the other one.
+  await Future.wait<void>([
+    // Firebase is optional — the app runs fully offline without it.
+    FirebaseBootstrap.init(),
+    // Scheduling happens in NotificationHost once the saved items are loaded.
+    NotificationService().init(),
+  ]);
 
-  // 3. Initialize Serendipity Notification Service (scheduling happens in
-  //    NotificationHost once the saved items are loaded).
-  await NotificationService().init();
-
-  // 4. Ads (AdMob) — optional monetization. Best-effort: a failure here must
+  // Ads (AdMob) — optional monetization. Best-effort: a failure here must
   //    never block startup. Frequency counters persist in the Hive meta box.
   try {
     await AdService.instance.init(prefs: localDataSource.meta);

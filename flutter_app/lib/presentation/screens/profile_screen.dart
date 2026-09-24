@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -567,10 +568,13 @@ class _Avatar extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: photo != null
-          ? Image.network(
-              photo,
+          ? CachedNetworkImage(
+              imageUrl: photo,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _fallback(),
+              memCacheWidth: 116,
+              memCacheHeight: 116,
+              filterQuality: FilterQuality.low,
+              errorWidget: (_, __, ___) => _fallback(),
             )
           : _fallback(),
     );

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -295,9 +296,12 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                     children: [
                       AspectRatio(
                         aspectRatio: 1.6,
-                        child: Image.network(
-                          item.thumbnailUrl!,
+                        child: CachedNetworkImage(
+                          imageUrl: item.thumbnailUrl!,
                           fit: BoxFit.cover,
+                          memCacheWidth: 900,
+                          memCacheHeight: 560,
+                          filterQuality: FilterQuality.low,
                         ),
                       ),
                       Positioned(
@@ -531,11 +535,14 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
           leading: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: item.thumbnailUrl != null
-                ? Image.network(
-                    item.thumbnailUrl!,
+                ? CachedNetworkImage(
+                    imageUrl: item.thumbnailUrl!,
                     width: 48,
                     height: 48,
                     fit: BoxFit.cover,
+                    memCacheWidth: 96,
+                    memCacheHeight: 96,
+                    filterQuality: FilterQuality.low,
                   )
                 : Container(
                     width: 48,

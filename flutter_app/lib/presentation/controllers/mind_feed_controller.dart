@@ -41,20 +41,23 @@ class MindFeedState {
   }
 
   List<MindItem> get filteredItems {
-    return items.where((item) {
-      final matchesQuery = searchQuery.isEmpty ||
-          item.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
-          (item.content?.toLowerCase().contains(searchQuery.toLowerCase()) ??
-              false) ||
-          item.tags.any(
-            (t) => t.toLowerCase().contains(searchQuery.toLowerCase()),
-          );
+    final query = searchQuery.trim().toLowerCase();
+    final tag = selectedTag?.trim().toLowerCase();
+    final hasTagFilter = tag != null && tag.isNotEmpty && tag != 'all';
 
-      final matchesTag = selectedTag == null ||
-          selectedTag!.isEmpty ||
-          selectedTag == 'all' ||
-          item.tags.any((t) => t.toLowerCase() == selectedTag!.toLowerCase()) ||
-          item.type.name.toLowerCase().contains(selectedTag!.toLowerCase());
+    // Avoid scanning and lower-casing every card on the common unfiltered
+    // feed path. The returned list is read-only by convention.
+    if (query.isEmpty && !hasTagFilter) return items;
+
+    return items.where((item) {
+      final matchesQuery = query.isEmpty ||
+          item.title.toLowerCase().contains(query) ||
+          (item.content?.toLowerCase().contains(query) ?? false) ||
+          item.tags.any((t) => t.toLowerCase().contains(query));
+
+      final matchesTag = !hasTagFilter ||
+          item.tags.any((t) => t.toLowerCase() == tag) ||
+          item.type.name.toLowerCase().contains(tag!);
 
       return matchesQuery && matchesTag;
     }).toList();

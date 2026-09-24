@@ -61,10 +61,13 @@ class MindCardWidget extends StatelessWidget {
                       child: CachedNetworkImage(
                         imageUrl: item.thumbnailUrl!,
                         fit: BoxFit.cover,
-                        memCacheWidth:
-                            450, // Optimize memory downsampling for 120 FPS buttery scrolling
-                        memCacheHeight: 600,
-                        fadeInDuration: const Duration(milliseconds: 150),
+                        // Two-column cards are much smaller than the source
+                        // image. Decode a bounded thumbnail to reduce memory and
+                        // raster work while scrolling.
+                        memCacheWidth: 360,
+                        memCacheHeight: 480,
+                        filterQuality: FilterQuality.low,
+                        fadeInDuration: const Duration(milliseconds: 100),
                         placeholder: (context, url) => Container(
                           color: const Color(0xFFF1F3F6),
                           child: const Center(

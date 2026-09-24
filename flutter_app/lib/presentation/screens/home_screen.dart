@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+
+import '../../core/ads/ad_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../controllers/navigation_controller.dart';
+import '../widgets/banner_ad_widget.dart';
 import 'mind_feed_screen.dart';
 import 'spaces_screen.dart';
 import 'serendipity_screen.dart';

@@ -8,6 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:keepit/data/datasources/local_mind_datasource.dart';
 import 'package:keepit/domain/entities/mind_item.dart';
 import 'package:keepit/presentation/controllers/mind_feed_controller.dart';
+import 'package:keepit/presentation/screens/home_screen.dart';
 import 'package:keepit/presentation/screens/onboarding_screen.dart';
 
 void main() {
@@ -65,18 +66,32 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
   }
 
-  /// Finishing onboarding persists a flag in Hive (real async file I/O) and
-  /// only then navigates, so the real event loop has to be drained with
-  /// runAsync before the frame that contains HomeScreen is pumped.
-  Future<void> finishOnboarding(WidgetTester tester) async {
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    await tester.runAsync(() async {
-      await Future<void>.delayed(const Duration(milliseconds: 400));
-    });
+  /// Clears the "onboarding seen" flag. This has to happen on the real event
+  /// loop: a Hive write issued from the test's fake-async zone never
+  /// completes, which would leave the flag stuck for the next test.
+  Future<void> resetSeenFlag(WidgetTester tester) async {
+    await tester.runAsync(
+      () => dataSource.putMeta(LocalMindDataSource.onboardingSeenKey, null),
+    );
+  }
+
+  /// Finishing onboarding persists the flag in Hive (real async file I/O) and
+  /// only then navigates, so drain the real event loop and pump until the
+  /// home screen is really on screen instead of guessing a frame count.
+  Future<void> settleUntilHome(WidgetTester tester) async {
+    for (var i = 0; i < 20; i++) {
+      if (find.byType(HomeScreen).evaluate().isNotEmpty) return;
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+    }
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
   }
+
+  bool onboardingSeenFlag() =>
+      dataSource.getMeta<bool>(LocalMindDataSource.onboardingSeenKey) == true;
 
   testWidgets('Next walks through all four pages', (tester) async {
     await pumpOnboarding(tester);
@@ -102,14 +117,16 @@ void main() {
 
   testWidgets('Skip stores the flag and opens the home screen', (tester) async {
     await pumpOnboarding(tester);
+    await resetSeenFlag(tester);
 
     await tester.tap(find.text('Skip'));
-    await finishOnboarding(tester);
+    await settleUntilHome(tester);
 
     // Flag persisted, so onboarding never shows again.
     expect(
-      dataSource.getMeta<bool>(LocalMindDataSource.onboardingSeenKey),
+      onboardingSeenFlag(),
       isTrue,
+      reason: 'Skip did not persist the onboarding flag',
     );
     // Home screen (bottom navigation) took over.
     expect(find.text('Everything'), findsOneWidget);
@@ -119,17 +136,21 @@ void main() {
   testWidgets('Get started on the last page also completes onboarding',
       (tester) async {
     await pumpOnboarding(tester);
+    await resetSeenFlag(tester);
 
     for (var i = 0; i < 3; i++) {
       await tester.tap(find.text('Next'));
       await turnPage(tester);
     }
+    expect(find.text('Get started'), findsOneWidget);
+
     await tester.tap(find.text('Get started'));
-    await finishOnboarding(tester);
+    await settleUntilHome(tester);
 
     expect(
-      dataSource.getMeta<bool>(LocalMindDataSource.onboardingSeenKey),
+      onboardingSeenFlag(),
       isTrue,
+      reason: 'Get started did not persist the onboarding flag',
     );
     expect(find.text('Everything'), findsOneWidget);
   });

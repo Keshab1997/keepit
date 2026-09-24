@@ -137,7 +137,11 @@ void main() {
     expect(find.text('Sign out'), findsOneWidget);
     expect(find.text('Delete all local data'), findsNothing);
 
-    // Delete account requires typing DELETE.
+    // Delete account requires typing DELETE. Scroll the tile fully into view
+    // first (the list gained a "Support KeepIt" tile, so the delete row can
+    // otherwise end up half below the fold and swallow the tap).
+    await tester.ensureVisible(find.text('Delete account'));
+    await tester.pump();
     await tester.tap(find.text('Delete account'));
     await tester.pumpAndSettle();
     final confirm = find.widgetWithText(FilledButton, 'Delete account');

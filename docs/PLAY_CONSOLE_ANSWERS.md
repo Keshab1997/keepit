@@ -22,7 +22,7 @@ communicate with each other; items are private). Expected rating: **Everyone / 3
 
 Import `docs/PLAY_STORE_DATA_SAFETY.csv` from Play Console → App content → Data safety → **Import from CSV**. Do not open and re-save it in Excel first. The file uses Google's official 5-column header; a notes column or shortened header is rejected as `Line 1: Invalid header row`.
 
-Account creation method, the deletion URL, Families, MASA and the UPI badge are **not** part of this CSV. Fill those on their own Play Console screens. Deletion URL: `https://keshab1997.github.io/keepit/delete-account.html`.
+The current Play Console form also requires account-creation and deletion rows. Those are filled in the CSV: OAuth only, deletion URL `https://keshab1997.github.io/keepit/delete-account.html`, no Families commitment, no MASA review, no UPI badge.
 
 ### Variant A: Firebase Cloud Sync + AdMob (current `flutter_app`)
 

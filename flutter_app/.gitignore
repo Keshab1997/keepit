@@ -49,8 +49,30 @@ app.*.map.json
 /ios/Runner/GoogleService-Info.plist
 /android/key.properties
 
-# Local environment (flutter_dotenv) — never reveal API keys
-/.env
+# Local environment (flutter_dotenv).
+#
+# `flutter_app/.env` IS TRACKED, on purpose. pubspec.yaml lists `.env` under
+# `flutter: assets:` so flutter_dotenv can bundle it, and Flutter fails the
+# build when a declared asset is missing -- a fresh clone (and therefore CI)
+# used to break `flutter analyze --fatal-infos` with `asset_does_not_exist`.
+# The tracked file is a comment-only placeholder.
+#
+# The `!/.env` rule below just keeps this file out of the ignore list. Note
+# that ignore rules have NO effect on a path git already tracks, so nothing
+# here stops a real key from being committed once you type one into `.env`.
+#
+# Two safe ways to supply IMGBB_API_KEY, best first:
+#
+#   1. Do not use .env at all -- pass it at build time (see docs/IMGBB_SETUP.md):
+#        flutter run --dart-define=IMGBB_API_KEY=YOUR_KEY
+#
+#   2. If you want it in .env, hide your local copy from git first:
+#        echo 'IMGBB_API_KEY=YOUR_KEY' >> flutter_app/.env
+#        git update-index --skip-worktree flutter_app/.env
+#      Undo with: git update-index --no-skip-worktree flutter_app/.env
+#
+# Check before every commit that `git status` does not list flutter_app/.env.
+!/.env
 /.env.*.local
 
 # Widget Preview related

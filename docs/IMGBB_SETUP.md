@@ -24,6 +24,47 @@ recoverable from a mobile binary, so use an ImgBB key dedicated to KeepIt and
 monitor/rotate it if necessary. ImgBB URLs are public; do not use this mode for
 private images.
 
+## The committed `.env` placeholder
+
+`flutter_app/.env` **is** in the repository, and it is intentionally empty of
+secrets. `pubspec.yaml` lists `.env` under `flutter: assets:` because
+`flutter_dotenv` needs the file bundled to read it at runtime. Flutter treats a
+declared asset that does not exist as a build error, so a fresh clone — and
+therefore CI — used to fail:
+
+```text
+warning • The asset file '.env' doesn't exist • pubspec.yaml:70:7 • asset_does_not_exist
+```
+
+`ci.yml` runs `flutter analyze --fatal-infos`, which turns even that single
+warning into a failed build. The committed placeholder satisfies the asset
+declaration and contains only comments.
+
+The app never depended on the file being present: `lib/main.dart` calls
+`await dotenv.load(isOptional: true)` and `ImgBbUploader` falls back to the
+`--dart-define` value above. Uploading is simply disabled until a key exists,
+which is what you want in CI and in tests.
+
+**Prefer `--dart-define`.** `.gitignore` cannot protect `flutter_app/.env`
+because git ignore rules have no effect on a path that is already tracked — so
+if you type a real key into it, `git status` will offer that change in your next
+commit. To keep a local key out of git, hide the file from the index *before*
+editing it:
+
+```bash
+git update-index --skip-worktree flutter_app/.env
+echo 'IMGBB_API_KEY=YOUR_IMGBB_KEY' >> flutter_app/.env
+
+# undo later
+git update-index --no-skip-worktree flutter_app/.env
+```
+
+`skip-worktree` is per clone — set it again after every fresh clone. As a habit,
+check that `git status` does not list `flutter_app/.env` before committing.
+
+Scratch files matching `.env.*.local` are still git-ignored, so
+`flutter_app/.env.dev.local` and similar are safe to create freely.
+
 ## GitHub Secret
 
 You may store the key as a repository secret named `IMGBB_API_KEY`:

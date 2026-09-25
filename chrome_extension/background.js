@@ -19,8 +19,61 @@ function notifySaved(item, duplicate) {
   });
 }
 
-async function saveItem(rawItem) {
-  const result = await KeepItFirebaseSync.saveLocalItem(rawItem);
+async function readPageMetadata(tabId) {
+  if (!tabId) return {};
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        const meta = (selector) => document.querySelector(selector)?.content?.trim() || '';
+        const first = (...selectors) => {
+          for (const selector of selectors) {
+            const value = meta(selector);
+            if (value) return value;
+          }
+          return '';
+        };
+        return {
+          title: first('meta[property="og:title"]', 'meta[name="twitter:title"]') || document.title,
+          content: first(
+            'meta[property="og:description"]',
+            'meta[name="twitter:description"]',
+            'meta[name="description"]',
+          ),
+          thumbnailUrl: first(
+            'meta[property="og:image"]',
+            'meta[name="twitter:image"]',
+          ),
+          authorName: first(
+            'meta[property="article:author"]',
+            'meta[name="author"]',
+          ),
+          siteName: first('meta[property="og:site_name"]'),
+        };
+      },
+    });
+    return results[0]?.result || {};
+  } catch (_) {
+    // chrome:// pages and restricted tabs do not allow script injection.
+    return {};
+  }
+}
+
+async function enrichPageItem(rawItem, tabId) {
+  if (!tabId || rawItem.type !== 'webArticle') return rawItem;
+  const metadata = await readPageMetadata(tabId);
+  return {
+    ...rawItem,
+    title: metadata.title || rawItem.title,
+    content: rawItem.content || metadata.content || null,
+    thumbnailUrl: rawItem.thumbnailUrl || metadata.thumbnailUrl || null,
+    authorName: rawItem.authorName || metadata.authorName || metadata.siteName || null,
+  };
+}
+
+async function saveItem(rawItem, tabId) {
+  const enriched = await enrichPageItem(rawItem, tabId);
+  const result = await KeepItFirebaseSync.saveLocalItem(enriched);
   notifySaved(result.item, result.duplicate);
   return result;
 }
@@ -112,7 +165,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   try {
-    await saveItem(itemFromContext(info, tab));
+    await saveItem(itemFromContext(info, tab), tab?.id);
   } catch (error) {
     console.error('KeepIt save failed:', error);
   }
@@ -131,16 +184,16 @@ chrome.commands.onCommand.addListener(async (command) => {
       tags: ['bookmark', 'quick-save'],
       createdAt: timestamp(),
       updatedAt: timestamp(),
-    });
+    }, tab?.id);
   } catch (error) {
     console.error('KeepIt shortcut save failed:', error);
   }
 });
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     if (message?.type === 'save_item') {
-      return saveItem(message.item || {});
+      return saveItem(message.item || {}, sender.tab?.id);
     }
     if (message?.type === 'sync_now') {
       return KeepItFirebaseSync.syncNow({ interactive: false });

@@ -809,6 +809,14 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                     },
                   ),
                   _buildActionTile(
+                    icon: LucideIcons.pencil,
+                    title: "Edit title, note & tags",
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _showEditDialog(context, ref, item);
+                    },
+                  ),
+                  _buildActionTile(
                     icon: LucideIcons.brain,
                     title: item.isTopMind
                         ? "Remove from Top of Mind"
@@ -841,6 +849,88 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
         );
       },
     );
+  }
+
+  Future<void> _showEditDialog(
+    BuildContext context,
+    WidgetRef ref,
+    MindItem item,
+  ) async {
+    final titleController = TextEditingController(text: item.title);
+    final contentController = TextEditingController(text: item.content ?? '');
+    final tagsController = TextEditingController(text: item.tags.join(', '));
+    final formKey = GlobalKey<FormState>();
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Edit item'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: titleController,
+                  autofocus: true,
+                  maxLength: 160,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Add a title'
+                      : null,
+                ),
+                TextFormField(
+                  controller: contentController,
+                  maxLines: 5,
+                  maxLength: 20000,
+                  decoration: const InputDecoration(
+                    labelText: 'Note or description',
+                    alignLabelWithHint: true,
+                  ),
+                ),
+                TextFormField(
+                  controller: tagsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Tags',
+                    hintText: 'ai, reading, ideas',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() == true) {
+                Navigator.pop(dialogContext, true);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (saved == true && context.mounted) {
+      await ref.read(mindFeedProvider.notifier).editItem(
+            item.id,
+            title: titleController.text,
+            content: contentController.text,
+            tags: tagsController.text.split(','),
+          );
+      if (context.mounted) {
+        MindToast.showSuccessToast(context, title: 'Item updated');
+      }
+    }
+    titleController.dispose();
+    contentController.dispose();
+    tagsController.dispose();
   }
 
   Widget _buildActionTile({

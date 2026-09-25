@@ -50,9 +50,16 @@ class MindFeedState {
     if (query.isEmpty && !hasTagFilter) return items;
 
     return items.where((item) {
+      final domain = item.url == null
+          ? ''
+          : (Uri.tryParse(item.url!)?.host.toLowerCase() ?? '');
       final matchesQuery = query.isEmpty ||
           item.title.toLowerCase().contains(query) ||
           (item.content?.toLowerCase().contains(query) ?? false) ||
+          (item.authorName?.toLowerCase().contains(query) ?? false) ||
+          domain.contains(query) ||
+          (item.dominantColorHex?.toLowerCase().contains(query) ?? false) ||
+          item.type.name.toLowerCase().contains(query) ||
           item.tags.any((t) => t.toLowerCase().contains(query));
 
       final matchesTag = !hasTagFilter ||
@@ -277,6 +284,39 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     if (updated == null) return;
     // Persist before notifying sync; otherwise the debounce can race the Hive
     // write and upload the previous version.
+    await _localDataSource.updateItem(updated!);
+    state = state.copyWith(items: updatedList);
+    _changed();
+  }
+
+  /// Edits the user-controlled fields of an item and queues the change for
+  /// cloud sync. Empty notes are removed instead of leaving stale content.
+  Future<void> editItem(
+    String id, {
+    required String title,
+    required String content,
+    required List<String> tags,
+  }) async {
+    MindItem? updated;
+    final cleanTitle = title.trim().isEmpty ? 'Untitled' : title.trim();
+    final cleanTags = tags
+        .map((tag) => tag.trim().replaceFirst(RegExp(r'^#'), ''))
+        .where((tag) => tag.isNotEmpty)
+        .toSet()
+        .take(50)
+        .toList();
+    final updatedList = state.items.map((item) {
+      if (item.id != id) return item;
+      updated = item.copyWith(
+        title: cleanTitle,
+        content: content.trim(),
+        clearContent: content.trim().isEmpty,
+        tags: cleanTags,
+        updatedAt: DateTime.now().toUtc(),
+      );
+      return updated!;
+    }).toList();
+    if (updated == null) return;
     await _localDataSource.updateItem(updated!);
     state = state.copyWith(items: updatedList);
     _changed();

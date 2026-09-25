@@ -10,7 +10,7 @@ The KeepIt Chrome Extension enables instant 1-click saving of web pages, YouTube
 - **UI:** Minimal TailwindCSS floating badge / popup modal
 - **Authentication:** Firebase Auth via Google OAuth in `chrome.identity`; the Firebase ID/refresh token pair is kept in extension storage and never logged.
 - **Cloud transport:** Firestore REST API, using the same `users/{uid}/items/{itemId}` documents as the Flutter app.
-- **Background Service Worker:** Intercepts context-menu clicks, keyboard shortcuts, normalizes item data, de-duplicates URLs, and runs the offline sync queue.
+- **Background Service Worker:** Intercepts context-menu clicks, keyboard shortcuts, extracts Open Graph metadata from accessible pages, normalizes item data, de-duplicates URLs, and runs the offline sync queue.
 
 ---
 

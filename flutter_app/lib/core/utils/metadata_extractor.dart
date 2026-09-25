@@ -195,9 +195,10 @@ class MetadataExtractor {
         id: id,
         title: cleanTitle,
         content: description,
-        url: cleanUrl,
+        url: scraped['canonicalUrl'] ?? cleanUrl,
         thumbnailUrl: scraped['image'],
-        authorName: scraped['siteName'] ?? uri?.host ?? 'Web',
+        authorName:
+            scraped['author'] ?? scraped['siteName'] ?? uri?.host ?? 'Web',
         type: ItemType.webArticle,
         tags: tags,
         dominantColorHex: '#4A90E2',
@@ -585,7 +586,9 @@ class MetadataExtractor {
     final urlRegex = RegExp(r'(https?://[^\s]+)');
     final match = urlRegex.firstMatch(text);
     if (match != null) {
-      return match.group(0)!;
+      // Share sheets often append punctuation around a URL. Removing it here
+      // improves metadata fetches and makes duplicate detection consistent.
+      return match.group(0)!.replaceFirst(RegExp(r'[.,!?;:)\]}]+$'), '');
     }
     return text.trim();
   }
@@ -642,12 +645,87 @@ class MetadataExtractor {
     final siteName = doc
         .querySelector('meta[property="og:site_name"]')
         ?.attributes['content'];
+    final canonicalUrl =
+        doc.querySelector('link[rel="canonical"]')?.attributes['href'];
+
+    // JSON-LD is often richer than Open Graph: articles commonly expose a
+    // clean headline, author, image and canonical URL here. Parse it as a
+    // fallback without trusting arbitrary script output as executable code.
+    String? ldTitle;
+    String? ldDescription;
+    String? ldImage;
+    String? ldAuthor;
+    String? ldUrl;
+    for (final script
+        in doc.querySelectorAll('script[type="application/ld+json"]')) {
+      try {
+        final decoded = jsonDecode(script.text);
+        for (final object in _jsonLdObjects(decoded)) {
+          final type = _jsonLdString(object['@type'])?.toLowerCase() ?? '';
+          if (type.isNotEmpty &&
+              !type.contains('article') &&
+              !type.contains('creativework') &&
+              !type.contains('video') &&
+              !type.contains('image')) {
+            continue;
+          }
+          ldTitle ??= _jsonLdString(object['headline']) ??
+              _jsonLdString(object['name']);
+          ldDescription ??= _jsonLdString(object['description']);
+          ldImage ??= _jsonLdImage(object['image']);
+          ldAuthor ??= _jsonLdString(object['author']);
+          ldUrl ??= _jsonLdString(object['url']);
+        }
+      } catch (_) {
+        // Many sites emit malformed or multiple JSON-LD blocks; keep scraping.
+      }
+    }
 
     return {
-      'title': title?.trim(),
-      'image': image?.trim(),
-      'description': description?.trim(),
+      'title': (title?.trim().isNotEmpty == true ? title : ldTitle)?.trim(),
+      'image': (image?.trim().isNotEmpty == true ? image : ldImage)?.trim(),
+      'description':
+          (description?.trim().isNotEmpty == true ? description : ldDescription)
+              ?.trim(),
       'siteName': siteName?.trim(),
+      'author': ldAuthor?.trim(),
+      'canonicalUrl':
+          (canonicalUrl?.trim().isNotEmpty == true ? canonicalUrl : ldUrl)
+              ?.trim(),
     };
+  }
+
+  static Iterable<Map<String, dynamic>> _jsonLdObjects(dynamic value) sync* {
+    if (value is List) {
+      for (final entry in value) {
+        yield* _jsonLdObjects(entry);
+      }
+      return;
+    }
+    if (value is Map) {
+      final graph = value['@graph'];
+      if (graph != null) yield* _jsonLdObjects(graph);
+      yield Map<String, dynamic>.from(value);
+    }
+  }
+
+  static String? _jsonLdString(dynamic value) {
+    if (value is String) return value.trim().isEmpty ? null : value.trim();
+    if (value is List && value.isNotEmpty) return _jsonLdString(value.first);
+    if (value is Map) {
+      return _jsonLdString(value['name']) ??
+          _jsonLdString(value['url']) ??
+          _jsonLdString(value['text']);
+    }
+    return null;
+  }
+
+  static String? _jsonLdImage(dynamic value) {
+    if (value is String) return value;
+    if (value is List && value.isNotEmpty) return _jsonLdImage(value.first);
+    if (value is Map) {
+      return _jsonLdString(value['url']) ?? _jsonLdString(value['contentUrl']);
+    }
+    return null;
   }
 }

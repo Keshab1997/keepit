@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../domain/entities/custom_space.dart';
 import '../../domain/entities/mind_item.dart';
 
 class LocalMindDataSource {
@@ -14,6 +15,10 @@ class LocalMindDataSource {
 
   /// Set once the first-launch onboarding has been shown (finished or skipped).
   static const onboardingSeenKey = 'onboarding_seen';
+
+  /// User-created Spaces are stored in the local meta box and sync through
+  /// each item's `spaceId` field. Built-in smart spaces remain code-defined.
+  static const customSpacesKey = 'custom_spaces';
 
   Box? _box;
   Box? _meta;
@@ -144,6 +149,53 @@ class LocalMindDataSource {
       await meta.delete(key);
     } else {
       await meta.put(key, value);
+    }
+  }
+
+  Future<List<CustomSpace>> getCustomSpaces() async {
+    final raw = meta.get(customSpacesKey);
+    if (raw is! List) return const [];
+    final spaces = <CustomSpace>[];
+    for (final value in raw) {
+      if (value is! Map) continue;
+      try {
+        spaces.add(CustomSpace.fromMap(value));
+      } catch (_) {
+        // Ignore one corrupt Space instead of hiding the rest of the library.
+      }
+    }
+    return spaces;
+  }
+
+  Future<void> saveCustomSpaces(List<CustomSpace> spaces) async {
+    await meta.put(
+      customSpacesKey,
+      spaces.map((space) => space.toMap()).toList(),
+    );
+  }
+
+  /// Deletes a Space and unassigns its items so no orphaned space IDs remain.
+  Future<void> deleteCustomSpace(String spaceId) async {
+    final spaces = await getCustomSpaces();
+    await saveCustomSpaces(
+        spaces.where((space) => space.id != spaceId).toList());
+    final affected = <MindItem>[];
+    for (final raw in box.values) {
+      if (raw is! Map) continue;
+      try {
+        final item = MindItem.fromMap(raw);
+        if (item.spaceId == spaceId) {
+          affected.add(
+            item.copyWith(
+              clearSpaceId: true,
+              updatedAt: DateTime.now().toUtc(),
+            ),
+          );
+        }
+      } catch (_) {}
+    }
+    for (final item in affected) {
+      await saveItem(item);
     }
   }
 

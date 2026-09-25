@@ -9,6 +9,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/mind_toast.dart';
 import '../../core/utils/external_link_launcher.dart';
+import '../../domain/entities/custom_space.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/mind_feed_controller.dart';
 
@@ -859,61 +860,85 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
     final titleController = TextEditingController(text: item.title);
     final contentController = TextEditingController(text: item.content ?? '');
     final tagsController = TextEditingController(text: item.tags.join(', '));
+    final spaces = await ref.read(localDataSourceProvider).getCustomSpaces();
+    String? selectedSpaceId =
+        spaces.any((space) => space.id == item.spaceId) ? item.spaceId : null;
     final formKey = GlobalKey<FormState>();
 
     final saved = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit item'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: titleController,
-                  autofocus: true,
-                  maxLength: 160,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Add a title'
-                      : null,
-                ),
-                TextFormField(
-                  controller: contentController,
-                  maxLines: 5,
-                  maxLength: 20000,
-                  decoration: const InputDecoration(
-                    labelText: 'Note or description',
-                    alignLabelWithHint: true,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Edit item'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    autofocus: true,
+                    maxLength: 160,
+                    decoration: const InputDecoration(labelText: 'Title'),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Add a title'
+                        : null,
                   ),
-                ),
-                TextFormField(
-                  controller: tagsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Tags',
-                    hintText: 'ai, reading, ideas',
+                  TextFormField(
+                    controller: contentController,
+                    maxLines: 5,
+                    maxLength: 20000,
+                    decoration: const InputDecoration(
+                      labelText: 'Note or description',
+                      alignLabelWithHint: true,
+                    ),
                   ),
-                ),
-              ],
+                  TextFormField(
+                    controller: tagsController,
+                    decoration: const InputDecoration(
+                      labelText: 'Tags',
+                      hintText: 'ai, reading, ideas',
+                    ),
+                  ),
+                  if (spaces.isNotEmpty)
+                    DropdownButtonFormField<String?>(
+                      value: selectedSpaceId,
+                      decoration: const InputDecoration(labelText: 'Space'),
+                      items: [
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('No Space'),
+                        ),
+                        ...spaces.map(
+                          (space) => DropdownMenuItem<String?>(
+                            value: space.id,
+                            child: Text(space.name),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setDialogState(() => selectedSpaceId = value),
+                    ),
+                ],
+              ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() == true) {
+                  Navigator.pop(dialogContext, true);
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState?.validate() == true) {
-                Navigator.pop(dialogContext, true);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
 
@@ -923,6 +948,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
             title: titleController.text,
             content: contentController.text,
             tags: tagsController.text.split(','),
+            spaceId: selectedSpaceId,
+            clearSpaceId: selectedSpaceId == null,
           );
       if (context.mounted) {
         MindToast.showSuccessToast(context, title: 'Item updated');

@@ -296,6 +296,8 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     required String title,
     required String content,
     required List<String> tags,
+    String? spaceId,
+    bool clearSpaceId = false,
   }) async {
     MindItem? updated;
     final cleanTitle = title.trim().isEmpty ? 'Untitled' : title.trim();
@@ -312,6 +314,8 @@ class MindFeedController extends StateNotifier<MindFeedState> {
         content: content.trim(),
         clearContent: content.trim().isEmpty,
         tags: cleanTags,
+        spaceId: spaceId,
+        clearSpaceId: clearSpaceId,
         updatedAt: DateTime.now().toUtc(),
       );
       return updated!;

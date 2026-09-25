@@ -95,7 +95,7 @@ Before uploading, inspect the version and confirm the signed release is using th
 1. Open [Google Play Console](https://play.google.com/console/).
 2. Create the app with:
    - Default language: English
-   - App name: **KeepIt — Smart Visual Bookmarks**
+   - App name: **KeepIt: Save Ideas & Links**
    - App: **App**
    - Free or paid: choose the intended business model
    - Contains ads: **Yes**

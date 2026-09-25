@@ -860,6 +860,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
     final contentController = TextEditingController(text: item.content ?? '');
     final tagsController = TextEditingController(text: item.tags.join(', '));
     final spaces = await ref.read(localDataSourceProvider).getCustomSpaces();
+    if (!context.mounted) return;
     String? selectedSpaceId =
         spaces.any((space) => space.id == item.spaceId) ? item.spaceId : null;
     final formKey = GlobalKey<FormState>();
@@ -902,7 +903,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                   ),
                   if (spaces.isNotEmpty)
                     DropdownButtonFormField<String?>(
-                      value: selectedSpaceId,
+                      initialValue: selectedSpaceId,
                       decoration: const InputDecoration(labelText: 'Space'),
                       items: [
                         const DropdownMenuItem<String?>(

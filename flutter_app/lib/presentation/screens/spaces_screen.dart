@@ -7,7 +7,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../data/datasources/local_mind_datasource.dart';
 import '../../domain/entities/custom_space.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/cloud_sync_controller.dart';

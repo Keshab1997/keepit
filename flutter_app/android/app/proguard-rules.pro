@@ -16,3 +16,13 @@
   @com.google.gson.annotations.SerializedName <fields>;
 }
 -dontwarn com.google.gson.**
+
+# package:jni (pulled in by path_provider_android) registers JNI natives by
+# exact class name. If R8 renames or strips these, dlopen/FindClass fails with
+# an Error (not an Exception) and the process dies at the first path_provider
+# call during startup. Keep them exactly as published.
+-keep class com.github.dart_lang.jni.** { *; }
+-keep class com.github.dart_lang.jni_flutter.** { *; }
+-keepclasseswithmembernames,includedescriptorclasses class * {
+    native <methods>;
+}

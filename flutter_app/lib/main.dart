@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,7 +22,7 @@ import 'presentation/widgets/sync_host.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() async {
+Future<void> _boot() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Local .env (git-ignored). Optional so CI and tests without the file
@@ -49,12 +51,69 @@ void main() async {
     // Ads are optional; keep booting.
   }
 
+  _appStarted = true;
   runApp(
     ProviderScope(
       overrides: [localDataSourceProvider.overrideWithValue(localDataSource)],
       child: const KeepItApp(),
     ),
   );
+}
+
+/// Set once the first [runApp] has been reached. Zone errors after that point
+/// must not tear a running app down to show the boot-error screen.
+bool _appStarted = false;
+
+void main() {
+  runZonedGuarded(
+    () async {
+      // In release builds a framework error would otherwise paint a silent
+      // grey screen; make the failure visible and keep a log line.
+      FlutterError.onError = (details) {
+        debugPrint('KeepIt Flutter error:\n${details.exceptionAsString()}');
+        FlutterError.presentError(details);
+      };
+      ErrorWidget.builder = (details) => Directionality(
+            textDirection: TextDirection.ltr,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('KeepIt hit an error:\n${details.exception}'),
+              ),
+            ),
+          );
+      await _boot();
+    },
+    (error, stack) {
+      debugPrint('KeepIt uncaught error: $error\n$stack');
+      if (!_appStarted) {
+        runApp(_BootErrorApp(error: error));
+      }
+    },
+  );
+}
+
+/// Minimal emergency UI shown when startup itself throws — better a visible
+/// error message than a process that silently closes.
+class _BootErrorApp extends StatelessWidget {
+  const _BootErrorApp({super.key, required this.error});
+
+  final Object error;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text('KeepIt could not start.\n\n$error'),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class KeepItApp extends ConsumerStatefulWidget {

@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.keshabstudios.keepit">
     
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -22,7 +23,7 @@
 
     <application
         android:label="KeepIt"
-        android:name="${applicationName}"
+        android:name="com.keshabstudios.keepit.CrashApp"
         android:icon="@mipmap/ic_launcher">
         
         <!-- AdMob app ID. LIVE production ID (ca-app-pub-4216917764852377~9499831430).
@@ -89,5 +90,28 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Crash safety net: shows uncaught Java/native crashes (which Dart
+             try/catch can never catch) in a readable screen, in a separate
+             process so it survives the crashing one. -->
+        <activity
+            android:name="com.keshabstudios.keepit.CrashActivity"
+            android:process=":crash"
+            android:theme="@android:style/Theme.Light"
+            android:exported="false" />
+
+        <!--
+             KeepIt is local-first: Firebase and ads are optional, and CI
+             builds ship without google-services.json. These auto-init
+             providers run at process start — before any guarded Dart code —
+             and can kill the app before the first frame. Removing them keeps
+             startup entirely in Dart's hands (FirebaseBootstrap, AdService).
+        -->
+        <provider
+            android:name="com.google.firebase.provider.FirebaseInitProvider"
+            tools:node="remove" />
+        <provider
+            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+            tools:node="remove" />
     </application>
 </manifest>

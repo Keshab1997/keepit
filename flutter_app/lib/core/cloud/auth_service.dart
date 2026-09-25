@@ -102,10 +102,15 @@ class FirebaseAuthService implements AuthService {
   final GoogleSignIn _google;
   Future<void>? _googleInit;
 
-  /// Optional override: `--dart-define=GOOGLE_SERVER_CLIENT_ID=xxx.apps.googleusercontent.com`.
-  /// Not needed on Android when google-services.json contains the web client.
+  /// The Web OAuth client ID (`client_type: 3` in google-services.json).
+  /// The Play Store APK we inspected did not contain the generated
+  /// `default_web_client_id` resource, so provide this fallback explicitly.
+  /// This is a public client ID, not a secret. A build-time define can
+  /// override it.
   static const String _serverClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue:
+        '332166521596-82nf4aljih1qkqmhhapkm2lnbtr3v49j.apps.googleusercontent.com',
   );
 
   @override
@@ -135,6 +140,10 @@ class FirebaseAuthService implements AuthService {
       }
       return idToken;
     } on GoogleSignInException catch (e) {
+      debugPrint(
+        'KeepIt Google Sign-In exception: ${e.code.name}: '
+        '${e.description ?? '(no description)'}',
+      );
       if (e.code == GoogleSignInExceptionCode.canceled ||
           e.code == GoogleSignInExceptionCode.interrupted) {
         throw const AuthFailure('Sign-in cancelled', cancelled: true);

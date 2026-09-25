@@ -1,0 +1,55 @@
+Question ID,Response ID,Response value,Answer requirement,Human-friendly question label,KeepIt recommendation / notes
+PSL_DATA_COLLECTION_COLLECTS_PERSONAL_DATA,,true,REQUIRED,Does your app collect or share any of the required user data types?,Yes for Firebase Cloud Sync and AdMob build; offline-only build requires a separate declaration
+PSL_DATA_COLLECTION_ENCRYPTED_IN_TRANSIT,,true,MAYBE_REQUIRED,Is all of the user data collected by your app encrypted in transit?,Yes; Firebase Google Sign-In AdMob and link-preview network requests use HTTPS/TLS
+PSL_SUPPORTED_ACCOUNT_CREATION_METHODS,PSL_ACM_OAUTH,true,MULTIPLE_CHOICE,Which account creation method does the app support? / OAuth,Google Sign-In via Firebase Auth; do not select username/password
+PSL_ACM_SPECIFY,,Google Sign-In OAuth via Firebase Authentication,MAYBE_REQUIRED,Describe the method of account creation,Optional Cloud Sync account created through Google Sign-In
+PSL_ACCOUNT_DELETION_URL,,https://keshab1997.github.io/keepit/delete-account.html,MAYBE_REQUIRED,Add a link users can use to request account and associated data deletion,Public deletion request page
+PSL_SUPPORT_DATA_DELETION_BY_USER,DATA_DELETION_YES,true,SINGLE_CHOICE,Do you provide a way for users to request data deletion? / Yes,Profile delete controls and public web request page
+PSL_DATA_DELETION_URL,,https://keshab1997.github.io/keepit/delete-account.html,MAYBE_REQUIRED,Delete data URL,Use the same public deletion URL
+PSL_DATA_COLLECTION_COMPLIES_FAMILY_POLICY,,false,OPTIONAL,Families policy commitment,KeepIt is not directed to children and is not opted into Designed for Families
+PSL_INDEPENDENTLY_VALIDATED,,false,OPTIONAL,Independent MASA security review,Select Yes only if a valid review has actually been completed
+PSL_UPI_BADGE_OPT_IN,,false,OPTIONAL,Show UPI badge,Not applicable
+PSL_HAS_OUTSIDE_APP_ACCOUNTS,,true,OPTIONAL,Can users log in with accounts created outside the app?,Yes; Google accounts created outside KeepIt
+PSL_OUTSIDE_APP_ACCOUNT_TYPES,PSL_OUTSIDE_APP_ACCOUNT_TYPE_OTHER,true,MULTIPLE_CHOICE,How are outside accounts created? / Other,Google account / OAuth identity provider
+PSL_OUTSIDE_APP_ACCOUNT_TYPE_SPECIFY,,Google account through Google Sign-In OAuth,MAYBE_REQUIRED,Describe outside account creation,Google manages the external account
+PSL_DATA_TYPES_PERSONAL,PSL_NAME,true,MULTIPLE_CHOICE,Personal info / Name,Collected for optional Firebase account management
+PSL_DATA_TYPES_PERSONAL,PSL_EMAIL,true,MULTIPLE_CHOICE,Personal info / Email address,Collected for optional Firebase account management
+PSL_DATA_TYPES_PERSONAL,PSL_USER_ACCOUNT,true,MULTIPLE_CHOICE,Personal info / User IDs,Firebase UID used for account and sync ownership
+PSL_DATA_TYPES_PERSONAL,PSL_OTHER_PERSONAL,,MULTIPLE_CHOICE,Personal info / Other info,Do not select unless the binary collects additional personal info
+PSL_DATA_TYPES_PHOTOS_AND_VIDEOS,PSL_PHOTOS,,MULTIPLE_CHOICE,Photos and videos / Photos,Profile photo URL may be retained; verify exact Firebase user profile fields before selecting
+PSL_DATA_TYPES_LOCATION,PSL_APPROX_LOCATION,,MULTIPLE_CHOICE,Location / Approximate location,Do not select for current code; no location permission and privacy policy says no location access
+PSL_DATA_TYPES_LOCATION,PSL_PRECISE_LOCATION,,MULTIPLE_CHOICE,Location / Precise location,Not collected
+PSL_DATA_TYPES_SEARCH_AND_BROWSING,PSL_WEB_BROWSING_HISTORY,,MULTIPLE_CHOICE,Web browsing / Web browsing history,Not collected as browsing history; saved URLs are user-generated content
+PSL_DATA_TYPES_EMAIL_AND_TEXT,PSL_EMAILS,,MULTIPLE_CHOICE,Messages / Emails,Not collected
+PSL_DATA_TYPES_EMAIL_AND_TEXT,PSL_SMS_CALL_LOG,,MULTIPLE_CHOICE,Messages / SMS or MMS,Not collected
+PSL_DATA_TYPES_CONTACTS,PSL_CONTACTS,,MULTIPLE_CHOICE,Contacts / Contacts,Not collected
+PSL_DATA_TYPES_CALENDAR,PSL_CALENDAR,,MULTIPLE_CHOICE,Calendar / Calendar events,Not collected
+PSL_DATA_TYPES_AUDIO,PSL_AUDIO,,MULTIPLE_CHOICE,Audio files / Voice or sound recordings,Not collected
+PSL_DATA_TYPES_HEALTH_AND_FITNESS,PSL_HEALTH,,MULTIPLE_CHOICE,Health and fitness / Health info,Not collected
+PSL_DATA_TYPES_FILES_AND_DOCS,PSL_FILES_AND_DOCS,,MULTIPLE_CHOICE,Files and docs / Files and docs,Select only if the final binary uploads or syncs user-selected files beyond supported images
+PSL_DATA_TYPES_APP_ACTIVITY,PSL_USER_GENERATED_CONTENT,true,MULTIPLE_CHOICE,App activity / Other user-generated content,Saved links notes tags thumbnails and status flags; optional Firebase sync
+PSL_DATA_TYPES_APP_ACTIVITY,PSL_USER_INTERACTION,true,MULTIPLE_CHOICE,App activity / App interactions,Select if reporting AdMob interactions or other SDK interaction data in the final binary
+PSL_DATA_TYPES_APP_ACTIVITY,PSL_IN_APP_SEARCH_HISTORY,,MULTIPLE_CHOICE,App activity / In-app search history,Current privacy policy does not state that search history leaves the device
+PSL_DATA_TYPES_APP_ACTIVITY,PSL_OTHER_APP_ACTIVITY,,MULTIPLE_CHOICE,App activity / Other actions,Not selected unless final SDK inventory requires it
+PSL_DATA_TYPES_APP_PERFORMANCE,PSL_CRASH_LOGS,,MULTIPLE_CHOICE,App info and performance / Crash logs,Select if CrashApp or a crash service transmits crash logs; verify release behavior
+PSL_DATA_TYPES_APP_PERFORMANCE,PSL_PERFORMANCE_DIAGNOSTICS,,MULTIPLE_CHOICE,App info and performance / Diagnostics,Select only if diagnostics are transmitted to a provider
+PSL_DATA_TYPES_IDENTIFIERS,PSL_DEVICE_ID,true,MULTIPLE_CHOICE,Device or other IDs / Device or other IDs,AdMob may process advertising/device identifiers; verify current SDK disclosure
+PSL_DATA_USAGE_RESPONSES:PSL_NAME:PSL_DATA_USAGE_COLLECTION_AND_SHARING,PSL_DATA_USAGE_ONLY_COLLECTED,true,MULTIPLE_CHOICE,Name / Collected,Google/Firebase account management
+PSL_DATA_USAGE_RESPONSES:PSL_NAME:DATA_USAGE_USER_CONTROL,PSL_DATA_USAGE_USER_CONTROL_OPTIONAL,true,SINGLE_CHOICE,Name / Users can choose whether collected,Only after optional Google Sign-In
+PSL_DATA_USAGE_RESPONSES:PSL_NAME:PSL_DATA_USAGE_COLLECTION_PURPOSE,PSL_ACCOUNT_MANAGEMENT,true,MULTIPLE_CHOICE,Name / Account management,Cloud Sync account
+PSL_DATA_USAGE_RESPONSES:PSL_EMAIL:PSL_DATA_USAGE_COLLECTION_AND_SHARING,PSL_DATA_USAGE_ONLY_COLLECTED,true,MULTIPLE_CHOICE,Email address / Collected,Google/Firebase account management
+PSL_DATA_USAGE_RESPONSES:PSL_EMAIL:DATA_USAGE_USER_CONTROL,PSL_DATA_USAGE_USER_CONTROL_OPTIONAL,true,SINGLE_CHOICE,Email address / Users can choose whether collected,Only after optional Google Sign-In
+PSL_DATA_USAGE_RESPONSES:PSL_EMAIL:PSL_DATA_USAGE_COLLECTION_PURPOSE,PSL_ACCOUNT_MANAGEMENT,true,MULTIPLE_CHOICE,Email address / Account management,Cloud Sync account
+PSL_DATA_USAGE_RESPONSES:PSL_USER_ACCOUNT:PSL_DATA_USAGE_COLLECTION_AND_SHARING,PSL_DATA_USAGE_ONLY_COLLECTED,true,MULTIPLE_CHOICE,User IDs / Collected,Firebase UID
+PSL_DATA_USAGE_RESPONSES:PSL_USER_ACCOUNT:DATA_USAGE_USER_CONTROL,PSL_DATA_USAGE_USER_CONTROL_OPTIONAL,true,SINGLE_CHOICE,User IDs / Users can choose whether collected,Only after optional Google Sign-In
+PSL_DATA_USAGE_RESPONSES:PSL_USER_ACCOUNT:PSL_DATA_USAGE_COLLECTION_PURPOSE,PSL_APP_FUNCTIONALITY,true,MULTIPLE_CHOICE,User IDs / App functionality,Sync ownership and account access
+PSL_DATA_USAGE_RESPONSES:PSL_USER_ACCOUNT:PSL_DATA_USAGE_COLLECTION_PURPOSE,PSL_ACCOUNT_MANAGEMENT,true,MULTIPLE_CHOICE,User IDs / Account management,Account management
+PSL_DATA_USAGE_RESPONSES:PSL_USER_GENERATED_CONTENT:PSL_DATA_USAGE_COLLECTION_AND_SHARING,PSL_DATA_USAGE_ONLY_COLLECTED,true,MULTIPLE_CHOICE,User-generated content / Collected,Saved items may be synced to Firestore when Cloud Sync is enabled
+PSL_DATA_USAGE_RESPONSES:PSL_USER_GENERATED_CONTENT:DATA_USAGE_USER_CONTROL,PSL_DATA_USAGE_USER_CONTROL_OPTIONAL,true,SINGLE_CHOICE,User-generated content / Users can choose whether collected,Cloud Sync is optional; local save works without an account
+PSL_DATA_USAGE_RESPONSES:PSL_USER_GENERATED_CONTENT:PSL_DATA_USAGE_COLLECTION_PURPOSE,PSL_APP_FUNCTIONALITY,true,MULTIPLE_CHOICE,User-generated content / App functionality,Save search and organise content
+PSL_DATA_USAGE_RESPONSES:PSL_DEVICE_ID:PSL_DATA_USAGE_COLLECTION_AND_SHARING,PSL_DATA_USAGE_ONLY_SHARED,true,MULTIPLE_CHOICE,Device or other IDs / Shared,Google AdMob may receive advertising/device identifiers
+PSL_DATA_USAGE_RESPONSES:PSL_DEVICE_ID:DATA_USAGE_USER_CONTROL,PSL_DATA_USAGE_USER_CONTROL_REQUIRED,true,SINGLE_CHOICE,Device or other IDs / Required,Verify against final AdMob consent and Play form behavior
+PSL_DATA_USAGE_RESPONSES:PSL_DEVICE_ID:PSL_DATA_USAGE_COLLECTION_PURPOSE,PSL_ADVERTISING,true,MULTIPLE_CHOICE,Device or other IDs / Advertising or marketing,Ad serving and measurement
+PSL_DATA_USAGE_RESPONSES:PSL_USER_INTERACTION:PSL_DATA_USAGE_COLLECTION_AND_SHARING,PSL_DATA_USAGE_ONLY_SHARED,true,MULTIPLE_CHOICE,App interactions / Shared,Ad views and interactions may be shared with Google AdMob
+PSL_DATA_USAGE_RESPONSES:PSL_USER_INTERACTION:DATA_USAGE_USER_CONTROL,PSL_DATA_USAGE_USER_CONTROL_REQUIRED,true,SINGLE_CHOICE,App interactions / Required,Verify against final AdMob consent and Play form behavior
+PSL_DATA_USAGE_RESPONSES:PSL_USER_INTERACTION:PSL_DATA_USAGE_COLLECTION_PURPOSE,PSL_ADVERTISING,true,MULTIPLE_CHOICE,App interactions / Advertising or marketing,Ad serving and measurement

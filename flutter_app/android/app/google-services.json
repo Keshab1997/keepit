@@ -14,11 +14,35 @@
       },
       "oauth_client": [
         {
+          "client_id": "332166521596-4f83vnv11163sa07aq3momlil42q3vtc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.keshabstudios.keepit",
+            "certificate_hash": "a332ba7137b6ad188e8de06a923ce4db590bbd3b"
+          }
+        },
+        {
           "client_id": "332166521596-ftih4j6khid9k7r1mdnot521323mktcg.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.keshabstudios.keepit",
             "certificate_hash": "5094c545119f16cce9e53058817d3c30461695eb"
+          }
+        },
+        {
+          "client_id": "332166521596-iciqh4fg7mq1am8m19vssnsvogkmis7p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.keshabstudios.keepit",
+            "certificate_hash": "37c58bfd8f3001f02e9dfd185709d9e920750d61"
+          }
+        },
+        {
+          "client_id": "332166521596-t4cioc13v5r1i4oh07lur97scdj9a3rv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.keshabstudios.keepit",
+            "certificate_hash": "c76c168a6290ab1298577711d1c44cdd593dfe5a"
           }
         },
         {

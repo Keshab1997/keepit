@@ -1,11 +1,7 @@
 /// AdMob configuration for KeepIt.
 ///
-/// The app ships with Google's official **test** ad unit IDs so the whole
-/// integration can be verified without an AdMob account. Before releasing:
-///
-///  1. Replace every ID below with your own (see docs/ADMOB_SETUP.md), and
-///  2. Replace the `com.google.android.gms.ads.APPLICATION_ID` meta-data value
-///     in `android/app/src/main/AndroidManifest.xml`.
+/// Live production IDs (see docs/ADMOB_SETUP.md). To test without serving
+/// real ads, temporarily swap these with Google's official test IDs.
 ///
 /// Frequency caps are deliberately conservative: ads must never get in the
 /// way of saving an idea.
@@ -21,7 +17,7 @@ class AdConfig {
   static const bool enableRewarded = true;
 
   // ---------------------------------------------------------------------------
-  // Ad unit IDs — Google's official TEST units. Replace before release!
+  // Ad unit IDs — LIVE production units (ca-app-pub-4216917764852377).
   // ---------------------------------------------------------------------------
 
   /// Also used as the meta-data value in AndroidManifest.xml.
@@ -48,7 +44,8 @@ class AdConfig {
   /// required). Flip to `true` only once a UMP/consent flow is in place.
   static const bool personalizedAds = false;
 
-  /// True while the IDs above are still Google's test units.
+  /// True if the IDs above are NOT the production publisher ID.
+  /// Currently false — live IDs in use.
   static bool get usingTestAds =>
-      bannerUnitId.startsWith('ca-app-pub-3940256099942544');
+      !bannerUnitId.startsWith('ca-app-pub-4216917764852377');
 }

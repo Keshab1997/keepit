@@ -41,15 +41,13 @@ class _EmptyRemote implements CloudSyncRemote {
   Future<List<RemoteRecord>> fetchChanges(
     String uid, {
     int sinceServerMillis = 0,
-  }) async =>
-      const [];
+  }) async => const [];
   @override
   Future<void> push(
     String uid, {
     List<RemoteRecord> upserts = const [],
     Map<String, int> deletions = const {},
-  }) async =>
-      pushed += upserts.length;
+  }) async => pushed += upserts.length;
   @override
   Future<void> deleteAllUserData(String uid) async {}
   @override

@@ -42,11 +42,11 @@ class ReminderSettings {
   }
 
   Map<String, dynamic> toJson() => {
-        'enabled': enabled,
-        'hour': hour,
-        'minute': minute,
-        'weeklyDigest': weeklyDigest,
-      };
+    'enabled': enabled,
+    'hour': hour,
+    'minute': minute,
+    'weeklyDigest': weeklyDigest,
+  };
 
   factory ReminderSettings.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const ReminderSettings();
@@ -102,23 +102,23 @@ class PlannedReminder {
   /// Compact payload delivered back to the app when the notification (or one
   /// of its action buttons) is tapped.
   String get payload => jsonEncode({
-        'kind': kind.name,
-        if (itemId != null) 'itemId': itemId,
-        if (itemIds.isNotEmpty) 'itemIds': itemIds,
-      });
+    'kind': kind.name,
+    if (itemId != null) 'itemId': itemId,
+    if (itemIds.isNotEmpty) 'itemIds': itemIds,
+  });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'kind': kind.name,
-        'fireAt': fireAt.toIso8601String(),
-        'itemId': itemId,
-        'stage': stage,
-        'snoozed': snoozed,
-        'itemIds': itemIds,
-        'title': title,
-        'body': body,
-        'lines': lines,
-      };
+    'id': id,
+    'kind': kind.name,
+    'fireAt': fireAt.toIso8601String(),
+    'itemId': itemId,
+    'stage': stage,
+    'snoozed': snoozed,
+    'itemIds': itemIds,
+    'title': title,
+    'body': body,
+    'lines': lines,
+  };
 
   factory PlannedReminder.fromJson(Map<String, dynamic> json) {
     return PlannedReminder(
@@ -174,12 +174,12 @@ class SerendipityEngineState {
   }
 
   Map<String, dynamic> toJson() => {
-        'version': 1,
-        'settings': settings.toJson(),
-        'lastStage': lastStage,
-        'snoozes': snoozes.map((k, v) => MapEntry(k, v.toIso8601String())),
-        'plan': plan.map((p) => p.toJson()).toList(),
-      };
+    'version': 1,
+    'settings': settings.toJson(),
+    'lastStage': lastStage,
+    'snoozes': snoozes.map((k, v) => MapEntry(k, v.toIso8601String())),
+    'plan': plan.map((p) => p.toJson()).toList(),
+  };
 
   factory SerendipityEngineState.fromJson(Map<String, dynamic> json) {
     final rawStages = (json['lastStage'] as Map?) ?? const {};

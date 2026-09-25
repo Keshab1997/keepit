@@ -68,8 +68,9 @@ class AdService {
   void _restoreCounters() {
     _savesSinceInterstitial = (_prefs?.get(_kSavesSince) as int?) ?? 0;
     final last = _prefs?.get(_kLastInterstitialAt) as int?;
-    _lastInterstitialAt =
-        last == null ? null : DateTime.fromMillisecondsSinceEpoch(last);
+    _lastInterstitialAt = last == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(last);
   }
 
   Future<void> _persistCounters() async {

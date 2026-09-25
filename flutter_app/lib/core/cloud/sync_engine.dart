@@ -91,8 +91,7 @@ class SyncEngine {
             deletedLocally++;
           }
         }
-        if (localTombstone != null &&
-            r.updatedAtMs >= localTombstone) {
+        if (localTombstone != null && r.updatedAtMs >= localTombstone) {
           settledTombstones.add(r.id);
         }
         continue;

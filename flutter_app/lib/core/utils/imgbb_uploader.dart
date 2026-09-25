@@ -73,7 +73,8 @@ class ImgBbUploader {
       throw const ImgBbUploadException('ImgBB returned an invalid response.');
     }
 
-    if (response.statusCode < 200 || response.statusCode >= 300 ||
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300 ||
         payload['success'] != true) {
       final error = payload['error'];
       final message = error is Map

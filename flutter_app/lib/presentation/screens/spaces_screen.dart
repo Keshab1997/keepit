@@ -125,16 +125,16 @@ class SpacesScreen extends ConsumerWidget {
         'icon': LucideIcons.cpu,
         'color': const Color(0xFF3B82F6),
         'filter': (MindItem item) => item.tags.any(
-              (t) => [
-                'ai',
-                'tech',
-                'coding',
-                'chatgpt',
-                'dev',
-                'tools',
-                'software',
-              ].contains(t.toLowerCase()),
-            ),
+          (t) => [
+            'ai',
+            'tech',
+            'coding',
+            'chatgpt',
+            'dev',
+            'tools',
+            'software',
+          ].contains(t.toLowerCase()),
+        ),
       },
       {
         'id': 'reels_video',
@@ -156,16 +156,16 @@ class SpacesScreen extends ConsumerWidget {
         'icon': LucideIcons.palette,
         'color': const Color(0xFF8B5CF6),
         'filter': (MindItem item) => item.tags.any(
-              (t) => [
-                'design',
-                'ui',
-                'ux',
-                'cinematic',
-                'photo',
-                'visual',
-                'art',
-              ].contains(t.toLowerCase()),
-            ),
+          (t) => [
+            'design',
+            'ui',
+            'ux',
+            'cinematic',
+            'photo',
+            'visual',
+            'art',
+          ].contains(t.toLowerCase()),
+        ),
       },
       {
         'id': 'reading_articles',
@@ -191,15 +191,15 @@ class SpacesScreen extends ConsumerWidget {
         'icon': LucideIcons.zap,
         'color': const Color(0xFFF59E0B),
         'filter': (MindItem item) => item.tags.any(
-              (t) => [
-                'productivity',
-                'useful',
-                'contacts',
-                'hack',
-                'mindset',
-                'habits',
-              ].contains(t.toLowerCase()),
-            ),
+          (t) => [
+            'productivity',
+            'useful',
+            'contacts',
+            'hack',
+            'mindset',
+            'habits',
+          ].contains(t.toLowerCase()),
+        ),
       },
     ];
 

@@ -199,8 +199,9 @@ class ProfileScreen extends ConsumerWidget {
 
   static Future<void> _emailSupport(BuildContext context, WidgetRef ref) async {
     final info = ref.read(packageInfoProvider).valueOrNull;
-    final version =
-        info == null ? '' : ' v${info.version} (${info.buildNumber})';
+    final version = info == null
+        ? ''
+        : ' v${info.version} (${info.buildNumber})';
     final uri = Uri(
       scheme: 'mailto',
       path: AppConfig.supportEmail,
@@ -240,8 +241,9 @@ class ProfileScreen extends ConsumerWidget {
     showLicensePage(
       context: context,
       applicationName: AppConfig.appName,
-      applicationVersion:
-          info == null ? null : '${info.version} (${info.buildNumber})',
+      applicationVersion: info == null
+          ? null
+          : '${info.version} (${info.buildNumber})',
       applicationLegalese: '© ${DateTime.now().year} Keshab Sarkar',
     );
   }
@@ -253,8 +255,7 @@ class ProfileScreen extends ConsumerWidget {
     final ok = await _confirm(
       context,
       title: 'Delete all local data?',
-      message:
-          'Every saved item on this device will be permanently removed. This cannot be undone.',
+      message: 'Every saved item on this device will be permanently removed. This cannot be undone.',
       confirmLabel: 'Delete everything',
       destructive: true,
     );
@@ -639,33 +640,32 @@ class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget stat(String value, String label, IconData icon) => Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFEDEEF2)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEDEEF2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 17, color: AppColors.primary),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
-            child: Column(
-              children: [
-                Icon(icon, size: 17, color: AppColors.primary),
-                const SizedBox(height: 6),
-                Text(
-                  value,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w800),
-                ),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11.5,
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
-        );
+          ],
+        ),
+      ),
+    );
     return Row(
       children: [
         stat('$total', 'Saved', LucideIcons.bookmark),
@@ -692,16 +692,14 @@ class _CloudSyncCard extends ConsumerWidget {
       return const _InfoCard(
         icon: LucideIcons.cloudOff,
         title: 'Cloud sync not set up yet',
-        message:
-            'KeepIt works fully offline. Cloud backup & multi-device sync will be available once this build is connected to Firebase.',
+        message: 'KeepIt works fully offline. Cloud backup & multi-device sync will be available once this build is connected to Firebase.',
       );
     }
     if (!state.signedIn) {
       return const _InfoCard(
         icon: LucideIcons.uploadCloud,
         title: 'Back up & sync your mind',
-        message:
-            'Sign in with Google to back up your saves and keep them in sync across devices. Your data stays private to your account.',
+        message: 'Sign in with Google to back up your saves and keep them in sync across devices. Your data stays private to your account.',
       );
     }
 
@@ -713,15 +711,15 @@ class _CloudSyncCard extends ConsumerWidget {
       String headline,
     ) = switch (state.status) {
       SyncStatus.syncing => (
-          LucideIcons.refreshCw,
-          AppColors.primary,
-          'Syncing…',
-        ),
+        LucideIcons.refreshCw,
+        AppColors.primary,
+        'Syncing…',
+      ),
       SyncStatus.error => (
-          LucideIcons.alertCircle,
-          AppColors.danger,
-          'Sync problem',
-        ),
+        LucideIcons.alertCircle,
+        AppColors.danger,
+        'Sync problem',
+      ),
       _ => (LucideIcons.checkCircle2, AppColors.success, 'Up to date'),
     };
 
@@ -833,8 +831,9 @@ class _CloudSyncCard extends ConsumerWidget {
     }
     final last = state.lastSyncAt;
     final pending = state.pendingChanges;
-    final lastLabel =
-        last == null ? 'Never synced' : 'Last synced ${_relative(last)}';
+    final lastLabel = last == null
+        ? 'Never synced'
+        : 'Last synced ${_relative(last)}';
     return pending > 0 ? '$lastLabel • $pending pending' : lastLabel;
   }
 
@@ -857,17 +856,17 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(left: 4, bottom: 8),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.2,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(left: 4, bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 11.5,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.2,
+        color: AppColors.textSecondary,
+      ),
+    ),
+  );
 }
 
 class _Group extends StatelessWidget {
@@ -1040,8 +1039,9 @@ class _SheetButton extends StatelessWidget {
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           side: BorderSide(
-            color:
-                destructive ? const Color(0x55FF3B30) : const Color(0xFFE5E7EB),
+            color: destructive
+                ? const Color(0x55FF3B30)
+                : const Color(0xFFE5E7EB),
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -1134,8 +1134,9 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
         FilledButton(
           onPressed: enabled ? () => Navigator.pop(context, true) : null,
           style: FilledButton.styleFrom(
-            backgroundColor:
-                widget.destructive ? AppColors.danger : AppColors.primary,
+            backgroundColor: widget.destructive
+                ? AppColors.danger
+                : AppColors.primary,
           ),
           child: Text(widget.confirmLabel),
         ),

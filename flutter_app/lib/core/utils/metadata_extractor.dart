@@ -87,8 +87,9 @@ class MetadataExtractor {
         final oembedUri = Uri.parse(
           'https://api.instagram.com/oembed/?url=${Uri.encodeComponent(cleanUrl)}',
         );
-        final oembedRes =
-            await http.get(oembedUri).timeout(const Duration(seconds: 4));
+        final oembedRes = await http
+            .get(oembedUri)
+            .timeout(const Duration(seconds: 4));
         if (oembedRes.statusCode == 200) {
           final json = jsonDecode(oembedRes.body);
           author = json['author_name'] ?? author;
@@ -151,8 +152,7 @@ class MetadataExtractor {
       // Extract a meaningful, concise headline title
       final cleanTitle = _extractInstagramTitle(cleanCaption, author);
 
-      igThumb ??=
-          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=700&q=80';
+      igThumb ??= 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=700&q=80';
 
       final tags = _generateAccurateTags(
         title: cleanTitle,
@@ -181,7 +181,8 @@ class MetadataExtractor {
       final scraped = await _scrapeOpenGraph(cleanUrl);
       final rawTitle = scraped['title'] ?? uri?.host ?? 'Saved Link';
       final cleanTitle = _cleanTitle(rawTitle);
-      final description = scraped['description'] ??
+      final description =
+          scraped['description'] ??
           'Article saved from ${uri?.host}. Tap to view original content.';
 
       final tags = _generateAccurateTags(
@@ -600,14 +601,15 @@ class MetadataExtractor {
   }
 
   static Future<Map<String, String?>> _scrapeOpenGraph(String url) async {
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {
-        'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-        'Accept': 'text/html,application/xhtml+xml',
-      },
-    ).timeout(const Duration(seconds: 5));
+    final response = await http
+        .get(
+          Uri.parse(url),
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+            'Accept': 'text/html,application/xhtml+xml',
+          },
+        )
+        .timeout(const Duration(seconds: 5));
 
     if (response.statusCode != 200) {
       return {};
@@ -617,21 +619,22 @@ class MetadataExtractor {
 
     final title =
         doc.querySelector('meta[property="og:title"]')?.attributes['content'] ??
-            doc
-                .querySelector('meta[name="twitter:title"]')
-                ?.attributes['content'] ??
-            doc.querySelector('title')?.text;
+        doc
+            .querySelector('meta[name="twitter:title"]')
+            ?.attributes['content'] ??
+        doc.querySelector('title')?.text;
 
     final image =
         doc.querySelector('meta[property="og:image"]')?.attributes['content'] ??
-            doc
-                .querySelector('meta[name="twitter:image"]')
-                ?.attributes['content'] ??
-            doc
-                .querySelector('meta[property="og:image:url"]')
-                ?.attributes['content'];
+        doc
+            .querySelector('meta[name="twitter:image"]')
+            ?.attributes['content'] ??
+        doc
+            .querySelector('meta[property="og:image:url"]')
+            ?.attributes['content'];
 
-    final description = doc
+    final description =
+        doc
             .querySelector('meta[property="og:description"]')
             ?.attributes['content'] ??
         doc

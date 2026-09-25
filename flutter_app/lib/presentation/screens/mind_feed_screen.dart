@@ -297,9 +297,9 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                           final isAll = category == 'All';
                           final isSelected = isAll
                               ? (state.selectedTag == null ||
-                                  state.selectedTag!.isEmpty)
+                                    state.selectedTag!.isEmpty)
                               : (state.selectedTag?.toLowerCase() ==
-                                  category.toLowerCase());
+                                    category.toLowerCase());
 
                           return GestureDetector(
                             onTap: () {
@@ -358,162 +358,159 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                     child: state.isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : items.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: 70,
-                                      height: 70,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0x26FF5B37),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        LucideIcons.sparkles,
-                                        color: AppColors.primary,
-                                        size: 32,
-                                      ),
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 70,
+                                  height: 70,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0x26FF5B37),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    LucideIcons.sparkles,
+                                    color: AppColors.primary,
+                                    size: 32,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  "No items found in this category",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                TextButton(
+                                  onPressed: () {
+                                    ref
+                                        .read(mindFeedProvider.notifier)
+                                        .setSelectedTag(null);
+                                  },
+                                  child: const Text(
+                                    "Show all items",
+                                    style: TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    const SizedBox(height: 16),
-                                    const Text(
-                                      "No items found in this category",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    TextButton(
-                                      onPressed: () {
-                                        ref
-                                            .read(mindFeedProvider.notifier)
-                                            .setSelectedTag(null);
-                                      },
-                                      child: const Text(
-                                        "Show all items",
-                                        style: TextStyle(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : MasonryGridView.count(
+                            controller: _scrollController,
+                            physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics(),
+                            ),
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 14,
+                            crossAxisSpacing: 14,
+                            padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
+                            itemCount: items.length,
+                            // Do not retain every off-screen card; image cards
+                            // can be large and CachedNetworkImage already caches
+                            // the decoded thumbnail.
+                            addAutomaticKeepAlives: false,
+                            addRepaintBoundaries: true,
+                            itemBuilder: (context, index) {
+                              final item = items[index];
+                              final isSelected = _selectedItemIds.contains(
+                                item.id,
+                              );
+
+                              return AnimatedBuilder(
+                                animation: _jiggleController,
+                                builder: (context, child) {
+                                  // Alternate tilt angles for neighboring cards (iOS Wiggle effect)
+                                  final angle = _isSelectionMode
+                                      ? (index.isEven ? 0.015 : -0.015) *
+                                            (_jiggleController.value - 0.5) *
+                                            2
+                                      : 0.0;
+
+                                  return Transform.rotate(
+                                    angle: angle,
+                                    child: Stack(
+                                      children: [
+                                        // The Masonry Card
+                                        MindCardWidget(
+                                          key: ValueKey(item.id),
+                                          item: item,
+                                          onTap: () {
+                                            if (_isSelectionMode) {
+                                              _toggleItemSelection(item.id);
+                                            } else {
+                                              MindCardDetailSheet.show(
+                                                context,
+                                                item,
+                                              );
+                                            }
+                                          },
+                                          onLongPress: () {
+                                            if (!_isSelectionMode) {
+                                              _enterSelectionMode(item.id);
+                                            } else {
+                                              _toggleItemSelection(item.id);
+                                            }
+                                          },
                                         ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : MasonryGridView.count(
-                                controller: _scrollController,
-                                physics: const BouncingScrollPhysics(
-                                  parent: AlwaysScrollableScrollPhysics(),
-                                ),
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 14,
-                                crossAxisSpacing: 14,
-                                padding:
-                                    const EdgeInsets.fromLTRB(16, 6, 16, 20),
-                                itemCount: items.length,
-                                // Do not retain every off-screen card; image cards
-                                // can be large and CachedNetworkImage already caches
-                                // the decoded thumbnail.
-                                addAutomaticKeepAlives: false,
-                                addRepaintBoundaries: true,
-                                itemBuilder: (context, index) {
-                                  final item = items[index];
-                                  final isSelected = _selectedItemIds.contains(
-                                    item.id,
-                                  );
 
-                                  return AnimatedBuilder(
-                                    animation: _jiggleController,
-                                    builder: (context, child) {
-                                      // Alternate tilt angles for neighboring cards (iOS Wiggle effect)
-                                      final angle = _isSelectionMode
-                                          ? (index.isEven ? 0.015 : -0.015) *
-                                              (_jiggleController.value - 0.5) *
-                                              2
-                                          : 0.0;
-
-                                      return Transform.rotate(
-                                        angle: angle,
-                                        child: Stack(
-                                          children: [
-                                            // The Masonry Card
-                                            MindCardWidget(
-                                              key: ValueKey(item.id),
-                                              item: item,
-                                              onTap: () {
-                                                if (_isSelectionMode) {
-                                                  _toggleItemSelection(item.id);
-                                                } else {
-                                                  MindCardDetailSheet.show(
-                                                    context,
-                                                    item,
-                                                  );
-                                                }
-                                              },
-                                              onLongPress: () {
-                                                if (!_isSelectionMode) {
-                                                  _enterSelectionMode(item.id);
-                                                } else {
-                                                  _toggleItemSelection(item.id);
-                                                }
-                                              },
-                                            ),
-
-                                            // Jiggle Mode Delete Badge / Selection Indicator
-                                            if (_isSelectionMode)
-                                              Positioned(
-                                                top: 6,
-                                                right: 6,
-                                                child: GestureDetector(
-                                                  onTap: () =>
-                                                      _toggleItemSelection(
-                                                          item.id),
-                                                  child: Container(
-                                                    width: 30,
-                                                    height: 30,
-                                                    decoration: BoxDecoration(
-                                                      color: isSelected
-                                                          ? AppColors.danger
-                                                          : Colors.white,
-                                                      shape: BoxShape.circle,
-                                                      border: Border.all(
-                                                        color: isSelected
-                                                            ? AppColors.danger
-                                                            : const Color(
-                                                                0x66000000,
-                                                              ),
-                                                        width: 2,
-                                                      ),
-                                                      boxShadow: const [
-                                                        BoxShadow(
-                                                          color:
-                                                              Color(0x33000000),
-                                                          blurRadius: 8,
-                                                          offset: Offset(0, 2),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    child: Icon(
-                                                      isSelected
-                                                          ? LucideIcons.check
-                                                          : LucideIcons.circle,
-                                                      color: isSelected
-                                                          ? Colors.white
-                                                          : Colors.transparent,
-                                                      size: 16,
-                                                    ),
+                                        // Jiggle Mode Delete Badge / Selection Indicator
+                                        if (_isSelectionMode)
+                                          Positioned(
+                                            top: 6,
+                                            right: 6,
+                                            child: GestureDetector(
+                                              onTap: () =>
+                                                  _toggleItemSelection(item.id),
+                                              child: Container(
+                                                width: 30,
+                                                height: 30,
+                                                decoration: BoxDecoration(
+                                                  color: isSelected
+                                                      ? AppColors.danger
+                                                      : Colors.white,
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: isSelected
+                                                        ? AppColors.danger
+                                                        : const Color(
+                                                            0x66000000,
+                                                          ),
+                                                    width: 2,
                                                   ),
+                                                  boxShadow: const [
+                                                    BoxShadow(
+                                                      color: Color(0x33000000),
+                                                      blurRadius: 8,
+                                                      offset: Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Icon(
+                                                  isSelected
+                                                      ? LucideIcons.check
+                                                      : LucideIcons.circle,
+                                                  color: isSelected
+                                                      ? Colors.white
+                                                      : Colors.transparent,
+                                                  size: 16,
                                                 ),
                                               ),
-                                          ],
-                                        ),
-                                      );
-                                    },
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   );
                                 },
-                              ),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -532,65 +529,60 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
         children: [
           Expanded(
             child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.glassWhite,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppColors.glassBorder,
-                      width: 1.1,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x08000000),
-                        blurRadius: 14,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppColors.glassWhite,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.glassBorder, width: 1.1),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x08000000),
+                    blurRadius: 14,
+                    offset: Offset(0, 3),
                   ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (val) {
-                      _searchDebounce?.cancel();
-                      _searchDebounce = Timer(
-                        const Duration(milliseconds: 180),
-                        () {
-                          if (mounted) {
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (val) {
+                  _searchDebounce?.cancel();
+                  _searchDebounce = Timer(
+                    const Duration(milliseconds: 180),
+                    () {
+                      if (mounted) {
+                        ref.read(mindFeedProvider.notifier).setSearchQuery(val);
+                      }
+                    },
+                  );
+                },
+                decoration: InputDecoration(
+                  hintText: "Search my mind...",
+                  hintStyle: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  prefixIcon: const Icon(
+                    LucideIcons.search,
+                    color: AppColors.textSecondary,
+                    size: 19,
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(LucideIcons.x, size: 16),
+                          onPressed: () {
+                            _searchDebounce?.cancel();
+                            _searchController.clear();
                             ref
                                 .read(mindFeedProvider.notifier)
-                                .setSearchQuery(val);
-                          }
-                        },
-                      );
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Search my mind...",
-                      hintStyle: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      prefixIcon: const Icon(
-                        LucideIcons.search,
-                        color: AppColors.textSecondary,
-                        size: 19,
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(LucideIcons.x, size: 16),
-                              onPressed: () {
-                                _searchDebounce?.cancel();
-                                _searchController.clear();
-                                ref
-                                    .read(mindFeedProvider.notifier)
-                                    .setSearchQuery('');
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
+                                .setSearchQuery('');
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -696,8 +688,9 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                         _selectedItemIds.clear();
                         _exitSelectionMode();
                       } else {
-                        final allItems =
-                            ref.read(mindFeedProvider).filteredItems;
+                        final allItems = ref
+                            .read(mindFeedProvider)
+                            .filteredItems;
                         _selectedItemIds.addAll(allItems.map((e) => e.id));
                       }
                     });
@@ -766,10 +759,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
     );
   }
 
-  Future<void> _pickAndSaveImage(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _pickAndSaveImage(BuildContext context, WidgetRef ref) async {
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       imageQuality: 92,
@@ -861,8 +851,9 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                 final link = urlController.text.trim();
                 if (link.isNotEmpty) {
                   Navigator.pop(ctx);
-                  final result =
-                      await ref.read(mindFeedProvider.notifier).addUrl(link);
+                  final result = await ref
+                      .read(mindFeedProvider.notifier)
+                      .addUrl(link);
                   if (!context.mounted) return;
 
                   if (result == SaveResult.duplicate) {

@@ -57,7 +57,7 @@ abstract class CloudSyncRemote {
 /// Security rules (firestore.rules) allow access only to the owner.
 class FirestoreSyncRemote implements CloudSyncRemote {
   FirestoreSyncRemote({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _db;
 
@@ -155,8 +155,10 @@ class FirestoreSyncRemote implements CloudSyncRemote {
 
   @override
   Future<int> countItems(String uid) async {
-    final agg =
-        await _items(uid).where('deleted', isEqualTo: false).count().get();
+    final agg = await _items(uid)
+        .where('deleted', isEqualTo: false)
+        .count()
+        .get();
     return agg.count ?? 0;
   }
 }

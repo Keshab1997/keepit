@@ -260,9 +260,7 @@ void main() {
       expect(next.plan.map((p) => p.id), [2]);
     });
 
-    test(
-        'clears a snooze once its reminder was delivered and forgets deleted items',
-        () {
+    test('clears a snooze once its reminder was delivered and forgets deleted items', () {
       final snoozeFire = now.subtract(const Duration(minutes: 5));
       final state = SerendipityEngineState(
         lastStage: {'gone': 2},

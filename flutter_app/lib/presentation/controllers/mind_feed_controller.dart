@@ -50,12 +50,14 @@ class MindFeedState {
     if (query.isEmpty && !hasTagFilter) return items;
 
     return items.where((item) {
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           item.title.toLowerCase().contains(query) ||
           (item.content?.toLowerCase().contains(query) ?? false) ||
           item.tags.any((t) => t.toLowerCase().contains(query));
 
-      final matchesTag = !hasTagFilter ||
+      final matchesTag =
+          !hasTagFilter ||
           item.tags.any((t) => t.toLowerCase() == tag) ||
           item.type.name.toLowerCase().contains(tag);
 
@@ -92,7 +94,7 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     try {
       alreadySeeded =
           _localDataSource.getMeta<bool>(LocalMindDataSource.demoSeededKey) ??
-              false;
+          false;
     } catch (_) {
       // Meta box unavailable — fall back to old behaviour.
     }
@@ -211,12 +213,15 @@ class MindFeedController extends StateNotifier<MindFeedState> {
       final parts = clean.split('?');
       final base = parts[0];
       final query = parts[1];
-      final cleanParams = query.split('&').where((param) {
-        return !param.startsWith('igsh=') &&
-            !param.startsWith('si=') &&
-            !param.startsWith('utm_') &&
-            !param.startsWith('fbclid=');
-      }).join('&');
+      final cleanParams = query
+          .split('&')
+          .where((param) {
+            return !param.startsWith('igsh=') &&
+                !param.startsWith('si=') &&
+                !param.startsWith('utm_') &&
+                !param.startsWith('fbclid=');
+          })
+          .join('&');
       clean = cleanParams.isNotEmpty ? '$base?$cleanParams' : base;
     }
     return clean;
@@ -314,10 +319,8 @@ class MindFeedController extends StateNotifier<MindFeedState> {
         id: '1',
         title: 'Super Useful 3 Contacts 🔥 (No relatives, only robots ✅)',
         url: 'https://www.instagram.com/reel/C_sample1',
-        content:
-            'Top 3 AI robot contacts that will replace 90% of manual repetitive tasks in 2026. Automated scheduling, AI assistants, and auto-replies.',
-        thumbnailUrl:
-            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+        content: 'Top 3 AI robot contacts that will replace 90% of manual repetitive tasks in 2026. Automated scheduling, AI assistants, and auto-replies.',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
         authorName: 'Sidhartha Rai',
         type: ItemType.instagramReel,
         tags: ['useful', 'contacts', 'ai', 'productivity', 'reel', 'robots'],
@@ -331,10 +334,8 @@ class MindFeedController extends StateNotifier<MindFeedState> {
         id: '2',
         title: 'Build Tools & System Architecture in 2026',
         url: 'https://techstacker.ai/build-tools',
-        content:
-            'Deep dive into modern developer toolchains: Vite, Turbopack, Flutter 3.x engines, and zero-bundle web architectures.',
-        thumbnailUrl:
-            'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
+        content: 'Deep dive into modern developer toolchains: Vite, Turbopack, Flutter 3.x engines, and zero-bundle web architectures.',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
         authorName: 'TechStacker AI',
         type: ItemType.webArticle,
         tags: [
@@ -354,10 +355,8 @@ class MindFeedController extends StateNotifier<MindFeedState> {
         id: '3',
         title: '3 AI Tools You Don\'t Know Exist',
         url: 'https://www.instagram.com/reel/C_sample2',
-        content:
-            'Hidden AI tools for students and developers to automate design, generate clean code, and summarize video reels.',
-        thumbnailUrl:
-            'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
+        content: 'Hidden AI tools for students and developers to automate design, generate clean code, and summarize video reels.',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
         authorName: 'AI Explorer',
         type: ItemType.instagramReel,
         tags: ['ai', 'productivity', 'tools', 'coding', 'reel', 'automation'],
@@ -368,10 +367,8 @@ class MindFeedController extends StateNotifier<MindFeedState> {
       MindItem(
         id: '4',
         title: 'Cinematic Image Grading & Color Science',
-        content:
-            'Mastering moody atmospheric tones, highlights roll-off, and cinematic look curves.',
-        thumbnailUrl:
-            'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
+        content: 'Mastering moody atmospheric tones, highlights roll-off, and cinematic look curves.',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
         authorName: 'Creative Lens',
         type: ItemType.image,
         tags: ['cinematic', 'color-grading', 'photo', 'design', 'visual'],
@@ -385,6 +382,6 @@ class MindFeedController extends StateNotifier<MindFeedState> {
 
 final mindFeedProvider =
     StateNotifierProvider<MindFeedController, MindFeedState>((ref) {
-  final dataSource = ref.watch(localDataSourceProvider);
-  return MindFeedController(dataSource);
-});
+      final dataSource = ref.watch(localDataSourceProvider);
+      return MindFeedController(dataSource);
+    });

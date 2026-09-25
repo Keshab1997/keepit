@@ -52,6 +52,23 @@ class MindToast {
     );
   }
 
+  /// Neutral "here is what just happened" toast (used by Check for update).
+  static void showInfoToast(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+  }) {
+    _showFloatingToast(
+      context: context,
+      icon: LucideIcons.info,
+      accentColor: AppColors.primary,
+      iconBgColor: const Color(0x26FF5B37),
+      borderColor: const Color(0x66FF5B37),
+      title: title,
+      subtitle: subtitle,
+    );
+  }
+
   static void _showFloatingToast({
     required BuildContext context,
     required IconData icon,

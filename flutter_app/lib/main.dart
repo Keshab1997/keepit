@@ -19,6 +19,7 @@ import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
 import 'presentation/widgets/notification_host.dart';
 import 'presentation/widgets/sync_host.dart';
+import 'presentation/widgets/update_host.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -207,11 +208,16 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
           title: 'KeepIt',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
+          // UpdateHost asks Google Play (silently) whether a newer build
+          // exists and swaps in its own update screen — or the blocking
+          // "Update required" screen for a mandatory release.
           home: showOnboarding == null
               ? const _BrandSplash()
-              : showOnboarding
-                  ? const OnboardingScreen()
-                  : const HomeScreen(),
+              : UpdateHost(
+                  child: showOnboarding
+                      ? const OnboardingScreen()
+                      : const HomeScreen(),
+                ),
         ),
       ),
     );

@@ -63,6 +63,7 @@ Every day we scroll past dozens of insightful Instagram Reels, YouTube Shorts, T
 | **"I've Watched / Read This"** | Track read/watch status so your active mind feed stays fresh and actionable. |
 | **Profile & Cloud Sync** | Works 100% offline with no account. Optional Google sign-in (Profile tab) backs up & syncs items via Firestore (last-write-wins, tombstones, auto-sync). Export JSON, delete local data, in-app account deletion. See [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md). |
 | **Full-Text & Color Search** | Search through tags, titles, notes, domains, and even dominant visual colors. |
+| **In-App Updates** | Publishing on Google Play makes a KeepIt-branded update screen appear inside the app on the next cold start — optional by default, forceable per release. See [docs/IN_APP_UPDATE.md](docs/IN_APP_UPDATE.md). |
 
 ---
 
@@ -71,6 +72,7 @@ Every day we scroll past dozens of insightful Instagram Reels, YouTube Shorts, T
 | Doc | What |
 | :--- | :--- |
 | [docs/PUBLISHING.md](docs/PUBLISHING.md) | Step-by-step Play Store release: keystore, AAB, Play Console, closed testing, checklist |
+| [docs/IN_APP_UPDATE.md](docs/IN_APP_UPDATE.md) | In-app updates: the update screen users see, how to force an update, and how to test it (Play only) |
 | [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md) | Create Firebase project, SHA fingerprints, Google Sign-In, Firestore rules |
 | [docs/PLAY_CONSOLE_ANSWERS.md](docs/PLAY_CONSOLE_ANSWERS.md) | Data safety, content rating, account deletion answers |
 | [docs/PLAY_STORE_LISTING.md](docs/PLAY_STORE_LISTING.md) | Store title, descriptions, release notes |

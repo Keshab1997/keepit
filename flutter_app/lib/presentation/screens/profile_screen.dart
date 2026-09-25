@@ -12,8 +12,10 @@ import '../../core/ads/ad_service.dart';
 import '../../core/config/app_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/mind_toast.dart';
+import '../../core/updates/app_update_service.dart';
 import '../../core/utils/data_export.dart';
 import '../../core/utils/notification_service.dart';
+import '../controllers/app_update_controller.dart';
 import '../controllers/cloud_sync_controller.dart';
 import '../controllers/mind_feed_controller.dart';
 import '../widgets/reminder_settings_sheet.dart';
@@ -101,6 +103,14 @@ class ProfileScreen extends ConsumerWidget {
                 subtitle: 'Enjoying the app? Leave a review',
                 onTap: () => _open(context, AppConfig.playStoreUrl),
               ),
+              // Play's in-app update API only exists on Android.
+              if (supportsInAppUpdate)
+                _Tile(
+                  icon: LucideIcons.refreshCw,
+                  title: 'Check for update',
+                  subtitle: 'Looks for a newer build on Google Play',
+                  onTap: () => _checkForUpdate(context, ref),
+                ),
               _Tile(
                 icon: LucideIcons.heart,
                 title: 'Support KeepIt',
@@ -194,6 +204,51 @@ class ProfileScreen extends ConsumerWidget {
         context,
         title: 'Ad not ready — try again in a moment',
       );
+    }
+  }
+
+  /// Manual update check. A manual run ignores the "Later" snooze; if Play
+  /// reports a newer build, UpdateHost shows the update screen itself.
+  static Future<void> _checkForUpdate(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    MindToast.showInfoToast(
+      context,
+      title: 'Checking for updates…',
+      subtitle: 'Asking Google Play about newer KeepIt builds.',
+    );
+    await ref.read(appUpdateProvider.notifier).check(manual: true);
+    if (!context.mounted) return;
+
+    switch (ref.read(appUpdateProvider).phase) {
+      case AppUpdatePhase.upToDate:
+        MindToast.showInfoToast(
+          context,
+          title: 'KeepIt is up to date',
+          subtitle: 'You already have the latest build from Google Play.',
+        );
+        break;
+      case AppUpdatePhase.unsupported:
+        MindToast.showInfoToast(
+          context,
+          title: 'Updates come from your store',
+          subtitle: 'Google Play in-app updates are Android-only.',
+        );
+        break;
+      case AppUpdatePhase.idle:
+        MindToast.showInfoToast(
+          context,
+          title: 'No update found',
+          subtitle: 'Google Play did not report a newer build.',
+        );
+        break;
+      case AppUpdatePhase.updateAvailable:
+      case AppUpdatePhase.readyToInstall:
+      case AppUpdatePhase.blocked:
+      case AppUpdatePhase.checking:
+      case AppUpdatePhase.downloading:
+        break; // The update screen is already taking care of it.
     }
   }
 

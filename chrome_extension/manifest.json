@@ -1,14 +1,22 @@
 {
   "manifest_version": 3,
   "name": "KeepIt - Smart Visual Bookmarks & Second Brain",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Save reels, articles, tweets, quotes, and visual inspiration to your KeepIt mind with 1-click.",
   "permissions": [
     "activeTab",
     "storage",
     "contextMenus",
     "scripting",
-    "notifications"
+    "notifications",
+    "identity",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://accounts.google.com/*",
+    "https://identitytoolkit.googleapis.com/*",
+    "https://securetoken.googleapis.com/*",
+    "https://firestore.googleapis.com/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",

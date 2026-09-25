@@ -126,13 +126,47 @@
     .btn-save:hover {
       opacity: 0.92;
     }
+    .cloud-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding: 8px 10px;
+      background: #FFF7F4;
+      border: 1px solid #FFE3DB;
+      border-radius: 10px;
+    }
+    .cloud-status {
+      color: #7A4B3E;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+    .cloud-actions {
+      display: flex;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .cloud-btn {
+      border: 1px solid #FFB9A8;
+      border-radius: 7px;
+      background: white;
+      color: #D94B2B;
+      font-size: 10px;
+      padding: 5px 7px;
+      cursor: pointer;
+    }
+    .cloud-btn:disabled, .btn-save:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
     .status-msg {
       margin-top: 10px;
       text-align: center;
       font-size: 12px;
       color: #10B981;
       font-weight: 600;
-      display: none;
+      min-height: 16px;
     }
   </style>
 </head>
@@ -147,6 +181,14 @@
   <div class="card-preview">
     <div id="pageTitle" class="page-title">Loading current page...</div>
     <div id="pageUrl" class="page-url"></div>
+  </div>
+
+  <div class="cloud-row">
+    <div id="cloudStatus" class="cloud-status">Checking cloud sync...</div>
+    <div class="cloud-actions">
+      <button id="connectBtn" class="cloud-btn" type="button">Connect</button>
+      <button id="syncBtn" class="cloud-btn" type="button" style="display:none">Sync</button>
+    </div>
   </div>
 
   <div class="input-group">

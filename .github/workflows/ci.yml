@@ -34,3 +34,22 @@ jobs:
       # No APK/AAB on ordinary pushes; use Manual Android Build for those.
       build-apk: false
       build-aab: false
+
+  extension-test:
+    name: Validate Chrome extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        run: |
+          node --check chrome_extension/keepit-schema.js
+          node --check chrome_extension/firebase-sync.js
+          node --check chrome_extension/background.js
+          node --check chrome_extension/popup/popup.js
+      - name: Run extension schema tests
+        run: node chrome_extension/schema_test.js

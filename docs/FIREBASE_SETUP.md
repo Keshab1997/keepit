@@ -77,7 +77,39 @@ After adding a fingerprint, **download google-services.json again** and replace 
    with the `REVERSED_CLIENT_ID` value from the plist.
 3. `cd ios && pod install`.
 
-## 6. Test
+## 6. Configure the Chrome extension
+
+The extension is local-first and works without Firebase. To enable cloud sync:
+
+1. In Firebase Console → Project settings → **Your apps**, add a **Web app**.
+2. Copy the Web API key and Project ID into `chrome_extension/firebase-config.js`:
+
+   ```js
+   globalThis.KEEPIT_FIREBASE_CONFIG = Object.freeze({
+     apiKey: 'AIza...',
+     projectId: 'your-project-id',
+     oauthClientId: '...apps.googleusercontent.com',
+   });
+   ```
+
+   Firebase web config values are client-side identifiers; never put a service-account
+   private key in the extension.
+3. Load the extension once from `chrome://extensions` and copy its ID.
+4. In Google Cloud Console → APIs & Services → Credentials, add this redirect URI to
+   the OAuth client used above:
+
+   ```text
+   https://<EXTENSION_ID>.chromiumapp.org/keepit
+   ```
+
+5. Reload the extension, open its popup, and click **Connect**.
+
+The extension writes to the same Firestore path as Flutter:
+`users/<uid>/items/<itemId>`. Saves continue to work offline in `chrome.storage.local`
+and are uploaded automatically after connection. The popup also exposes **Sync** for
+an immediate pull/push. The service worker retries on its 15-minute alarm.
+
+## 7. Test
 
 ```bash
 cd flutter_app

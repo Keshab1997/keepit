@@ -43,9 +43,7 @@ All IDs and caps live in one place:
 ## Play Console checklist
 
 - **App content → Ads** → "Yes, my app contains ads".
-- **Data safety** → declare *Device or other IDs → Advertising ID* (collected **and shared**
-  with Google) and *App activity → App interactions* (ad views/taps). Copy/paste answers are
-  in `PLAY_CONSOLE_ANSWERS.md`.
+- **Data safety** → import `PLAY_STORE_DATA_SAFETY.csv`. AdMob's automatic disclosure is already in that file: approximate location (from IP), diagnostics, app interactions, and device or other IDs, each collected and shared for advertising, analytics and fraud prevention. Copy/paste answers are in `PLAY_CONSOLE_ANSWERS.md`.
 - The privacy policy already discloses AdMob (`privacy-policy.html`, section 5) — it is served
   at https://keshab1997.github.io/keepit/privacy-policy.html
 

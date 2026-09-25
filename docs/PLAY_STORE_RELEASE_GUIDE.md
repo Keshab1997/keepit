@@ -144,7 +144,7 @@ Welcome to KeepIt. Save links, notes and visual inspiration, organise them with 
 
 ## 6. Data Safety worksheet
 
-Use `docs/PLAY_STORE_DATA_SAFETY.csv` as a structured worksheet. It is not an official Play Console import file; copy the values into the current Play Console form and verify each one against the exact release.
+Import `docs/PLAY_STORE_DATA_SAFETY.csv` with Play Console → App content → Data safety → **Import from CSV**. It is built on Google's official sample (same header, question IDs and row order). Upload that file directly. Opening it in Excel and saving again can change the header or `TRUE`/`FALSE` and Play Console will reject line 1.
 
 ### Recommended high-level answers for the Firebase + AdMob build
 
@@ -161,12 +161,12 @@ Use `docs/PLAY_STORE_DATA_SAFETY.csv` as a structured worksheet. It is not an of
 
 Based on the repository and privacy policy, the likely categories are:
 
-- Personal info: name, email address, user IDs, profile photo if retained
-- App activity: other user-generated content (saved links, notes, tags), app interactions if required by AdMob disclosure
-- Device or other IDs: advertising ID and possibly app/device identifiers processed by Google SDKs
-- App info and performance: crash logs/diagnostics only if the release or an SDK collects them
-- Approximate or precise location: **not declared by the current app code**
-- Contacts, calendar, microphone, camera, health, financial and message data: **not collected by the current app**
+- Personal info: name, email address, personal identifiers, Google profile photo after sign-in
+- App activity: other user-generated content (saved links, notes, tags) when Cloud Sync is on; page views and taps from AdMob
+- Device or other IDs: advertising ID and app set ID, collected and shared by AdMob
+- App info and performance: diagnostics from the Mobile Ads SDK. Crash logs stay off unless Crashlytics is added.
+- Location: approximate location only, because AdMob uses IP address to estimate general location. Precise location stays off; the app requests no location permission.
+- Contacts, calendar, microphone, camera, health, financial and message data: **not collected**
 
 ## 7. App access and review notes
 

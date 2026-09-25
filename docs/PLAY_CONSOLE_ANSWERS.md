@@ -20,28 +20,33 @@ communicate with each other; items are private). Expected rating: **Everyone / 3
 
 ## Data safety
 
-### Variant A: with Firebase Cloud Sync (default once google-services.json is added)
+Import `docs/PLAY_STORE_DATA_SAFETY.csv` from Play Console → App content → Data safety → **Import from CSV**. Do not open and re-save it in Excel first. The file uses Google's official 5-column header; a notes column or shortened header is rejected as `Line 1: Invalid header row`.
+
+Account creation method, the deletion URL, Families, MASA and the UPI badge are **not** part of this CSV. Fill those on their own Play Console screens. Deletion URL: `https://keshab1997.github.io/keepit/delete-account.html`.
+
+### Variant A: Firebase Cloud Sync + AdMob (current `flutter_app`)
 
 **Does your app collect or share any of the required user data types?** Yes
 **Is all user data encrypted in transit?** Yes
 **Do you provide a way for users to request that their data is deleted?** Yes (in-app + URL)
+**Processed ephemerally?** No, for every type below.
 
 | Data type | Collected | Shared | Optional? | Purpose | Notes |
 |---|---|---|---|---|---|
-| Personal info → **Name** | Yes | No | Optional | Account management | from Google sign-in |
-| Personal info → **Email address** | Yes | No | Optional | Account management | |
-| Personal info → **User IDs** | Yes | No | Optional | Account management, App functionality | Firebase UID |
-| App activity → **Other user-generated content** | Yes | No | Optional | App functionality | saved links/notes, synced to cloud |
-| Photos (profile photo URL) | No* | | | | *Only the URL of the Google avatar; you may also declare it under Photos → Optional → Account management to be safe |
-| Device or other IDs → **Advertising ID** | Yes | **Yes** (Google AdMob) | Required | Advertising or marketing |
-| App activity → **App interactions** (ad views / taps) | Yes | **Yes** (Google AdMob) | Required | Advertising or marketing |
+| Personal info → **Name** | Yes | No | Optional | Account management | Google Sign-In |
+| Personal info → **Email address** | Yes | No | Optional | Account management | Google Sign-In |
+| Personal info → **Personal identifiers** | Yes | No | Optional | Account management, App functionality | Firebase UID |
+| Photos and videos → **Photos** | Yes | No | Optional | Account management | Google profile photo, only after sign-in |
+| App activity → **Other user-generated content** | Yes | No | Optional | App functionality | saved links/notes/tags, only if Cloud Sync is on |
+| Location → **Approximate location** | Yes | **Yes** (AdMob) | Required | Advertising, Analytics, Fraud prevention | IP address used by the Mobile Ads SDK to estimate general location. The app has no location permission. |
+| App info and performance → **Diagnostics** | Yes | **Yes** (AdMob) | Required | Advertising, Analytics, Fraud prevention | SDK performance data (launch time, hang rate, energy). No Crashlytics, so crash logs stay off. |
+| App activity → **Page views and taps in app** | Yes | **Yes** (AdMob) | Required | Advertising, Analytics, Fraud prevention | ad views, taps, app launch |
+| Device or other IDs | Yes | **Yes** (AdMob) | Required | Advertising, Analytics, Fraud prevention | advertising ID and app set ID |
 
-- "Processed ephemerally?" → No. "Required or optional?" → **Optional** (users can use the app without signing in).
-- Shared: **Yes** — the advertising ID and ad-interaction data are shared with Google AdMob (a third party) in order to serve ads. Everything else (saved items, account data) stays with us; Firebase is a *service provider* processing on our behalf, which doesn't count as sharing.
-- Security practices: ✅ encrypted in transit, ✅ deletion request mechanism.
+Firebase processes account and saved-item data on our behalf. That is collection, not sharing. AdMob is an independent third party, so its data is both collected and shared. Source: [Google Mobile Ads SDK data disclosure](https://developers.google.com/admob/android/privacy/play-data-disclosure).
 
-### Variant B: published without Firebase
-Data collected: **No**. Data shared: **No**. (Everything stays on the device.)
+### Variant B: published without Firebase and without AdMob
+Only then answer **No** to collection and sharing. Removing Firebase alone is not enough while `google_mobile_ads` is still in the binary.
 
 ## Account deletion
 - Can users create an account? **Yes** (Google sign-in)

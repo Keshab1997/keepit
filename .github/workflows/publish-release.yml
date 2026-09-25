@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   publish:
-    uses: Keshab1997/flutter-builder/.github/workflows/publish-release.yml@v1.6.0
+    uses: Keshab1997/flutter-builder/.github/workflows/publish-release.yml@v1.7.0
     with:
       app-name: KeepIt
       working-directory: flutter_app
@@ -50,4 +50,11 @@ jobs:
       # secret inside the builder (v1.6.0+) and written to
       # flutter_app/android/app/ before the build. `secrets: inherit` below
       # passes it through. A missing secret means an offline-only build.
+      #
+      # Pre-flight (v1.7.0+): doctor.sh runs right before the artifact is
+      # built. With preflight-require-firebase, an EMPTY
+      # GOOGLE_SERVICES_JSON_BASE64 fails the release loudly instead of
+      # silently shipping an app with no cloud sync.
+      preflight: true
+      preflight-require-firebase: true
     secrets: inherit

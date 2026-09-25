@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   release-aab:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.6.0
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.7.0
     with:
       flutter-channel: stable
       working-directory: flutter_app
@@ -29,6 +29,10 @@ jobs:
         ADMOB_REWARDED_ID=${{ vars.ADMOB_REWARDED_ID }}
       build-env: |
         ADMOB_APP_ID=${{ vars.ADMOB_APP_ID }}
+      # Pre-flight (v1.7.0+): a tagged build should never ship with a broken
+      # or empty Firebase config.
+      preflight: true
+      preflight-require-firebase: true
     secrets:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}

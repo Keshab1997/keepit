@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   build:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.6.0
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.7.0
     with:
       flutter-channel: stable
       working-directory: flutter_app
@@ -43,6 +43,10 @@ jobs:
       # Gradle reads this for the AndroidManifest AdMob app ID placeholder.
       build-env: |
         ADMOB_APP_ID=${{ vars.ADMOB_APP_ID }}
+      # Pre-flight (v1.7.0+): catch a missing/empty Firebase secret here,
+      # before you test the build on a phone.
+      preflight: true
+      preflight-require-firebase: true
     secrets:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}

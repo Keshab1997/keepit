@@ -46,8 +46,7 @@ class AdConfig {
   /// (`com.google.android.gms.ads.APPLICATION_ID`).
   static const String androidAppId = String.fromEnvironment('ADMOB_APP_ID');
 
-  static const String bannerUnitId =
-      String.fromEnvironment('ADMOB_BANNER_ID');
+  static const String bannerUnitId = String.fromEnvironment('ADMOB_BANNER_ID');
 
   static const String interstitialUnitId =
       String.fromEnvironment('ADMOB_INTERSTITIAL_ID');

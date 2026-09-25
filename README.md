@@ -1,6 +1,40 @@
 # KeepIt - AI-Powered Second Brain & Smart Visual Bookmarks 🧠✨
 
-> **"Never lose an idea, reel, article, or note again."**  
+> **"Never lose an idea, reel, article, or note again."**  \
+
+<p align="center">
+  <img src="store_assets/feature_graphic_ai.png" alt="KeepIt — Your visual second brain" width="100%">
+</p>
+
+<p align="center">
+  <b>Save less. Remember more.</b><br>
+  A beautiful, private second brain for everything worth keeping.
+</p>
+
+<p align="center">
+  <a href="#-why-keepit">Features</a> ·
+  <a href="#-getting-started">Getting started</a> ·
+  <a href="docs/PLAY_STORE_RELEASE_GUIDE.md">Play Store release guide</a>
+</p>
+
+## ✨ See KeepIt in action
+
+<p align="center">
+  <img src="store_assets/ai_mockups/01_everything_feed.png" width="23%" alt="KeepIt visual feed">
+  <img src="store_assets/ai_mockups/02_serendipity.png" width="23%" alt="KeepIt Serendipity">
+  <img src="store_assets/ai_mockups/03_spaces.png" width="23%" alt="KeepIt Spaces">
+  <img src="store_assets/ai_mockups/04_profile_sync.png" width="23%" alt="KeepIt Profile and Cloud Sync">
+</p>
+
+## 🎨 The KeepIt idea
+
+<p align="center">
+  <img src="store_assets/ai_concepts/01_capture_everything.png" width="23%" alt="Save what inspires you">
+  <img src="store_assets/ai_concepts/02_rediscover_ideas.png" width="23%" alt="Rediscover what matters">
+  <img src="store_assets/ai_concepts/03_organize_your_world.png" width="23%" alt="Everything has a place">
+  <img src="store_assets/ai_concepts/04_private_by_default.png" width="23%" alt="Your ideas stay yours">
+</p>
+
 > KeepIt is a privacy-first, visually aesthetic second brain for mobile (Flutter) and desktop (Chrome Extension). Inspired by the beauty of mymind, engineered for effortless recall and privacy.
 
 ---

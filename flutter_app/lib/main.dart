@@ -96,7 +96,7 @@ void main() {
 /// Minimal emergency UI shown when startup itself throws — better a visible
 /// error message than a process that silently closes.
 class _BootErrorApp extends StatelessWidget {
-  const _BootErrorApp({super.key, required this.error});
+  const _BootErrorApp({required this.error});
 
   final Object error;
 

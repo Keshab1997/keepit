@@ -1,8 +1,8 @@
 # AdMob setup (monetization)
 
 KeepIt monetizes with **Google AdMob** via [`google_mobile_ads`](https://pub.dev/packages/google_mobile_ads).
-The app currently ships with Google's official **test ad unit IDs**, so everything works out of
-the box — real ads simply show up labelled "Test Ad".
+The real AdMob app + ad unit IDs (App `ca-app-pub-4216917764852377~9499831430`,
+banner/interstitial/rewarded units) are wired in — see `ad_config.dart`.
 
 ## What's already implemented
 

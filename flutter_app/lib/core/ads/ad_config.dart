@@ -25,11 +25,11 @@ class AdConfig {
   // ---------------------------------------------------------------------------
 
   /// Also used as the meta-data value in AndroidManifest.xml.
-  static const String androidAppId = 'ca-app-pub-3940256099942544~3347511713';
-  static const String bannerUnitId = 'ca-app-pub-3940256099942544/6300978111';
+  static const String androidAppId = 'ca-app-pub-4216917764852377~9499831430';
+  static const String bannerUnitId = 'ca-app-pub-4216917764852377/7198025168';
   static const String interstitialUnitId =
-      'ca-app-pub-3940256099942544/1033173712';
-  static const String rewardedUnitId = 'ca-app-pub-3940256099942544/5224354917';
+      'ca-app-pub-4216917764852377/5884943495';
+  static const String rewardedUnitId = 'ca-app-pub-4216917764852377/8263694824';
 
   // ---------------------------------------------------------------------------
   // Frequency caps (UX first)

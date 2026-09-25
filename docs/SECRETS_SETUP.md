@@ -13,15 +13,17 @@ that goes with it.
 ```bash
 cd keepit
 
-# 1. AdMob (4 values, from the AdMob console → Apps → keepit → Ad units)
-gh secret set ADMOB_APP_ID                 # ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
-gh secret set ADMOB_BANNER_ID              # ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ
-gh secret set ADMOB_INTERSTITIAL_ID
-gh secret set ADMOB_REWARDED_ID
+# 1. AdMob → repository VARIABLES (not secrets — see the note below)
+gh variable set ADMOB_APP_ID                 # ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
+gh variable set ADMOB_BANNER_ID              # ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ
+gh variable set ADMOB_INTERSTITIAL_ID
+gh variable set ADMOB_REWARDED_ID
 
-# 2. Firebase client config (written into the build by flutter-builder v1.5.1+)
-base64 -w0 flutter_app/android/app/google-services.json \
-  | gh secret set GOOGLE_SERVICES_JSON_BASE64
+# 2. Firebase client config → repository SECRET
+#    Linux:
+base64 -w0 flutter_app/android/app/google-services.json | gh secret set GOOGLE_SERVICES_JSON_BASE64
+#    macOS:
+base64 -i flutter_app/android/app/google-services.json  | gh secret set GOOGLE_SERVICES_JSON_BASE64
 ```
 
 Then run **Actions → Publish Android Release → Run workflow** and check the log
@@ -29,41 +31,43 @@ for `OK: android/app/google-services.json is valid JSON`.
 
 ---
 
-## 1. The secrets
+## 1. Variables vs secrets — why the split
 
-| Secret | Where to copy it from | Used by |
+> ⚠️ **GitHub Actions does not expose the `secrets` context inside a reusable
+> workflow's `with:` inputs.** Writing
+> `dart-defines: ADMOB_APP_ID=${{ secrets.ADMOB_APP_ID }}` makes the workflow
+> fail instantly with **zero jobs** — no error message beyond a red run. This
+> bit us once; don't reintroduce it.
+
+AdMob IDs travel through `dart-defines` and `build-env`, which are `with:`
+inputs, so they must be **Variables**. `google-services.json` is read from
+inside the shared builder (`inputs.x || secrets.X`, v1.6.0+), so it can be a
+**Secret**.
+
+| Name | Kind | Where to copy it from |
 |---|---|---|
-| `ADMOB_APP_ID` | AdMob → Apps → `com.keshabstudios.keepit` → App ID | Dart **and** `AndroidManifest.xml` |
-| `ADMOB_BANNER_ID` | AdMob → ad units → Banner | Dart |
-| `ADMOB_INTERSTITIAL_ID` | AdMob → ad units → Interstitial | Dart |
-| `ADMOB_REWARDED_ID` | AdMob → ad units → Rewarded | Dart |
-| `GOOGLE_SERVICES_JSON_BASE64` | `base64` of your local `google-services.json` | Gradle (Firebase plugin) |
+| `ADMOB_APP_ID` | Variable | AdMob → Apps → `com.keshabstudios.keepit` → App ID |
+| `ADMOB_BANNER_ID` | Variable | AdMob → ad units → Banner |
+| `ADMOB_INTERSTITIAL_ID` | Variable | AdMob → ad units → Interstitial |
+| `ADMOB_REWARDED_ID` | Variable | AdMob → ad units → Rewarded |
+| `GOOGLE_SERVICES_JSON_BASE64` | Secret | `base64` of your local `google-services.json` |
+
+This is fine security-wise: AdMob IDs are public identifiers — they are
+compiled into every APK you publish anyway. The abuse risk we were fixing was
+them sitting in the **source repo**, not in the binary.
 
 Already-present secrets (unchanged): `ANDROID_KEYSTORE_BASE64`,
 `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 
-### Add them from the terminal
+> 💡 Prefer everything under one roof? You can keep the AdMob IDs as secrets
+> too — but then you have to inline them in the workflow or feed them through a
+> `secrets:`-backed input in `Keshab1997/flutter-builder`, because `with:` can
+> never read them.
 
-```bash
-gh secret set ADMOB_APP_ID                 # prompts for the value, hidden input
-gh secret set ADMOB_BANNER_ID
-gh secret set ADMOB_INTERSTITIAL_ID
-gh secret set ADMOB_REWARDED_ID
+### Add them from the UI
 
-# Linux:
-base64 -w0 flutter_app/android/app/google-services.json | gh secret set GOOGLE_SERVICES_JSON_BASE64
-# macOS:
-base64 -i flutter_app/android/app/google-services.json  | gh secret set GOOGLE_SERVICES_JSON_BASE64
-```
-
-### Or from the UI
-
-Repo → **Settings → Secrets and variables → Actions → New repository secret**.
-
-> 💡 AdMob IDs are public identifiers, not credentials. If you would rather see
-> them in the build log when debugging, put them in **Variables** instead and
-> change `${{ secrets.ADMOB_... }}` to `${{ vars.ADMOB_... }}` in the
-> workflows. Keep `GOOGLE_SERVICES_JSON_BASE64` a secret either way.
+Repo → **Settings → Secrets and variables → Actions**
+→ **Variables** tab (AdMob) / **Secrets** tab (Google services JSON).
 
 ---
 
@@ -77,9 +81,12 @@ Run **Actions → Publish Android Release → Run workflow** and look for:
 | `Dart defines (values hidden): ADMOB_ENABLED, ADMOB_APP_ID, …` | AdMob defines compiled in ✅ |
 | `No release placeholders found.` | No test IDs / `com.example` left in the source ✅ |
 
-If a secret is missing you get `::notice::build-env: ADMOB_APP_ID is empty and
+If a value is missing you get `::notice::build-env: ADMOB_APP_ID is empty and
 was skipped` — the build still succeeds, but ships **ad-free**. That is the
 intended fail-safe, not a bug.
+
+> 🚨 If a run finishes **red with zero jobs**, a `${{ secrets.… }}` slipped into
+> a `with:` input. See the warning in section 1.
 
 ### Confirm ads actually ship
 
@@ -196,5 +203,5 @@ Afterwards every collaborator must re-clone, and any open PR must be rebased.
 | `android/app/src/main/AndroidManifest.xml` | `android:value="${admobAppId}"` |
 | `android/app/google-services.json` | **Untracked** (was committed); now git-ignored |
 | `.gitignore` (new, repo root) | Signing material, Firebase config, editor junk |
-| `.github/workflows/*.yml` | Builder bumped to `v1.5.1`; `dart-defines` + `build-env` + `google-services-json-base64` |
-| `Keshab1997/flutter-builder` | v1.5.1 adds the `google-services-json-base64` / `-plist-base64` inputs |
+| `.github/workflows/*.yml` | Builder bumped to `v1.6.0`; AdMob IDs via `dart-defines` + `build-env`, `google-services.json` via the `GOOGLE_SERVICES_JSON_BASE64` secret |
+| `Keshab1997/flutter-builder` | v1.6.0 reads `google-services.json` / `GoogleService-Info.plist` from a secret or a `with:` input |

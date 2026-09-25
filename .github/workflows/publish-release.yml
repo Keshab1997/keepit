@@ -27,24 +27,27 @@ permissions:
 
 jobs:
   publish:
-    uses: Keshab1997/flutter-builder/.github/workflows/publish-release.yml@v1.5.1
+    uses: Keshab1997/flutter-builder/.github/workflows/publish-release.yml@v1.6.0
     with:
       app-name: KeepIt
       working-directory: flutter_app
       release-draft: ${{ inputs.draft }}
       release-prerelease: ${{ inputs.prerelease }}
-      # Real AdMob IDs live in repository secrets, never in git. Without them
-      # the app compiles ad-free (AdConfig.adsEnabled defaults to false).
+      # Real AdMob IDs come from repository Variables, never from git. A
+      # reusable workflow's `with:` inputs cannot read the secrets context, and
+      # AdMob IDs are public identifiers that ship inside every APK anyway.
+      # Without them the app compiles ad-free (AdConfig.adsEnabled is false).
       dart-defines: |
         ADMOB_ENABLED=true
-        ADMOB_APP_ID=${{ secrets.ADMOB_APP_ID }}
-        ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID }}
-        ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID }}
-        ADMOB_REWARDED_ID=${{ secrets.ADMOB_REWARDED_ID }}
+        ADMOB_APP_ID=${{ vars.ADMOB_APP_ID }}
+        ADMOB_BANNER_ID=${{ vars.ADMOB_BANNER_ID }}
+        ADMOB_INTERSTITIAL_ID=${{ vars.ADMOB_INTERSTITIAL_ID }}
+        ADMOB_REWARDED_ID=${{ vars.ADMOB_REWARDED_ID }}
       # Gradle reads this for the AndroidManifest AdMob app ID placeholder.
       build-env: |
-        ADMOB_APP_ID=${{ secrets.ADMOB_APP_ID }}
-      # Written to flutter_app/android/app/google-services.json before the build
-      # (builder v1.5.1+). Empty secret = step skipped, offline-only build.
-      google-services-json-base64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        ADMOB_APP_ID=${{ vars.ADMOB_APP_ID }}
+      # google-services.json is read from the GOOGLE_SERVICES_JSON_BASE64
+      # secret inside the builder (v1.6.0+) and written to
+      # flutter_app/android/app/ before the build. `secrets: inherit` below
+      # passes it through. A missing secret means an offline-only build.
     secrets: inherit

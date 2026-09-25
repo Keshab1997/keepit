@@ -23,24 +23,31 @@ permissions:
 
 jobs:
   build:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.5.1
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.6.0
     with:
       flutter-channel: stable
       working-directory: flutter_app
       build-apk: ${{ inputs.format == 'apk' }}
       build-aab: ${{ inputs.format == 'aab' }}
       artifact-retention-days: 14
+      # Real AdMob IDs come from repository Variables. A reusable workflow's
+      # `with:` inputs cannot read the secrets context, and AdMob IDs are
+      # public identifiers that ship inside every APK anyway. Without them the
+      # app simply compiles ad-free.
       dart-defines: |
         ADMOB_ENABLED=true
-        ADMOB_APP_ID=${{ secrets.ADMOB_APP_ID }}
-        ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID }}
-        ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID }}
-        ADMOB_REWARDED_ID=${{ secrets.ADMOB_REWARDED_ID }}
+        ADMOB_APP_ID=${{ vars.ADMOB_APP_ID }}
+        ADMOB_BANNER_ID=${{ vars.ADMOB_BANNER_ID }}
+        ADMOB_INTERSTITIAL_ID=${{ vars.ADMOB_INTERSTITIAL_ID }}
+        ADMOB_REWARDED_ID=${{ vars.ADMOB_REWARDED_ID }}
+      # Gradle reads this for the AndroidManifest AdMob app ID placeholder.
       build-env: |
-        ADMOB_APP_ID=${{ secrets.ADMOB_APP_ID }}
-      google-services-json-base64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        ADMOB_APP_ID=${{ vars.ADMOB_APP_ID }}
     secrets:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      # Firebase client config: written to flutter_app/android/app/ before the
+      # build (builder v1.6.0+). Missing secret = offline-only build.
+      GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}

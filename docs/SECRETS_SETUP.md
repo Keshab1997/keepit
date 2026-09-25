@@ -29,6 +29,39 @@ base64 -i flutter_app/android/app/google-services.json  | gh secret set GOOGLE_S
 Then run **Actions → Publish Android Release → Run workflow** and check the log
 for `OK: android/app/google-services.json is valid JSON`.
 
+> ## 🚨 Already ran the `base64 -w0` command on a Mac? Your secret is EMPTY.
+>
+> macOS ships **BSD** `base64`, which has no `-w` flag. If you ran:
+>
+> ```bash
+> base64 -w0 flutter_app/android/app/google-services.json | gh secret set GOOGLE_SERVICES_JSON_BASE64
+> ```
+>
+> you saw this — and the second line is a **false success**:
+>
+> ```
+> base64: invalid option -- w          ← base64 failed, printed nothing
+> ✓ Set Actions secret GOOGLE_SERVICES_JSON_BASE64 for Keshab1997/keepit
+> ```
+>
+> `base64` exited with an error and wrote nothing to stdout, so `gh` stored an
+> **empty value** — while still printing "✓ Set Actions secret". There is no
+> error for this; `gh secret list` shows the name either way.
+>
+> **Fix — re-run with the macOS form (no `-w`, `-i` for input):**
+>
+> ```bash
+> base64 -i flutter_app/android/app/google-services.json | gh secret set GOOGLE_SERVICES_JSON_BASE64
+> ```
+>
+> **A build with an empty secret does not fail.** It quietly produces an app
+> with **no cloud sync**, because `build.gradle.kts` skips the Firebase plugin
+> when `google-services.json` is absent. The only signal is the missing
+> `OK: android/app/google-services.json is valid JSON` line in section 2.
+>
+> 💡 Habit worth keeping: before piping anything into `gh secret set`, check it
+> produced output — `base64 -i <file> | wc -c` should print thousands, not `0`.
+
 ---
 
 ## 1. Variables vs secrets — why the split

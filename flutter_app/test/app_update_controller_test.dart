@@ -181,7 +181,8 @@ void main() {
 
     await controller.startFlexibleDownload();
 
-    expect(container.read(appUpdateProvider).phase, AppUpdatePhase.updateAvailable);
+    expect(container.read(appUpdateProvider).phase,
+        AppUpdatePhase.updateAvailable);
   });
 
   test('Later postpones that build only, and a manual check ignores it',

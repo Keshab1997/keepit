@@ -111,7 +111,8 @@ class NoopAppUpdateService implements AppUpdateService {
   Future<AppUpdateInfo?> checkForUpdate() async => null;
 
   @override
-  Stream<InstallStatus> get installStatus => const Stream<InstallStatus>.empty();
+  Stream<InstallStatus> get installStatus =>
+      const Stream<InstallStatus>.empty();
 
   @override
   Future<AppUpdateResult> startFlexibleUpdate() async =>

@@ -152,7 +152,8 @@ final appUpdateServiceProvider = Provider<AppUpdateService>((ref) {
   return const PlayAppUpdateService();
 });
 
-final updatePolicyProvider = Provider<UpdatePolicy>((ref) => const UpdatePolicy());
+final updatePolicyProvider =
+    Provider<UpdatePolicy>((ref) => const UpdatePolicy());
 
 final updatePreferencesProvider = Provider<UpdatePreferences>(
   (ref) => HiveUpdatePreferences(ref.watch(localDataSourceProvider)),
@@ -225,8 +226,8 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
 
       final available = info.availableVersionCode;
       final finishedDownload = info.installStatus == InstallStatus.downloaded;
-      final inProgress =
-          info.updateAvailability == UpdateAvailability.developerTriggeredUpdateInProgress;
+      final inProgress = info.updateAvailability ==
+          UpdateAvailability.developerTriggeredUpdateInProgress;
       final isAvailable =
           info.updateAvailability == UpdateAvailability.updateAvailable;
 
@@ -442,7 +443,8 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
           break;
         case InstallStatus.installing:
         case InstallStatus.installed:
-          state = state.copyWith(phase: AppUpdatePhase.downloading, busy: false);
+          state =
+              state.copyWith(phase: AppUpdatePhase.downloading, busy: false);
           break;
         case InstallStatus.failed:
         case InstallStatus.canceled:

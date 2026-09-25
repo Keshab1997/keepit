@@ -26,11 +26,11 @@ class NotificationActionRecord {
   });
 
   Map<String, dynamic> toJson() => {
-    'type': type,
-    'itemId': itemId,
-    if (until != null) 'until': until!.toIso8601String(),
-    'at': at.toIso8601String(),
-  };
+        'type': type,
+        'itemId': itemId,
+        if (until != null) 'until': until!.toIso8601String(),
+        'at': at.toIso8601String(),
+      };
 
   static NotificationActionRecord? tryParse(String line) {
     try {

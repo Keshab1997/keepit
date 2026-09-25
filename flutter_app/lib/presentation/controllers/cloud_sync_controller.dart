@@ -338,12 +338,12 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
 
 final cloudSyncProvider =
     StateNotifierProvider<CloudSyncController, CloudSyncState>((ref) {
-      final controller = CloudSyncController(
-        auth: ref.watch(authServiceProvider),
-        remote: ref.watch(cloudSyncRemoteProvider),
-        local: ref.watch(localDataSourceProvider),
-        onLocalDataChanged: () =>
-            ref.read(mindFeedProvider.notifier).loadItems(seedDemo: false),
-      );
-      return controller;
-    });
+  final controller = CloudSyncController(
+    auth: ref.watch(authServiceProvider),
+    remote: ref.watch(cloudSyncRemoteProvider),
+    local: ref.watch(localDataSourceProvider),
+    onLocalDataChanged: () =>
+        ref.read(mindFeedProvider.notifier).loadItems(seedDemo: false),
+  );
+  return controller;
+});

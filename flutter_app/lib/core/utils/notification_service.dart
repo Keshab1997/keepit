@@ -116,8 +116,7 @@ class NotificationService {
     _store = store ?? await SerendipityStore.open();
     _state = await _store.loadState();
 
-    final supported =
-        !kIsWeb &&
+    final supported = !kIsWeb &&
         (defaultTargetPlatform == TargetPlatform.android ||
             defaultTargetPlatform == TargetPlatform.iOS ||
             defaultTargetPlatform == TargetPlatform.macOS);
@@ -193,17 +192,13 @@ class NotificationService {
   Future<bool> requestPermission() async {
     if (!_pluginReady) return false;
     try {
-      final android = _plugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >();
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
       if (android != null) {
         return await android.requestNotificationsPermission() ?? false;
       }
-      final ios = _plugin
-          .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin
-          >();
+      final ios = _plugin.resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin>();
       if (ios != null) {
         return await ios.requestPermissions(
               alert: true,
@@ -212,10 +207,8 @@ class NotificationService {
             ) ??
             false;
       }
-      final mac = _plugin
-          .resolvePlatformSpecificImplementation<
-            MacOSFlutterLocalNotificationsPlugin
-          >();
+      final mac = _plugin.resolvePlatformSpecificImplementation<
+          MacOSFlutterLocalNotificationsPlugin>();
       if (mac != null) {
         return await mac.requestPermissions(
               alert: true,
@@ -234,20 +227,14 @@ class NotificationService {
   Future<bool?> areNotificationsEnabled() async {
     if (!_pluginReady) return null;
     try {
-      final android = _plugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >();
+      final android = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
       if (android != null) return await android.areNotificationsEnabled();
-      final ios = _plugin
-          .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin
-          >();
+      final ios = _plugin.resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin>();
       if (ios != null) return (await ios.checkPermissions())?.isEnabled;
-      final mac = _plugin
-          .resolvePlatformSpecificImplementation<
-            MacOSFlutterLocalNotificationsPlugin
-          >();
+      final mac = _plugin.resolvePlatformSpecificImplementation<
+          MacOSFlutterLocalNotificationsPlugin>();
       if (mac != null) return (await mac.checkPermissions())?.isEnabled;
     } catch (_) {}
     return null;
@@ -488,10 +475,10 @@ class NotificationService {
       showTestNotification(item);
 
   Future<void> cancelAll() => _serialized(() async {
-    if (_pluginReady) await _cancelPlanned();
-    _state = _state.copyWith(plan: const []);
-    await _store.saveState(_state);
-  });
+        if (_pluginReady) await _cancelPlanned();
+        _state = _state.copyWith(plan: const []);
+        await _store.saveState(_state);
+      });
 
   // ---------------------------------------------------------------------------
   // Responses

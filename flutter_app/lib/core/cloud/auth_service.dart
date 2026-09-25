@@ -23,10 +23,8 @@ class AppUser {
     final source = (displayName?.trim().isNotEmpty ?? false)
         ? displayName!.trim()
         : (email ?? '?');
-    final parts = source
-        .split(RegExp(r'[\s@._]+'))
-        .where((p) => p.isNotEmpty)
-        .toList();
+    final parts =
+        source.split(RegExp(r'[\s@._]+')).where((p) => p.isNotEmpty).toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
     return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
@@ -97,8 +95,8 @@ class UnavailableAuthService implements AuthService {
 /// Google Sign-In → Firebase Auth.
 class FirebaseAuthService implements AuthService {
   FirebaseAuthService({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
-    : _auth = auth ?? FirebaseAuth.instance,
-      _google = googleSignIn ?? GoogleSignIn.instance;
+      : _auth = auth ?? FirebaseAuth.instance,
+        _google = googleSignIn ?? GoogleSignIn.instance;
 
   final FirebaseAuth _auth;
   final GoogleSignIn _google;

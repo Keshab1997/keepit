@@ -396,8 +396,8 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
         isDigest
             ? LucideIcons.sun
             : (reminder.snoozed
-                  ? LucideIcons.alarmClock
-                  : LucideIcons.sparkles),
+                ? LucideIcons.alarmClock
+                : LucideIcons.sparkles),
         true,
       ),
       title: Text(

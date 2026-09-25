@@ -23,22 +23,26 @@ const List<_OnboardingPage> _pages = [
   _OnboardingPage(
     image: 'assets/onboarding/onboarding_save.jpg',
     title: 'Save anything in one tap',
-    body: 'Reels, videos, articles, photos and notes — share them from Instagram, YouTube, Chrome or any app straight into KeepIt.',
+    body:
+        'Reels, videos, articles, photos and notes — share them from Instagram, YouTube, Chrome or any app straight into KeepIt.',
   ),
   _OnboardingPage(
     image: 'assets/onboarding/onboarding_feed.jpg',
     title: 'Your visual second brain',
-    body: 'Everything you save becomes a beautiful card. Smart tags and Spaces keep it organised, and search finds anything instantly.',
+    body:
+        'Everything you save becomes a beautiful card. Smart tags and Spaces keep it organised, and search finds anything instantly.',
   ),
   _OnboardingPage(
     image: 'assets/onboarding/onboarding_serendipity.jpg',
     title: 'Never forget what you save',
-    body: 'Serendipity reminders bring your saved ideas back on day 3, 14, 45 and 90 — plus a relaxing Sunday digest.',
+    body:
+        'Serendipity reminders bring your saved ideas back on day 3, 14, 45 and 90 — plus a relaxing Sunday digest.',
   ),
   _OnboardingPage(
     image: 'assets/onboarding/onboarding_private.jpg',
     title: 'Private by design',
-    body: 'Local-first: your mind lives on your phone. Sign in only if you want cloud backup — light, non-personalized ads keep KeepIt free.',
+    body:
+        'Local-first: your mind lives on your phone. Sign in only if you want cloud backup — light, non-personalized ads keep KeepIt free.',
   ),
 ];
 

@@ -77,9 +77,8 @@ class ImgBbUploader {
         response.statusCode >= 300 ||
         payload['success'] != true) {
       final error = payload['error'];
-      final message = error is Map
-          ? error['message']?.toString()
-          : error?.toString();
+      final message =
+          error is Map ? error['message']?.toString() : error?.toString();
       throw ImgBbUploadException(
         message == null || message.isEmpty
             ? 'ImgBB rejected the image upload.'

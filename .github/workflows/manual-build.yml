@@ -23,13 +23,22 @@ permissions:
 
 jobs:
   build:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.4.0
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.5.1
     with:
       flutter-channel: stable
       working-directory: flutter_app
       build-apk: ${{ inputs.format == 'apk' }}
       build-aab: ${{ inputs.format == 'aab' }}
       artifact-retention-days: 14
+      dart-defines: |
+        ADMOB_ENABLED=true
+        ADMOB_APP_ID=${{ secrets.ADMOB_APP_ID }}
+        ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID }}
+        ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID }}
+        ADMOB_REWARDED_ID=${{ secrets.ADMOB_REWARDED_ID }}
+      build-env: |
+        ADMOB_APP_ID=${{ secrets.ADMOB_APP_ID }}
+      google-services-json-base64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
     secrets:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}

@@ -1,31 +1,69 @@
 /// AdMob configuration for KeepIt.
 ///
-/// Live production IDs (see docs/ADMOB_SETUP.md). To test without serving
-/// real ads, temporarily swap these with Google's official test IDs.
+/// The real AdMob IDs are **not** in this file and must never be committed.
+/// They are injected at release time through the CI workflow:
+///
+///   * `ADMOB_ENABLED=true`        — master switch (off without it)
+///   * `ADMOB_APP_ID`              — also fed to Gradle for the manifest
+///   * `ADMOB_BANNER_ID`
+///   * `ADMOB_INTERSTITIAL_ID`
+///   * `ADMOB_REWARDED_ID`
+///
+/// Every value has an empty default, so a plain `flutter run`, a CI check or a
+/// fork build produces an **ad-free** app that never talks to AdMob. That is
+/// deliberate: a checkout without the release secrets must not ship someone
+/// else's ad units, and must not ship Google's test units either (the release
+/// gate in the shared builder fails the build when test IDs are in `lib/`).
+///
+/// See `docs/SECRETS_SETUP.md` for the one-time repository configuration.
 ///
 /// Frequency caps are deliberately conservative: ads must never get in the
 /// way of saving an idea.
 class AdConfig {
   AdConfig._();
 
-  /// Master switch — set to `false` to ship a completely ad-free build.
-  static const bool adsEnabled = true;
+  /// Master switch. Compile-time only: `--dart-define=ADMOB_ENABLED=true`.
+  ///
+  /// Defaults to `false` so every build that did not receive the release
+  /// secrets is ad-free.
+  static const bool adsEnabled =
+      bool.fromEnvironment('ADMOB_ENABLED', defaultValue: false);
 
-  /// Individual formats.
-  static const bool enableBanner = true;
-  static const bool enableInterstitial = true;
-  static const bool enableRewarded = true;
+  /// Individual formats. Each one is off unless the whole stack is enabled.
+  static const bool _enableBanner = true;
+  static const bool _enableInterstitial = true;
+  static const bool _enableRewarded = true;
+
+  static bool get enableBanner => adsEnabled && _enableBanner;
+  static bool get enableInterstitial => adsEnabled && _enableInterstitial;
+  static bool get enableRewarded => adsEnabled && _enableRewarded;
 
   // ---------------------------------------------------------------------------
-  // Ad unit IDs — LIVE production units (ca-app-pub-4216917764852377).
+  // Ad unit IDs — supplied by the release workflow, empty by default.
   // ---------------------------------------------------------------------------
 
-  /// Also used as the meta-data value in AndroidManifest.xml.
-  static const String androidAppId = 'ca-app-pub-4216917764852377~9499831430';
-  static const String bannerUnitId = 'ca-app-pub-4216917764852377/7198025168';
+  /// Must match the value Gradle writes into AndroidManifest.xml
+  /// (`com.google.android.gms.ads.APPLICATION_ID`).
+  static const String androidAppId = String.fromEnvironment('ADMOB_APP_ID');
+
+  static const String bannerUnitId =
+      String.fromEnvironment('ADMOB_BANNER_ID');
+
   static const String interstitialUnitId =
-      'ca-app-pub-4216917764852377/5884943495';
-  static const String rewardedUnitId = 'ca-app-pub-4216917764852377/8263694824';
+      String.fromEnvironment('ADMOB_INTERSTITIAL_ID');
+
+  static const String rewardedUnitId =
+      String.fromEnvironment('ADMOB_REWARDED_ID');
+
+  /// True when the switch is on but the unit IDs were not supplied.
+  ///
+  /// A release build should never hit this — the workflow passes every ID — but
+  /// it keeps a mis-configured run from initialising AdMob with empty units.
+  static bool get missingUnitIds =>
+      androidAppId.isEmpty ||
+      bannerUnitId.isEmpty ||
+      interstitialUnitId.isEmpty ||
+      rewardedUnitId.isEmpty;
 
   // ---------------------------------------------------------------------------
   // Frequency caps (UX first)
@@ -44,8 +82,7 @@ class AdConfig {
   /// required). Flip to `true` only once a UMP/consent flow is in place.
   static const bool personalizedAds = false;
 
-  /// True if the IDs above are NOT the production publisher ID.
-  /// Currently false — live IDs in use.
-  static bool get usingTestAds =>
-      !bannerUnitId.startsWith('ca-app-pub-4216917764852377');
+  /// Always `false`: test IDs are no longer compiled into the app. Kept as a
+  /// constant so callers that logged or branched on it keep compiling.
+  static bool get usingTestAds => false;
 }

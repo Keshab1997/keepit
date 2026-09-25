@@ -41,6 +41,13 @@ android {
 
     defaultConfig {
         applicationId = "com.keshabstudios.keepit"
+        // AdMob app ID for the <meta-data> in AndroidManifest.xml. Supplied by
+        // the release workflow through `build-env: ADMOB_APP_ID=...`; the
+        // fallback is only reached by local/CI builds, which ship ad-free
+        // because AdConfig.adsEnabled is false without the Dart defines.
+        // Never commit the real value. See docs/SECRETS_SETUP.md.
+        manifestPlaceholders["admobAppId"] =
+            System.getenv("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

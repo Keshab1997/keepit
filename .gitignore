@@ -1,0 +1,41 @@
+# --------------------------------------------------------------------------- #
+# Signing material — losing these to git means anyone can forge your updates. #
+# --------------------------------------------------------------------------- #
+*.jks
+*.keystore
+*.pem
+key.properties
+
+# --------------------------------------------------------------------------- #
+# Firebase client config. Not a secret on its own, but committing it lets
+# anyone point their own build at this project's Firestore/Auth. The CI
+# workflow writes the file from the GOOGLE_SERVICES_JSON_BASE64 secret
+# (flutter-builder v1.5.1+). See docs/SECRETS_SETUP.md.
+#
+# NOTE: flutter_app/.env IS tracked on purpose — it is an empty, commented
+# placeholder that documents the optional local settings.
+# --------------------------------------------------------------------------- #
+google-services.json
+GoogleService-Info.plist
+
+# --------------------------------------------------------------------------- #
+# OS / editor junk (this repo had no root .gitignore at all before)
+# --------------------------------------------------------------------------- #
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+.idea/
+.vscode/
+*.iml
+
+# --------------------------------------------------------------------------- #
+# Tooling
+# --------------------------------------------------------------------------- #
+node_modules/
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+*.log

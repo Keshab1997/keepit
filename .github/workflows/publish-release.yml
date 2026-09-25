@@ -27,10 +27,24 @@ permissions:
 
 jobs:
   publish:
-    uses: Keshab1997/flutter-builder/.github/workflows/publish-release.yml@v1.4.0
+    uses: Keshab1997/flutter-builder/.github/workflows/publish-release.yml@v1.5.1
     with:
       app-name: KeepIt
       working-directory: flutter_app
       release-draft: ${{ inputs.draft }}
       release-prerelease: ${{ inputs.prerelease }}
+      # Real AdMob IDs live in repository secrets, never in git. Without them
+      # the app compiles ad-free (AdConfig.adsEnabled defaults to false).
+      dart-defines: |
+        ADMOB_ENABLED=true
+        ADMOB_APP_ID=${{ secrets.ADMOB_APP_ID }}
+        ADMOB_BANNER_ID=${{ secrets.ADMOB_BANNER_ID }}
+        ADMOB_INTERSTITIAL_ID=${{ secrets.ADMOB_INTERSTITIAL_ID }}
+        ADMOB_REWARDED_ID=${{ secrets.ADMOB_REWARDED_ID }}
+      # Gradle reads this for the AndroidManifest AdMob app ID placeholder.
+      build-env: |
+        ADMOB_APP_ID=${{ secrets.ADMOB_APP_ID }}
+      # Written to flutter_app/android/app/google-services.json before the build
+      # (builder v1.5.1+). Empty secret = step skipped, offline-only build.
+      google-services-json-base64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
     secrets: inherit

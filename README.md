@@ -76,7 +76,8 @@ Every day we scroll past dozens of insightful Instagram Reels, YouTube Shorts, T
 | [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md) | Create Firebase project, SHA fingerprints, Google Sign-In, Firestore rules |
 | [docs/PLAY_CONSOLE_ANSWERS.md](docs/PLAY_CONSOLE_ANSWERS.md) | Data safety, content rating, account deletion answers |
 | [docs/PLAY_STORE_LISTING.md](docs/PLAY_STORE_LISTING.md) | Store title, descriptions, release notes |
-| [docs/ADMOB_SETUP.md](docs/ADMOB_SETUP.md) | AdMob account, ad units, replacing the test IDs, "contains ads" declaration |
+| [docs/SECRETS_SETUP.md](docs/SECRETS_SETUP.md) | **Start here** — GitHub secrets for the AdMob IDs and `google-services.json`, plus Firebase/Play hardening |
+| [docs/ADMOB_SETUP.md](docs/ADMOB_SETUP.md) | AdMob account, ad units, how the IDs reach a release build, "contains ads" declaration |
 | [docs/IMGBB_SETUP.md](docs/IMGBB_SETUP.md) | Optional public image uploads with ImgBB; only URLs sync through Firestore |
 | `store_assets/` | 512 icon, 1024×500 feature graphic, `generate_assets.py` (regenerates all app icons) |
 | `docs/*.html` | Privacy policy, Terms, Delete-account pages (GitHub Pages) |
@@ -158,6 +159,13 @@ cd keepit
 cd flutter_app
 flutter pub get
 flutter run
+```
+
+> 🔐 **A plain checkout builds an ad-free, offline-only app.** The real AdMob
+> IDs and `google-services.json` live in GitHub Actions secrets and are injected
+> by the release workflow — they are deliberately not in this repository.
+> See [`docs/SECRETS_SETUP.md`](docs/SECRETS_SETUP.md) if you are setting up a
+> release pipeline (or a fork) of your own.
 
 # Load Chrome Extension
 # Open chrome://extensions -> Enable Developer Mode -> Load Unpacked -> select 'chrome_extension'

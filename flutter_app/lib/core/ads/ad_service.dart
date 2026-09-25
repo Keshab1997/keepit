@@ -52,6 +52,14 @@ class AdService {
   Future<void> init({Box? prefs}) async {
     _prefs = prefs;
     if (!AdConfig.adsEnabled) return;
+    // The release workflow injects every unit ID. A build that flipped the
+    // switch without them would otherwise initialise AdMob with empty ad
+    // units, so stay ad-free instead.
+    if (AdConfig.missingUnitIds) {
+      debugPrint('AdMob: ADMOB_ENABLED is set but the unit IDs were not '
+          'supplied; running ad-free.');
+      return;
+    }
     _restoreCounters();
     if (!adsPlatformSupported) return;
     try {

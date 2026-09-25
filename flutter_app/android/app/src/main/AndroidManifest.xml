@@ -26,11 +26,13 @@
         android:name="com.keshabstudios.keepit.CrashApp"
         android:icon="@mipmap/ic_launcher">
         
-        <!-- AdMob app ID. LIVE production ID (ca-app-pub-4216917764852377~9499831430).
-              See docs/ADMOB_SETUP.md. -->
+        <!-- AdMob app ID. Injected by Gradle from the ADMOB_APP_ID build
+              environment variable (manifestPlaceholders["admobAppId"]);
+              the real value lives in a GitHub Actions secret and is never
+              committed. See docs/SECRETS_SETUP.md. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-4216917764852377~9499831430" />
+            android:value="${admobAppId}" />
 
         <activity
             android:name="io.flutter.embedding.android.FlutterActivity"

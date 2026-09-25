@@ -305,7 +305,8 @@ class _SpacesScreenState extends ConsumerState<SpacesScreen> {
                 Wrap(
                   spacing: 8,
                   children: _colors.map((color) {
-                    final selected = selectedColor.value == color.value;
+                    final selected =
+                        selectedColor.toARGB32() == color.toARGB32();
                     return GestureDetector(
                       onTap: () => setDialogState(() => selectedColor = color),
                       child: Container(
@@ -370,7 +371,7 @@ class _SpacesScreenState extends ConsumerState<SpacesScreen> {
                   CustomSpace(
                     id: existing?.id ?? const Uuid().v4(),
                     name: name,
-                    colorValue: selectedColor.value,
+                    colorValue: selectedColor.toARGB32(),
                     iconName: selectedIcon,
                   ),
                 );

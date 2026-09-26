@@ -17,15 +17,15 @@ Unsigned builds are suitable for testing. Distributing without OS warnings needs
 Install Node.js 22 and npm. From the `desktop/` directory:
 
 ```sh
-npm run build:web  # npm ci + Next build + copies static assets into standalone output
 npm ci
+npm run build:web  # npm ci + Next build + copies/checks the standalone runtime
 npm start          # optional: starts the built app on your machine
-# On the appropriate OS:
+# On the appropriate OS (each dist command rebuilds the web bundle first):
 npm run dist:win    # Windows x64 NSIS installer
 npm run dist:mac    # macOS x64 + arm64 DMG files
 ```
 
-Installers are written to `desktop/release/`. Run `npm run build:web` again whenever web code changes. `npm run dist:*` checks/copies web assets before packaging but does not rebuild the web code for you.
+Installers are written to `desktop/release/`. The packaging commands always rebuild and validate the standalone Next.js runtime before packaging so an old/incomplete web bundle cannot silently ship. The packaged Mac, Windows, and web UI icons are generated from `store_assets/play_store_icon_512.png`.
 
 ## What works without internet
 

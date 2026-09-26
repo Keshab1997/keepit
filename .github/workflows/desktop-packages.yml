@@ -50,14 +50,6 @@ jobs:
             web-app/package-lock.json
             desktop/package-lock.json
 
-      - name: Install web dependencies
-        working-directory: web-app
-        run: npm ci
-
-      - name: Build bundled web app and API
-        working-directory: web-app
-        run: npm run build
-
       - name: Install desktop packaging dependencies
         working-directory: desktop
         run: npm ci

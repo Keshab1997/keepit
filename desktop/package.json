@@ -7,9 +7,9 @@
   "scripts": {
     "build:web": "npm --prefix ../web-app ci && npm --prefix ../web-app run build && node scripts/prepare-web.cjs",
     "start": "node scripts/prepare-web.cjs && electron .",
-    "dist:win": "node scripts/prepare-web.cjs && electron-builder --win nsis --x64",
-    "dist:mac": "node scripts/prepare-web.cjs && electron-builder --mac dmg --x64 --arm64",
-    "dist": "node scripts/prepare-web.cjs && electron-builder"
+    "dist:win": "npm run build:web && electron-builder --win nsis --x64",
+    "dist:mac": "npm run build:web && electron-builder --mac dmg --x64 --arm64",
+    "dist": "npm run build:web && electron-builder"
   },
   "devDependencies": {
     "electron": "44.4.5",
@@ -69,6 +69,10 @@
       {
         "from": "../web-app/.next/standalone",
         "to": "next-server"
+      },
+      {
+        "from": "../web-app/.next/standalone/runtime-deps",
+        "to": "next-server/runtime-deps"
       }
     ]
   }

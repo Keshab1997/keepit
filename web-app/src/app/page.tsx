@@ -333,7 +333,7 @@ export default function KeepItWeb() {
     <div className="app-shell">
       <aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}>
         <button className="brand" onClick={() => { setView("everything"); setMobileNav(false); }} aria-label="KeepIt home">
-          <span className="brand-mark"><BrainMark /></span><span className="brand-copy"><strong>KeepIt</strong><small>YOUR VISUAL SECOND BRAIN</small></span>
+          <span className="brand-mark app-logo"><img src="/keepit-icon.png" alt="" width={42} height={42} /></span><span className="brand-copy"><strong>KeepIt</strong><small>YOUR VISUAL SECOND BRAIN</small></span>
         </button>
         <button className="quick-save" onClick={() => startCompose("link")}><span><Plus size={18} strokeWidth={2.4} /></span>Quick save <kbd>⌘ N</kbd></button>
         <div className="side-label">LIBRARY</div>
@@ -417,8 +417,6 @@ export default function KeepItWeb() {
   );
 }
 
-function BrainMark() { return <svg width="25" height="25" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M13.8 5.1c-1.2-2.5-5.2-2.1-5.5.9-3.1-.2-4.2 3.8-2.1 5.4-2.2 2-.7 5.6 2.2 5.6.2 3.1 4.5 4.1 5.4 1.3m.4-13.2c1.2-2.5 5.2-2.1 5.5.9 3.1-.2 4.2 3.8 2.1 5.4 2.2 2 .7 5.6-2.2 5.6-.2 3.1-4.5 4.1-5.4 1.3M14 5v18m-5.1-14c2 .1 3 1.4 3 3m-5 3.1c2 .1 3.7 1.2 4.2 3m8-9.1c-2 .1-3 1.4-3 3m5 3.1c-2 .1-3.7 1.2-4.2 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 3v3M2.5 4.5h3M24 19v3m-1.5-1.5h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>; }
-
 function MemoryCard({ item, onClick, onTogglePin, index }: { item: MindItem; onClick: () => void; onTogglePin: () => void; index: number }) {
   const imageHeight = [226, 184, 248, 198, 212, 176, 230, 194][index % 8];
   return <article className={`memory-card ${item.isTopMind ? "pinned" : ""}`}>
@@ -438,7 +436,7 @@ function EmptyState({ onSave, onNote, onSpace }: { onSave: () => void; onNote: (
     </div>
     <div className="empty-art">
       <span className="empty-orbit orbit-a"/><span className="empty-orbit orbit-b"/>
-      <div className="empty-orb"><BrainMark /></div>
+      <div className="empty-orb"><img src="/keepit-icon.png" alt="" width={42} height={42} /></div>
       <div className="empty-note-card"><span>01 <i>/</i> CAPTURE</span><strong>A thought is a good place to start.</strong><div className="note-lines"><i/><i/><i/></div><small>KEEPIT · YOUR SECOND BRAIN</small></div>
       <div className="empty-art-caption">A GOOD COLLECTION<br/><em>BEGINS WITH ONE THING</em></div>
       <button className="empty-space-link" onClick={onSpace}><Folder size={13}/> Or start with a Space <ArrowUpRight size={12}/></button>

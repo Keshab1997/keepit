@@ -118,6 +118,7 @@ if (!app.requestSingleInstanceLock()) {
         NODE_ENV: "production",
         HOSTNAME: "127.0.0.1",
         PORT: String(PORT),
+        NODE_PATH: path.join(path.dirname(entry), "runtime-deps"),
         KEEPIT_DESKTOP_BOOT_TOKEN: bootToken,
       },
       stdio: ["ignore", "pipe", "pipe"],
@@ -137,7 +138,11 @@ if (!app.requestSingleInstanceLock()) {
 
     for (let attempt = 0; attempt < 100; attempt++) {
       if (server.exitCode !== null || !server.pid) {
-        throw new Error(`Could not start the bundled web server. Port ${PORT} may be in use. ${startupError}`);
+        const details = startupError.trim() || "The server exited before it became ready.";
+        if (/EADDRINUSE|address already in use/i.test(details)) {
+          throw new Error(`Could not start the bundled web server because port ${PORT} is already in use. Close the other app using that port and try again.\n\n${details}`);
+        }
+        throw new Error(`The bundled web server stopped during startup (exit code ${server.exitCode ?? "unknown"}).\n\n${details}\n\nServer bundle: ${entry}`);
       }
       if (await checkOurServer()) return;
       await new Promise((resolve) => setTimeout(resolve, 250));

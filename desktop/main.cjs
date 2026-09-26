@@ -41,8 +41,29 @@ if (!app.requestSingleInstanceLock()) {
   function isFirebaseGoogleSignIn(rawUrl) {
     try {
       const url = new URL(rawUrl);
-      return url.hostname === "accounts.google.com" ||
-        (url.hostname.endsWith(".firebaseapp.com") && url.pathname.startsWith("/__/auth/handler"));
+      const host = url.hostname;
+      // Google OAuth hosts + Firebase auth handler + Google's new oauth hosts
+      return host === "accounts.google.com" ||
+        host === "accounts.youtube.com" ||
+        host.endsWith(".googleusercontent.com") ||
+        host.endsWith(".google.com") && url.pathname.includes("oauth") ||
+        host.endsWith(".gstatic.com") ||
+        (host.endsWith(".firebaseapp.com") && url.pathname.startsWith("/__/auth")) ||
+        host === "keepit-deda6.firebaseapp.com" ||
+        // Allow localhost callback for system-browser flow fallback
+        (host === "127.0.0.1" && url.port === String(PORT) && url.pathname.startsWith("/__/auth")) ||
+        (host === "localhost" && url.pathname.startsWith("/__/auth"));
+    } catch {
+      return false;
+    }
+  }
+
+  function isAuthRelatedUrl(rawUrl) {
+    try {
+      const url = new URL(rawUrl);
+      return isFirebaseGoogleSignIn(rawUrl) ||
+        url.hostname.includes("google") && (url.pathname.includes("signin") || url.pathname.includes("oauth") || url.search.includes("oauth")) ||
+        url.href.includes("firebase") && url.href.includes("auth");
     } catch {
       return false;
     }
@@ -67,6 +88,12 @@ if (!app.requestSingleInstanceLock()) {
       if (new URL(rawUrl).protocol !== "keepit:") return;
       if (!serverReady) return;
       showMainWindow();
+      // Handle keepit://auth?token=... deep link if implemented later
+      if (rawUrl.includes("auth")) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("keepit:auth-callback", rawUrl);
+        }
+      }
     } catch { /* Ignore malformed protocol URLs. */ }
   }
 
@@ -78,19 +105,44 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.on("web-contents-created", (_event, contents) => {
+    // Keep track of auth popups to allow their navigations
+    const isAuthPopupWindow = () => {
+      try {
+        const parent = BrowserWindow.fromWebContents(contents)?.getParentWindow();
+        // Also check if this contents is itself an auth popup by URL
+        const url = contents.getURL();
+        return Boolean(parent) || isFirebaseGoogleSignIn(url);
+      } catch {
+        return false;
+      }
+    };
+
     contents.setWindowOpenHandler(({ url }) => {
-      if (isFirebaseGoogleSignIn(url)) {
+      console.log(`[KeepIt] window.open requested: ${url}`);
+      if (isFirebaseGoogleSignIn(url) || isAuthRelatedUrl(url)) {
+        console.log(`[KeepIt] Allowing auth popup for: ${url}`);
         return {
           action: "allow",
           overrideBrowserWindowOptions: {
             width: 520,
             height: 720,
+            minWidth: 400,
+            minHeight: 600,
             resizable: true,
             autoHideMenuBar: true,
-            webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true },
+            show: true,
+            // CRITICAL FIX for Mac: sandbox must be false for Firebase popup postMessage to work
+            // sandbox:true breaks window.opener communication on macOS
+            webPreferences: { 
+              nodeIntegration: false, 
+              contextIsolation: true, 
+              sandbox: false,
+              partition: "default"
+            },
           },
         };
       }
+      console.log(`[KeepIt] Opening externally: ${url}`);
       openExternalSafely(url);
       return { action: "deny" };
     });
@@ -98,13 +150,41 @@ if (!app.requestSingleInstanceLock()) {
     contents.on("will-navigate", (event, rawUrl) => {
       try {
         const url = new URL(rawUrl);
-        const isAuthPopup = Boolean(BrowserWindow.fromWebContents(contents)?.getParentWindow());
-        if (url.origin !== appOrigin && !(isAuthPopup && isFirebaseGoogleSignIn(rawUrl))) {
-          event.preventDefault();
-          openExternalSafely(rawUrl);
+        const isPopup = Boolean(BrowserWindow.fromWebContents(contents)?.getParentWindow());
+        const isAuth = isFirebaseGoogleSignIn(rawUrl) || isAuthRelatedUrl(rawUrl);
+        
+        // Allow navigation within app origin
+        if (url.origin === appOrigin) {
+          console.log(`[KeepIt] Allowing navigation to app origin: ${rawUrl}`);
+          return;
         }
+        
+        // Allow auth popup to navigate to Google/Firebase auth URLs
+        if (isPopup && isAuth) {
+          console.log(`[KeepIt] Allowing auth popup navigation: ${rawUrl}`);
+          return;
+        }
+        
+        // If main window tries to navigate to auth URL, allow it as popup instead
+        if (!isPopup && isAuth) {
+          console.log(`[KeepIt] Main window auth navigation, allowing: ${rawUrl}`);
+          return;
+        }
+        
+        // Block everything else and open externally
+        console.log(`[KeepIt] Blocking navigation, opening externally: ${rawUrl}`);
+        event.preventDefault();
+        openExternalSafely(rawUrl);
       } catch {
         event.preventDefault();
+      }
+    });
+
+    // Handle cases where Google shows "This browser or app may not be secure"
+    // Detect and offer to open in system browser as fallback
+    contents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+      if (isFirebaseGoogleSignIn(validatedURL) || isAuthRelatedUrl(validatedURL)) {
+        console.warn(`[KeepIt] Auth page failed to load: ${errorCode} ${errorDescription} ${validatedURL}`);
       }
     });
   });
@@ -133,8 +213,6 @@ if (!app.requestSingleInstanceLock()) {
     const entry = serverEntry();
     if (!fs.existsSync(entry)) throw new Error("Bundled web server is missing. Rebuild the desktop installer.");
 
-    // Electron supplies the Node runtime. The traced Next modules are staged
-    // outside node_modules because electron-builder honors .gitignore rules.
     server = spawn(process.execPath, [entry], {
       cwd: path.dirname(entry),
       env: {
@@ -387,6 +465,12 @@ if (!app.requestSingleInstanceLock()) {
     if (mainWindow && event.sender === mainWindow.webContents) syncReminders(next);
   });
 
+  // NEW: Handle auth callback from system browser flow
+  ipcMain.on("keepit:auth-external", (_event, url) => {
+    console.log(`[KeepIt] External auth requested: ${url}`);
+    openExternalSafely(url);
+  });
+
   app.on("second-instance", (_event, commandLine) => {
     const protocolUrl = Array.isArray(commandLine) ? commandLine.find((argument) => typeof argument === "string" && argument.startsWith("keepit://")) : null;
     if (protocolUrl) handleProtocolUrl(protocolUrl);
@@ -427,7 +511,6 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.on("window-all-closed", () => {
-    // Keep the app, global shortcut, and scheduled reminders alive in the tray.
     if (quitting) app.quit();
   });
 }

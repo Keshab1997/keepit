@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
 import type { User } from "firebase/auth";
-import { auth, connectGoogle, db, deleteCloudItem, disconnectGoogle, firebaseReady, saveCloudItem, watchItems } from "@/lib/firebase";
+import { auth, connectGoogle, db, deleteCloudItem, disconnectGoogle, firebaseReady, handleRedirectResult, saveCloudItem, watchItems } from "@/lib/firebase";
 import { formatSavedDate, getDomain, starterSpaces, type ItemType, type MindItem } from "@/lib/items";
 import { clearTombstone, loadItems, loadSpaces, loadTombstones, replaceItems, replaceSpaces, setTombstone, type KeepItSpace } from "@/lib/storage";
 
@@ -96,6 +96,12 @@ export default function KeepItWeb() {
 
   useEffect(() => {
     if (!firebaseReady || !auth) { setAuthReady(true); return; }
+    // Handle redirect result for Electron desktop fallback flow
+    void handleRedirectResult().then((redirectUser) => {
+      if (redirectUser) {
+        console.log("[KeepIt] Redirect login success:", redirectUser.email);
+      }
+    });
     return onAuthStateChanged(auth, (user) => {
       const nextUid = user?.uid ?? null;
       if (accountUidRef.current !== nextUid) { accountUidRef.current = nextUid; setItems([]); setActiveItem(null); setIsReady(false); }

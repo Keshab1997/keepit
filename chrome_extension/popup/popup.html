@@ -160,6 +160,33 @@
       opacity: 0.55;
       cursor: wait;
     }
+    .desktop-send {
+      margin-top: 12px;
+      padding-top: 11px;
+      border-top: 1px solid #EBECEF;
+    }
+    .desktop-label {
+      margin-bottom: 7px;
+      color: #7A7E8C;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+    .desktop-buttons { display: flex; gap: 7px; }
+    .desktop-btn {
+      flex: 1;
+      padding: 9px 6px;
+      border: 1px solid #DCDDE3;
+      border-radius: 9px;
+      background: white;
+      color: #444957;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .desktop-btn:hover { border-color: #FF9C82; color: #D94B2B; }
+    .desktop-btn:disabled { opacity: .55; cursor: wait; }
     .status-msg {
       margin-top: 10px;
       text-align: center;
@@ -205,7 +232,14 @@
   <button class="btn-save" id="saveBtn">
     <span>Save to Mind</span>
   </button>
-  <div class="status-msg" id="statusMsg">✨ Saved to your KeepIt Brain!</div>
+  <section class="desktop-send" aria-label="Send to KeepIt desktop">
+    <div class="desktop-label">KeepIt Desktop</div>
+    <div class="desktop-buttons">
+      <button class="desktop-btn" id="sendPageBtn" type="button">Send this page</button>
+      <button class="desktop-btn" id="sendSelectionBtn" type="button">Send selection</button>
+    </div>
+  </section>
+  <div class="status-msg" id="statusMsg" aria-live="polite">Ready to save.</div>
 
   <script src="popup.js"></script>
 </body>

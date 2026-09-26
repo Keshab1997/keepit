@@ -1,16 +1,28 @@
-const { app, BrowserWindow, dialog, shell } = require("electron");
+const {
+  app, BrowserWindow, dialog, shell, globalShortcut, Tray, Menu, clipboard,
+  nativeImage, Notification, ipcMain,
+} = require("electron");
 const { spawn } = require("node:child_process");
 const { randomBytes } = require("node:crypto");
+const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
 
 // Keep the origin stable: the existing web app stores bookmarks in IndexedDB,
-// which is scoped to scheme + host + port. A random port would hide the user's
-// library on every restart. Only one KeepIt desktop instance may use this port.
+// which is scoped to scheme + host + port. Only one KeepIt instance uses it.
 const PORT = 43819;
 const appOrigin = `http://127.0.0.1:${PORT}`;
 const bootToken = randomBytes(32).toString("hex");
+const captureShortcut = "CommandOrControl+Shift+K";
+const captureShortcutLabel = process.platform === "darwin" ? "⌘+Shift+K" : "Ctrl+Shift+K";
 let server;
+let mainWindow;
+let captureWindow;
+let tray;
+let bridgePollTimer;
+let bridgePolling = false;
+let reminderTimer;
+let reminders = [];
 let quitting = false;
 
 app.setName("KeepIt");
@@ -19,15 +31,9 @@ if (process.platform === "win32") app.setAppUserModelId("com.keshab.keepit");
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on("second-instance", () => {
-    const window = BrowserWindow.getAllWindows()[0];
-    if (window) {
-      if (window.isMinimized()) window.restore();
-      window.focus();
-    }
-  });
-
   const iconPath = path.join(__dirname, "build", "icon.png");
+  const preloadPath = path.join(__dirname, "preload.cjs");
+  const reminderPath = () => path.join(app.getPath("userData"), "reminders.json");
 
   function isFirebaseGoogleSignIn(rawUrl) {
     try {
@@ -48,9 +54,11 @@ if (!app.requestSingleInstanceLock()) {
     }
   }
 
-  // Google/Firebase authentication popups stay in Electron; ordinary links
-  // open in the user's browser. Google can refuse OAuth in embedded browsers;
-  // cloud sign-in must still be tested on the actual macOS/Windows installers.
+  function isSafeUrl(rawUrl) {
+    try { return ["http:", "https:"].includes(new URL(rawUrl).protocol); }
+    catch { return false; }
+  }
+
   app.on("web-contents-created", (_event, contents) => {
     contents.setWindowOpenHandler(({ url }) => {
       if (isFirebaseGoogleSignIn(url)) {
@@ -105,11 +113,10 @@ if (!app.requestSingleInstanceLock()) {
 
   async function launchServer() {
     const entry = serverEntry();
-    const fs = require("node:fs");
     if (!fs.existsSync(entry)) throw new Error("Bundled web server is missing. Rebuild the desktop installer.");
 
-    // Electron contains a Node runtime. Run the traced Next.js standalone
-    // server in a separate Node-mode process, with no system Node installation.
+    // Electron supplies the Node runtime. The traced Next modules are staged
+    // outside node_modules because electron-builder honors .gitignore rules.
     server = spawn(process.execPath, [entry], {
       cwd: path.dirname(entry),
       env: {
@@ -151,7 +158,18 @@ if (!app.requestSingleInstanceLock()) {
     throw new Error(`Timed out starting the bundled web server on port ${PORT}. ${startupError}`);
   }
 
-  function createWindow() {
+  function showMainWindow() {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      createMainWindow();
+      return;
+    }
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  }
+
+  function createMainWindow() {
+    if (mainWindow && !mainWindow.isDestroyed()) return mainWindow;
     const window = new BrowserWindow({
       width: 1360,
       height: 900,
@@ -161,9 +179,17 @@ if (!app.requestSingleInstanceLock()) {
       title: "KeepIt",
       icon: iconPath,
       autoHideMenuBar: process.platform === "win32",
-      webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true },
+      webPreferences: { preload: preloadPath, nodeIntegration: false, contextIsolation: true, sandbox: true },
     });
+    mainWindow = window;
     window.once("ready-to-show", () => window.show());
+    window.on("close", (event) => {
+      if (!quitting) {
+        event.preventDefault();
+        window.hide();
+      }
+    });
+    window.on("closed", () => { if (mainWindow === window) mainWindow = null; });
     void window.loadURL(appOrigin).catch((error) => {
       dialog.showErrorBox("KeepIt cannot load", error.message);
       app.quit();
@@ -171,13 +197,174 @@ if (!app.requestSingleInstanceLock()) {
     return window;
   }
 
+  function createCaptureWindow(useClipboard = true) {
+    if (captureWindow && !captureWindow.isDestroyed()) {
+      captureWindow.show();
+      captureWindow.focus();
+      return;
+    }
+    const text = useClipboard ? clipboard.readText().trim().slice(0, 12_000) : "";
+    const mode = isSafeUrl(text) ? "link" : "note";
+    const payload = encodeURIComponent(JSON.stringify({ mode, text }));
+    const window = new BrowserWindow({
+      width: 540,
+      height: 610,
+      minWidth: 480,
+      minHeight: 500,
+      maxWidth: 640,
+      show: false,
+      title: "Quick Capture · KeepIt",
+      icon: iconPath,
+      resizable: true,
+      alwaysOnTop: true,
+      autoHideMenuBar: true,
+      webPreferences: {
+        preload: preloadPath,
+        additionalArguments: ["--keepit-capture-window=1"],
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: true,
+      },
+    });
+    captureWindow = window;
+    window.once("ready-to-show", () => { window.show(); window.focus(); });
+    window.on("closed", () => { if (captureWindow === window) captureWindow = null; });
+    void window.loadURL(`${appOrigin}/#desktop-capture=${payload}`).catch((error) => {
+      console.error("KeepIt capture window could not load:", error.message);
+      window.close();
+    });
+  }
+
+  function createTray() {
+    if (tray) return;
+    const image = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 });
+    tray = new Tray(image);
+    tray.setToolTip("KeepIt · Save ideas for later");
+    tray.setContextMenu(Menu.buildFromTemplate([
+      { label: "Open KeepIt", click: showMainWindow },
+      { label: `Quick Capture (${captureShortcutLabel})`, click: () => createCaptureWindow(true) },
+      { label: "New blank note", click: () => createCaptureWindow(false) },
+      { type: "separator" },
+      { label: "Quit KeepIt", click: () => { quitting = true; app.quit(); } },
+    ]));
+    tray.on("click", showMainWindow);
+    tray.on("double-click", showMainWindow);
+  }
+
+  function setupShortcuts() {
+    const registered = globalShortcut.register(captureShortcut, createCaptureWindow);
+    if (!registered) console.warn(`Could not register ${captureShortcut}; it may be used by another app.`);
+  }
+
+  function startDesktopBridgePolling() {
+    const poll = async () => {
+      if (bridgePolling || !mainWindow || mainWindow.isDestroyed()) return;
+      bridgePolling = true;
+      try {
+        const response = await fetch(`${appOrigin}/api/desktop-bridge`, {
+          headers: { "x-keepit-desktop-boot-token": bootToken },
+          cache: "no-store",
+          signal: AbortSignal.timeout(1800),
+        });
+        if (response.ok) {
+          const payload = await response.json();
+          if (payload?.item && mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send("keepit:import-item", payload.item);
+          }
+        }
+      } catch {
+        // The local bridge is best-effort; offline saves continue to work.
+      } finally {
+        bridgePolling = false;
+      }
+    };
+    void poll();
+    bridgePollTimer = setInterval(() => void poll(), 900);
+    bridgePollTimer.unref?.();
+  }
+
+  function loadReminders() {
+    try {
+      const data = JSON.parse(fs.readFileSync(reminderPath(), "utf8"));
+      reminders = Array.isArray(data) ? data.filter((item) => item && typeof item.id === "string" && typeof item.title === "string" && Number.isFinite(Date.parse(item.remindAt))) : [];
+    } catch {
+      reminders = [];
+    }
+  }
+
+  function persistReminders() {
+    try {
+      fs.mkdirSync(path.dirname(reminderPath()), { recursive: true });
+      fs.writeFileSync(reminderPath(), JSON.stringify(reminders, null, 2), { mode: 0o600 });
+    } catch (error) {
+      console.warn("Could not save KeepIt reminders:", error.message);
+    }
+  }
+
+  function syncReminders(next) {
+    if (!Array.isArray(next)) return;
+    const current = Date.now();
+    reminders = next
+      .filter((item) => item && typeof item.id === "string" && typeof item.title === "string" && typeof item.remindAt === "string")
+      .map((item) => ({ id: item.id.slice(0, 120), title: item.title.slice(0, 300), remindAt: item.remindAt }))
+      .filter((item) => Number.isFinite(Date.parse(item.remindAt)) && Date.parse(item.remindAt) > current)
+      .slice(0, 500);
+    persistReminders();
+  }
+
+  function showDueReminders() {
+    const now = Date.now();
+    const due = reminders.filter((item) => Date.parse(item.remindAt) <= now);
+    if (!due.length) return;
+    reminders = reminders.filter((item) => Date.parse(item.remindAt) > now);
+    persistReminders();
+    for (const item of due) {
+      if (!Notification.isSupported()) continue;
+      const notification = new Notification({ title: "A KeepIt idea is ready to revisit", body: item.title, silent: false });
+      notification.on("click", () => {
+        showMainWindow();
+        setTimeout(() => {
+          if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("keepit:open-reminder", item.id);
+        }, 350);
+      });
+      notification.show();
+    }
+  }
+
+  ipcMain.on("keepit:close-capture", (event) => {
+    if (captureWindow && event.sender === captureWindow.webContents) captureWindow.close();
+  });
+
+  ipcMain.on("keepit:capture-saved", (event) => {
+    if (captureWindow && event.sender === captureWindow.webContents) {
+      captureWindow.close();
+      showMainWindow();
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("keepit:capture-saved");
+      }, 250);
+      return;
+    }
+    if (mainWindow && event.sender === mainWindow.webContents) showMainWindow();
+  });
+
+  ipcMain.on("keepit:sync-reminders", (event, next) => {
+    if (mainWindow && event.sender === mainWindow.webContents) syncReminders(next);
+  });
+
+  app.on("second-instance", () => showMainWindow());
+  app.on("activate", () => showMainWindow());
+
   app.whenReady().then(async () => {
     try {
       await launchServer();
-      createWindow();
-      app.on("activate", () => {
-        if (BrowserWindow.getAllWindows().length === 0) createWindow();
-      });
+      loadReminders();
+      createTray();
+      setupShortcuts();
+      createMainWindow();
+      startDesktopBridgePolling();
+      reminderTimer = setInterval(showDueReminders, 15_000);
+      reminderTimer.unref?.();
+      showDueReminders();
     } catch (error) {
       dialog.showErrorBox("KeepIt cannot start", error.message);
       app.quit();
@@ -186,9 +373,15 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on("before-quit", () => {
     quitting = true;
+    globalShortcut.unregisterAll();
+    if (bridgePollTimer) clearInterval(bridgePollTimer);
+    if (reminderTimer) clearInterval(reminderTimer);
+    if (tray) { tray.destroy(); tray = null; }
     if (server && !server.killed) server.kill();
   });
+
   app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") app.quit();
+    // Keep the app, global shortcut, and scheduled reminders alive in the tray.
+    if (quitting) app.quit();
   });
 }

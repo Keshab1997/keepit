@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const cloudStatus = document.getElementById('cloudStatus');
   const connectBtn = document.getElementById('connectBtn');
   const syncBtn = document.getElementById('syncBtn');
+  const sendPageBtn = document.getElementById('sendPageBtn');
+  const sendSelectionBtn = document.getElementById('sendSelectionBtn');
   const suggestedTags = document.querySelectorAll('.tag-chip');
 
   let tab = null;
@@ -97,6 +99,62 @@ document.addEventListener('DOMContentLoaded', async () => {
       setStatus(statusMsg, error.message, true);
     } finally {
       syncBtn.disabled = false;
+    }
+  });
+
+  async function sendToDesktop(item, successMessage, button) {
+    button.disabled = true;
+    try {
+      const response = await fetch('http://127.0.0.1:43819/api/desktop-bridge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'KeepIt Desktop is not available. Open the desktop app and try again.');
+      setStatus(statusMsg, successMessage);
+    } catch (error) {
+      setStatus(statusMsg, error.message || 'Could not reach KeepIt Desktop. Open it and try again.', true);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  sendPageBtn.addEventListener('click', async () => {
+    if (!tab?.url || !(tab.url.toLowerCase().startsWith('http://') || tab.url.toLowerCase().startsWith('https://'))) {
+      setStatus(statusMsg, 'Open a regular webpage before sending it to desktop.', true);
+      return;
+    }
+    const now = new Date().toISOString();
+    await sendToDesktop({
+      id: `chrome_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      title: tab.title || 'Saved webpage', url: tab.url, thumbnailUrl: tab.favIconUrl || undefined,
+      type: 'webArticle', tags: ['browser', 'chrome'], isWatched: false, isTopMind: false,
+      createdAt: now, updatedAt: now,
+    }, 'Sent this page to KeepIt Desktop.', sendPageBtn);
+  });
+
+  sendSelectionBtn.addEventListener('click', async () => {
+    if (!tab?.id || !tab.url || !(tab.url.toLowerCase().startsWith('http://') || tab.url.toLowerCase().startsWith('https://'))) {
+      setStatus(statusMsg, 'Open a webpage and select text first.', true);
+      return;
+    }
+    sendSelectionBtn.disabled = true;
+    try {
+      const result = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: () => window.getSelection()?.toString() || '' });
+      const selection = String(result?.[0]?.result || '').trim().slice(0, 20_000);
+      if (!selection) throw new Error('Select some text on the page first, then try again.');
+      const now = new Date().toISOString();
+      await sendToDesktop({
+        id: `chrome_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        title: selection.slice(0, 100) || 'Saved quote', url: tab.url, content: selection,
+        type: 'quote', tags: ['quote', 'browser'], isWatched: false, isTopMind: false,
+        createdAt: now, updatedAt: now,
+      }, 'Sent selected text to KeepIt Desktop.', sendSelectionBtn);
+    } catch (error) {
+      setStatus(statusMsg, error.message || 'Could not read that selection.', true);
+    } finally {
+      sendSelectionBtn.disabled = false;
     }
   });
 

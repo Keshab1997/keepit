@@ -13,6 +13,7 @@ export type MindItem = {
   spaceId?: string;
   isWatched: boolean;
   isTopMind: boolean;
+  remindAt?: string;
   dominantColorHex?: string;
   createdAt: string;
   updatedAt: string;

@@ -4,6 +4,13 @@ The desktop installers contain the **Next.js web build, its server/API routes, s
 
 The address/port is intentionally stable because the web app stores items in IndexedDB, which is tied to the page origin. Do not change the port after users have saved items without migrating their IndexedDB data. Only one app instance runs at a time; if another program already owns the port, KeepIt reports a startup error instead of showing a different program's page. Desktop builds check GitHub for newer stable `desktop-v*` releases at startup and show a dismissible in-app notice with a link to the release page; updates are not silently installed.
 
+## Desktop capture, tray, and reminders
+
+- **Quick Capture:** `Ctrl+Shift+K` on Windows or `⌘+Shift+K` on macOS opens a small capture window. It prefills a copied URL as a link or copied text as a note; copy the selection in another app before invoking the shortcut. Saving adds it to the same local library.
+- **Tray/menu bar:** closing the main window hides KeepIt in the system tray (Windows) or menu bar (macOS). Use the tray menu to reopen the library, open Quick Capture with the clipboard, start a blank note, or quit. Native reminders continue while KeepIt is running in the tray; quitting the app stops reminder delivery until it is launched again.
+- **Native reminders:** open a saved item and choose **Remind me in 1 week**. Electron persists the reminder and shows an OS notification when it is due; clicking the notification opens that item.
+- **Chrome extension handoff:** load `chrome_extension/` as an unpacked extension in Chrome and grant its loopback permission. With KeepIt Desktop open, use its popup's **Send this page** or **Send selection** action. The item is queued locally and imported into the desktop library; no hosted web app or Firebase sync is required.
+
 ## Build installers using GitHub Actions
 
 1. Go to **Actions → Build standalone desktop installers → Run workflow**. No hosted URL or `KEEPIT_WEB_URL` is required.

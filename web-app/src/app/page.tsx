@@ -37,6 +37,30 @@ const mergeByVersion = (...collections: MindItem[][]) => {
   return [...merged.values()];
 };
 
+const itemTypes = new Set<ItemType>(["instagramReel", "youtubeVideo", "webArticle", "quote", "image", "quickNote"]);
+function normalizeBridgeItem(value: unknown): MindItem | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Partial<MindItem>;
+  if (typeof raw.id !== "string" || !raw.id || typeof raw.title !== "string" || !raw.title || !raw.type || !itemTypes.has(raw.type)) return null;
+  let url: string | undefined;
+  if (typeof raw.url === "string" && raw.url) {
+    try { const parsed = new URL(raw.url); if (!["http:", "https:"].includes(parsed.protocol)) return null; url = parsed.toString(); }
+    catch { return null; }
+  }
+  const now = new Date().toISOString();
+  return {
+    id: raw.id.slice(0, 120), title: raw.title.slice(0, 300), type: raw.type,
+    ...(url ? { url } : {}),
+    ...(typeof raw.content === "string" ? { content: raw.content.slice(0, 20_000) } : {}),
+    ...(typeof raw.thumbnailUrl === "string" && /^https:\/\//i.test(raw.thumbnailUrl) ? { thumbnailUrl: raw.thumbnailUrl.slice(0, 2048) } : {}),
+    ...(typeof raw.authorName === "string" ? { authorName: raw.authorName.slice(0, 200) } : {}),
+    tags: Array.isArray(raw.tags) ? raw.tags.filter((tag): tag is string => typeof tag === "string").slice(0, 20) : ["browser"],
+    isWatched: raw.isWatched === true, isTopMind: raw.isTopMind === true,
+    createdAt: typeof raw.createdAt === "string" && Number.isFinite(Date.parse(raw.createdAt)) ? raw.createdAt : now,
+    updatedAt: typeof raw.updatedAt === "string" && Number.isFinite(Date.parse(raw.updatedAt)) ? raw.updatedAt : now,
+  };
+}
+
 export default function KeepItWeb() {
   const [view, setView] = useState<View>("everything");
   const [items, setItems] = useState<MindItem[]>([]);
@@ -56,6 +80,9 @@ export default function KeepItWeb() {
   const [toast, setToast] = useState<Toast>(null);
   const [desktopUpdate, setDesktopUpdate] = useState<DesktopUpdate | null>(null);
   const [dismissedDesktopUpdate, setDismissedDesktopUpdate] = useState<string | null>(null);
+  const [isDesktopApp, setIsDesktopApp] = useState(false);
+  const [pendingDesktopItem, setPendingDesktopItem] = useState<unknown>(null);
+  const [pendingReminderId, setPendingReminderId] = useState<string | null>(null);
   const [account, setAccount] = useState<User | null>(null);
   const accountUidRef = useRef<string | null>(null);
   const [authReady, setAuthReady] = useState(!firebaseReady);
@@ -181,7 +208,7 @@ export default function KeepItWeb() {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "n") {
         event.preventDefault(); setShowComposer(true);
       }
-      if (event.key === "Escape") { setActiveItem(null); setShowComposer(false); setMobileNav(false); }
+      if (event.key === "Escape") { setActiveItem(null); setShowComposer(false); setMobileNav(false); if (window.keepitDesktop?.isCaptureWindow) window.keepitDesktop.closeCapture(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -200,9 +227,93 @@ export default function KeepItWeb() {
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    const bridge = window.keepitDesktop;
+    if (!bridge) return;
+    setIsDesktopApp(true);
+    const stopImports = bridge.onImportItem((item) => setPendingDesktopItem(item));
+    const stopReminders = bridge.onOpenReminder((itemId) => setPendingReminderId(itemId));
+    const refreshAfterCapture = () => {
+      void loadItems(storageScope).then((saved) => setItems(mergeByVersion(saved, itemsRef.current)));
+    };
+    window.addEventListener("keepit:capture-saved", refreshAfterCapture);
+    return () => {
+      stopImports(); stopReminders();
+      window.removeEventListener("keepit:capture-saved", refreshAfterCapture);
+    };
+  }, [storageScope]);
+
+  useEffect(() => {
+    const bridge = window.keepitDesktop;
+    if (!bridge?.isCaptureWindow) return;
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const raw = params.get("desktop-capture");
+    if (!raw) return;
+    try {
+      const capture = JSON.parse(raw) as { mode?: string; text?: string };
+      const text = typeof capture.text === "string" ? capture.text : "";
+      if (capture.mode === "link") {
+        setComposeMode("link"); setUrlDraft(text); setNoteDraft(""); setTitleDraft("");
+      } else {
+        setComposeMode("note"); setUrlDraft(""); setTitleDraft(""); setNoteDraft(text);
+      }
+      setTagDraft(text ? "quick-capture" : "");
+      setShowComposer(true);
+    } catch {
+      setComposeMode("note"); setShowComposer(true);
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isDesktopApp || !isReady) return;
+    window.keepitDesktop?.syncReminders(items
+      .filter((item) => item.remindAt && Date.parse(item.remindAt) > Date.now())
+      .map((item) => ({ id: item.id, title: item.title, remindAt: item.remindAt! })));
+  }, [items, isDesktopApp, isReady]);
+
+  useEffect(() => {
+    if (!pendingReminderId) return;
+    const item = items.find((entry) => entry.id === pendingReminderId);
+    if (item) { setView("everything"); setActiveItem(item); setPendingReminderId(null); }
+    else if (isReady) setPendingReminderId(null);
+  }, [pendingReminderId, items, isReady]);
+
   const notify = useCallback((text: string, kind: ToastKind = "success") => {
     setToast({ text, kind }); window.setTimeout(() => setToast(null), 2800);
   }, []);
+
+  useEffect(() => {
+    if (!isReady || !pendingDesktopItem) return;
+    let active = true;
+    const incoming = normalizeBridgeItem(pendingDesktopItem);
+    if (!incoming) { setPendingDesktopItem(null); notify("KeepIt could not read that browser item.", "error"); return; }
+    void (async () => {
+      const stored = await loadItems(storageScope);
+      if (!active) return;
+      const current = mergeByVersion(stored, itemsRef.current);
+      const trimSlash = (url: string) => url.endsWith("/") ? url.slice(0, -1) : url;
+      const existing = current.find((item) => item.id === incoming.id || Boolean(item.url && incoming.url && trimSlash(item.url) === trimSlash(incoming.url)));
+      if (existing) {
+        setActiveItem(existing); setView("everything"); setPendingDesktopItem(null);
+        notify("That item is already in KeepIt.");
+        window.keepitDesktop?.captureSaved();
+        return;
+      }
+      const next = [incoming, ...current];
+      await replaceItems(storageScope, next);
+      if (!active) return;
+      setItems(next); setView("everything"); setPendingDesktopItem(null);
+      if (account && db) {
+        try { await saveCloudItem(account.uid, incoming); setSyncState("synced"); }
+        catch { setSyncState("error"); }
+      }
+      notify("Saved from your browser to KeepIt.");
+      window.keepitDesktop?.captureSaved();
+    })().catch(() => notify("Could not save that browser item.", "error"));
+    return () => { active = false; };
+  }, [pendingDesktopItem, isReady, storageScope, account, notify]);
 
   const persist = useCallback(async (item: MindItem) => {
     try { await clearTombstone(storageScope, item.id); } catch { /* The live record still remains usable if local storage is unavailable. */ }
@@ -308,7 +419,9 @@ export default function KeepItWeb() {
         createdAt: timestamp,
         updatedAt: timestamp,
       };
-      setItems((current) => [item, ...current]);
+      const nextItems = [item, ...itemsRef.current.filter((entry) => entry.id !== item.id)];
+      await replaceItems(storageScope, nextItems);
+      setItems(nextItems);
       setShowComposer(false);
       setImageDraft(null);
       notify(composeMode === "note" ? "Note saved on this device" : composeMode === "image" ? "Image saved to your KeepIt library" : "Link saved on this device");
@@ -316,6 +429,7 @@ export default function KeepItWeb() {
         try { await saveCloudItem(account.uid, item); setSyncState("synced"); notify("Saved and synced across your devices"); }
         catch { setSyncState("error"); notify("Saved on this device; cloud sync will retry when available.", "error"); }
       }
+      if (window.keepitDesktop?.isCaptureWindow) window.keepitDesktop.captureSaved();
     } catch (error) {
       notify(error instanceof Error ? error.message : "Could not save this item.", "error");
     } finally { setSaving(false); }
@@ -431,8 +545,8 @@ export default function KeepItWeb() {
         </div>
       </main>
 
-      {activeItem && <ItemDetail item={activeItem} spaces={spaces} onClose={() => setActiveItem(null)} onUpdate={(updated) => { void persist(updated); setActiveItem(updated); }} onDelete={() => void removeItem(activeItem)} onToggleWatched={() => void toggleFlag(activeItem, "isWatched")} onTogglePin={() => void toggleFlag(activeItem, "isTopMind")} />}
-      {showComposer && <Composer mode={composeMode} setMode={setComposeMode} title={titleDraft} setTitle={setTitleDraft} url={urlDraft} setUrl={setUrlDraft} note={noteDraft} setNote={setNoteDraft} tags={tagDraft} setTags={setTagDraft} image={imageDraft} setImage={setImageDraft} saving={saving} onClose={() => { setShowComposer(false); setImageDraft(null); }} onSubmit={saveDraft} />}
+      {activeItem && <ItemDetail item={activeItem} spaces={spaces} desktopMode={isDesktopApp} onClose={() => setActiveItem(null)} onUpdate={(updated) => { void persist(updated); setActiveItem(updated); }} onDelete={() => void removeItem(activeItem)} onToggleWatched={() => void toggleFlag(activeItem, "isWatched")} onTogglePin={() => void toggleFlag(activeItem, "isTopMind")} />}
+      {showComposer && <Composer mode={composeMode} setMode={setComposeMode} title={titleDraft} setTitle={setTitleDraft} url={urlDraft} setUrl={setUrlDraft} note={noteDraft} setNote={setNoteDraft} tags={tagDraft} setTags={setTagDraft} image={imageDraft} setImage={setImageDraft} saving={saving} onClose={() => { setShowComposer(false); setImageDraft(null); if (window.keepitDesktop?.isCaptureWindow) window.keepitDesktop.closeCapture(); }} onSubmit={saveDraft} />}
       {toast && <div className={`toast ${toast.kind ?? ""}`}><span className="toast-check">{toast.kind === "error" ? "!" : "✓"}</span>{toast.text}<button onClick={() => setToast(null)} aria-label="Dismiss"><X size={14} /></button></div>}
     </div>
   );
@@ -479,12 +593,13 @@ function Profile({ account, syncState, ready, onSignIn, onSignOut, onExport, cou
   return <div className="profile-layout"><section className="profile-hero"><div className="profile-cover"><div className="cover-orb cover-one"/><div className="cover-orb cover-two"/><span className="cover-label">A LITTLE SPACE FOR BIG IDEAS</span><div className="cover-stars">✳ <span>✧</span> ✦</div></div><div className="profile-info"><div className="profile-large-avatar">{account?.displayName?.slice(0, 1).toUpperCase() ?? "K"}</div><div className="profile-info-copy"><h2>{account?.displayName ?? "Your library"}</h2><p>{account?.email ?? "Saved on this browser"}</p></div>{account ? <button className="secondary-button" onClick={onSignOut}><LogOut size={15} /> Disconnect</button> : <button className="primary-button" onClick={onSignIn}>{ready ? <LogIn size={15} /> : <Cloud size={15} />} {ready ? "Connect Google" : "Set up cloud sync"}</button>}</div></section><section className="profile-stat-grid"><div className="profile-stat"><span className="stat-icon coral"><Bookmark size={17}/></span><strong>{count}</strong><small>Saved ideas</small></div><div className="profile-stat"><span className="stat-icon violet"><FolderHeart size={17}/></span><strong>{starterSpaces.length}</strong><small>Spaces to explore</small></div><div className="profile-stat"><span className="stat-icon green"><CheckCheck size={17}/></span><strong>Local-first</strong><small>Your ideas stay yours</small></div></section><section className="settings-card"><div className="settings-heading"><div><span className="eyebrow">YOUR PREFERENCES</span><h3>KeepIt, your way.</h3></div><Settings2 size={19}/></div><button className="setting-row" onClick={onExport}><span className="setting-icon"><Share2 size={16}/></span><span><strong>Export your mind</strong><small>Download a portable JSON copy of your saved ideas.</small></span><ArrowRight size={16}/></button><div className="setting-row setting-static"><span className="setting-icon"><Cloud size={16}/></span><span><strong>Cloud sync</strong><small>{account ? `Connected · ${syncState}` : ready ? "Optional · authorize this site in Firebase, then sign in to sync with mobile." : "Set Firebase web config to connect your mobile library."}</small></span><span className={`settings-status ${account ? "online" : "offline"}`}>{account ? "ON" : "LOCAL"}</span></div><div className="privacy-note"><ShieldCheck size={16}/><span><strong>Private by default.</strong> Your saved ideas belong to you. No feed, no noise, just your mind.</span></div></section></div>;
 }
 
-function ItemDetail({ item, spaces, onClose, onUpdate, onDelete, onToggleWatched, onTogglePin }: { item: MindItem; spaces: typeof starterSpaces; onClose: () => void; onUpdate: (item: MindItem) => void; onDelete: () => void; onToggleWatched: () => void; onTogglePin: () => void }) {
+function ItemDetail({ item, spaces, desktopMode, onClose, onUpdate, onDelete, onToggleWatched, onTogglePin }: { item: MindItem; spaces: typeof starterSpaces; desktopMode: boolean; onClose: () => void; onUpdate: (item: MindItem) => void; onDelete: () => void; onToggleWatched: () => void; onTogglePin: () => void }) {
   const [title, setTitle] = useState(item.title);
   const [content, setContent] = useState(item.content ?? "");
   const [tagText, setTagText] = useState(item.tags.join(", "));
+  const reminderActive = Boolean(item.remindAt && Date.parse(item.remindAt) > Date.now());
   const saveEdits = () => onUpdate({ ...item, title: title.trim() || "Untitled", content: content.trim() || undefined, tags: tagText.split(",").map((value) => value.trim().replace(/^#/, "")).filter(Boolean), updatedAt: new Date().toISOString() });
-  return <div className="modal-backdrop detail-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="detail-panel" role="dialog" aria-modal="true" aria-label="Saved item details"><div className="detail-top"><span className="detail-kind">{sourceIcon(item.type)} {sourceName(item.type)}</span><div className="detail-top-actions"><button className={item.isTopMind ? "mini-action pinned-action" : "mini-action"} onClick={onTogglePin} title="Pin to top of mind"><Pin size={16}/></button><button className="mini-action" onClick={onClose} aria-label="Close"><X size={18}/></button></div></div>{item.thumbnailUrl && <div className="detail-image"><img src={item.thumbnailUrl} alt=""/><span className="detail-domain">{getDomain(item.url)}</span></div>}<div className="detail-content"><div className="detail-saved"><span className="author-dot"/> SAVED {formatSavedDate(item.createdAt).toUpperCase()} <span>·</span> {item.authorName ?? "YOUR LIBRARY"}</div><label className="field-label" htmlFor="edit-title">TITLE</label><input id="edit-title" className="detail-title-input" value={title} onChange={(event) => setTitle(event.target.value)} onBlur={saveEdits}/><label className="field-label" htmlFor="edit-note">YOUR NOTE</label><textarea id="edit-note" className="detail-note-input" value={content} onChange={(event) => setContent(event.target.value)} onBlur={saveEdits} placeholder="Add a thought to remember why this mattered…" rows={4}/><label className="field-label" htmlFor="edit-tags">TAGS <span>Separate with commas</span></label><input id="edit-tags" className="edit-tags-input" value={tagText} onChange={(event) => setTagText(event.target.value)} onBlur={saveEdits}/><div className="detail-tags">{item.tags.map((value) => <span className="tag-chip" key={value}>#{value}</span>)}</div>{item.url && <a className="original-link" href={item.url} target="_blank" rel="noreferrer"><Link2 size={15}/><span>{getDomain(item.url)}</span><ExternalLink size={14}/></a>}<div className="detail-actions"><button className={item.isWatched ? "watched-button done" : "watched-button"} onClick={onToggleWatched}>{item.isWatched ? <CheckCheck size={16}/> : <Check size={16}/>} {item.isWatched ? "Revisited" : "Mark as revisited"}</button><button className="delete-action" onClick={onDelete}><Trash2 size={15}/></button></div><div className="detail-space-row"><span>KEEP IN A SPACE</span><select value={item.spaceId ?? ""} onChange={(event) => onUpdate({ ...item, spaceId: event.target.value || undefined, updatedAt: new Date().toISOString() })}><option value="">No space yet</option>{spaces.map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}</select></div></div></section></div>;
+  return <div className="modal-backdrop detail-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="detail-panel" role="dialog" aria-modal="true" aria-label="Saved item details"><div className="detail-top"><span className="detail-kind">{sourceIcon(item.type)} {sourceName(item.type)}</span><div className="detail-top-actions"><button className={item.isTopMind ? "mini-action pinned-action" : "mini-action"} onClick={onTogglePin} title="Pin to top of mind"><Pin size={16}/></button><button className="mini-action" onClick={onClose} aria-label="Close"><X size={18}/></button></div></div>{item.thumbnailUrl && <div className="detail-image"><img src={item.thumbnailUrl} alt=""/><span className="detail-domain">{getDomain(item.url)}</span></div>}<div className="detail-content"><div className="detail-saved"><span className="author-dot"/> SAVED {formatSavedDate(item.createdAt).toUpperCase()} <span>·</span> {item.authorName ?? "YOUR LIBRARY"}</div><label className="field-label" htmlFor="edit-title">TITLE</label><input id="edit-title" className="detail-title-input" value={title} onChange={(event) => setTitle(event.target.value)} onBlur={saveEdits}/><label className="field-label" htmlFor="edit-note">YOUR NOTE</label><textarea id="edit-note" className="detail-note-input" value={content} onChange={(event) => setContent(event.target.value)} onBlur={saveEdits} placeholder="Add a thought to remember why this mattered…" rows={4}/><label className="field-label" htmlFor="edit-tags">TAGS <span>Separate with commas</span></label><input id="edit-tags" className="edit-tags-input" value={tagText} onChange={(event) => setTagText(event.target.value)} onBlur={saveEdits}/><div className="detail-tags">{item.tags.map((value) => <span className="tag-chip" key={value}>#{value}</span>)}</div>{item.url && <a className="original-link" href={item.url} target="_blank" rel="noreferrer"><Link2 size={15}/><span>{getDomain(item.url)}</span><ExternalLink size={14}/></a>}<div className="detail-actions">{desktopMode && <button className={reminderActive ? "watched-button done" : "watched-button"} onClick={() => onUpdate({ ...item, remindAt: reminderActive ? undefined : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), updatedAt: new Date().toISOString() })}><Bell size={16}/>{reminderActive ? "Reminder set · cancel" : "Remind me in 1 week"}</button>}<button className={item.isWatched ? "watched-button done" : "watched-button"} onClick={onToggleWatched}>{item.isWatched ? <CheckCheck size={16}/> : <Check size={16}/>} {item.isWatched ? "Revisited" : "Mark as revisited"}</button><button className="delete-action" onClick={onDelete}><Trash2 size={15}/></button></div><div className="detail-space-row"><span>KEEP IN A SPACE</span><select value={item.spaceId ?? ""} onChange={(event) => onUpdate({ ...item, spaceId: event.target.value || undefined, updatedAt: new Date().toISOString() })}><option value="">No space yet</option>{spaces.map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}</select></div></div></section></div>;
 }
 
 function Composer({ mode, setMode, title, setTitle, url, setUrl, note, setNote, tags, setTags, image, setImage, saving, onClose, onSubmit }: {

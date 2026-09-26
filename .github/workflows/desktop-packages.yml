@@ -80,15 +80,28 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Check out source and previous tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Download platform installers
         uses: actions/download-artifact@v4
         with:
           path: release-assets
           merge-multiple: true
 
+      - name: Generate desktop release notes from commits
+        run: node desktop/scripts/generate-release-notes.cjs release-notes.md
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: KeepIt Desktop ${{ github.ref_name }}
-          generate_release_notes: true
+          body_path: release-notes.md
           files: release-assets/*

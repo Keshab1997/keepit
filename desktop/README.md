@@ -8,7 +8,7 @@ The address/port is intentionally stable because the web app stores items in Ind
 
 1. Go to **Actions → Build standalone desktop installers → Run workflow**. No hosted URL or `KEEPIT_WEB_URL` is required.
 2. Download `windows-installer` (`.exe`, x64) and `macos-disk-images` (`.dmg`, Intel and Apple Silicon) from the completed run. The workflow builds the web app on each OS, bundles it, and packages the Electron app on that OS.
-3. To also attach installers to a GitHub Release, push a tag like `desktop-v1.0.0`. Only tag a commit after reviewing and testing it.
+3. To automatically publish a GitHub Release with **release notes generated from commits** and all three installers attached, bump `desktop/package.json`'s version, then push a matching tag like `desktop-v1.0.1`. The workflow rebuilds the installers for that tag and publishes only after both builds succeed. Only tag a commit after reviewing and testing it. Downloads attached to the Release remain available after the workflow artifacts expire.
 
 Unsigned builds are suitable for testing. Distributing without OS warnings needs Windows code signing and Apple Developer ID signing/notarization. Neither credential is included in the repository.
 

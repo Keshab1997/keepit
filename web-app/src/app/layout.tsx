@@ -4,6 +4,7 @@ import "./dark-theme.css";
 import "./pastel-theme.css";
 import "./readability.css";
 import "./image-upload.css";
+import "./type-scale.css";
 
 export const metadata: Metadata = {
   title: "KeepIt — Your visual second brain",

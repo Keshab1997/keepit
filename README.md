@@ -47,7 +47,7 @@ Every day we scroll past dozens of insightful Instagram Reels, YouTube Shorts, T
 2. **Local-First Architecture:** Instant access offline with zero latency using local database (Hive/Isar/SQLite), seamlessly backed up to Firebase.
 3. **Smart Serendipity & AI Recall:** Smart notifications remind you of items you saved days or weeks ago right when you need inspiration.
 4. **Minimal Aesthetic UI:** Card-based dynamic masonry grid with tag clouds, color palettes, space categorizations, and distraction-free viewing.
-5. **Cross-Platform Ecosystem:** Native Flutter App (Android & iOS) + Manifest V3 Chrome Extension.
+5. **Cross-Platform Ecosystem:** Native Flutter App (Android & iOS), a desktop-first Next.js web companion, and Manifest V3 Chrome Extension.
 
 ---
 
@@ -130,6 +130,7 @@ keepit/
 │   │   ├── domain/              # Entities and use cases
 │   │   └── presentation/        # Screens (Masonry feed, Detail, Spaces, Serendipity)
 │   └── pubspec.yaml
+├── web-app/                     # Desktop-first Next.js companion (local-first + Firebase-ready)
 ├── chrome_extension/            # Manifest V3 Extension for 1-click web bookmarking
 │   ├── manifest.json
 │   ├── popup/
@@ -166,6 +167,17 @@ flutter run
 > by the release workflow — they are deliberately not in this repository.
 > See [`docs/SECRETS_SETUP.md`](docs/SECRETS_SETUP.md) if you are setting up a
 > release pipeline (or a fork) of your own.
+
+### Run the desktop web companion
+
+```bash
+cd web-app
+npm install
+cp .env.example .env.local   # optional: add your Firebase Web app config for shared sync
+npm run dev
+```
+
+The web app is empty-by-default and saves real items locally in IndexedDB; Firebase enables optional cross-device sync. See [`web-app/README.md`](web-app/README.md) for setup details.
 
 # Load Chrome Extension
 # Open chrome://extensions -> Enable Developer Mode -> Load Unpacked -> select 'chrome_extension'

@@ -7,9 +7,10 @@ The address/port is intentionally stable because the web app stores items in Ind
 ## Desktop capture, tray, and reminders
 
 - **Quick Capture:** `Ctrl+Shift+K` on Windows or `⌘+Shift+K` on macOS opens a small capture window. It prefills a copied URL as a link or copied text as a note; copy the selection in another app before invoking the shortcut. Saving adds it to the same local library.
+- **Open KeepIt directly:** `Ctrl+Alt+K` on Windows or `⌘+Option+K` on macOS brings the desktop window forward, including when it is hidden in the tray.
 - **Tray/menu bar:** closing the main window hides KeepIt in the system tray (Windows) or menu bar (macOS). Use the tray menu to reopen the library, open Quick Capture with the clipboard, start a blank note, or quit. Native reminders continue while KeepIt is running in the tray; quitting the app stops reminder delivery until it is launched again.
 - **Native reminders:** open a saved item and choose **Remind me in 1 week**. Electron persists the reminder and shows an OS notification when it is due; clicking the notification opens that item.
-- **Chrome extension handoff:** load `chrome_extension/` as an unpacked extension in Chrome and grant its loopback permission. With KeepIt Desktop open, use its popup's **Send this page** or **Send selection** action. The item is queued locally and imported into the desktop library; no hosted web app or Firebase sync is required.
+- **Chrome extension:** the popup detects Instagram Reel URLs and saves them as `instagramReel` items. **Open KeepIt Web** and the optional `Alt+Shift+K` extension command open `https://keepit-web-peach.vercel.app`; **Open Desktop App** launches the installed app via `keepit://` (Chrome may ask for confirmation). Chrome key bindings can be changed at `chrome://extensions/shortcuts`. Each desktop GitHub Release includes a versioned `KeepIt-Chrome-Extension-*.zip`; extract it and choose **Load unpacked** in `chrome://extensions` (Developer mode on). With KeepIt Desktop running, the popup can also send the page or selected text to its local library.
 
 ## Build installers using GitHub Actions
 

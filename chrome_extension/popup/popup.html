@@ -1,246 +1,115 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>KeepIt Quick Save</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KeepIt</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-    body {
-      width: 340px;
-      padding: 16px;
-      background: #F9F9FB;
-      color: #1E212D;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      font-size: 16px;
-    }
-    .logo-badge {
-      width: 26px;
-      height: 26px;
-      background: #FF5B37;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 14px;
-    }
-    .card-preview {
-      background: #FFFFFF;
-      border: 1px solid #EBECEF;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-    }
-    .page-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      line-height: 1.3;
-      max-height: 38px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .page-url {
-      font-size: 11px;
-      color: #7A7E8C;
-      word-break: break-all;
-    }
-    .input-group {
-      margin-bottom: 12px;
-    }
-    label {
-      font-size: 11px;
-      font-weight: 600;
-      color: #7A7E8C;
-      display: block;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1px solid #EBECEF;
-      border-radius: 10px;
-      font-size: 13px;
-      background: #FFFFFF;
-      outline: none;
-      transition: border 0.2s;
-    }
-    input[type="text"]:focus {
-      border-color: #FF5B37;
-    }
-    .tag-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 6px;
-    }
-    .tag-chip {
-      background: #F1F2F6;
-      color: #4A4E5A;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .tag-chip.active {
-      background: #FFECE7;
-      color: #FF5B37;
-      font-weight: 600;
-    }
-    .btn-save {
-      width: 100%;
-      padding: 11px;
-      background: #FF5B37;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 10px rgba(255, 91, 55, 0.25);
-      transition: opacity 0.2s;
-    }
-    .btn-save:hover {
-      opacity: 0.92;
-    }
-    .cloud-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 14px;
-      padding: 8px 10px;
-      background: #FFF7F4;
-      border: 1px solid #FFE3DB;
-      border-radius: 10px;
-    }
-    .cloud-status {
-      color: #7A4B3E;
-      font-size: 10px;
-      line-height: 1.25;
-    }
-    .cloud-actions {
-      display: flex;
-      gap: 5px;
-      flex-shrink: 0;
-    }
-    .cloud-btn {
-      border: 1px solid #FFB9A8;
-      border-radius: 7px;
-      background: white;
-      color: #D94B2B;
-      font-size: 10px;
-      padding: 5px 7px;
-      cursor: pointer;
-    }
-    .cloud-btn:disabled, .btn-save:disabled {
-      opacity: 0.55;
-      cursor: wait;
-    }
-    .desktop-send {
-      margin-top: 12px;
-      padding-top: 11px;
-      border-top: 1px solid #EBECEF;
-    }
-    .desktop-label {
-      margin-bottom: 7px;
-      color: #7A7E8C;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .4px;
-      text-transform: uppercase;
-    }
-    .desktop-buttons { display: flex; gap: 7px; }
-    .desktop-btn {
-      flex: 1;
-      padding: 9px 6px;
-      border: 1px solid #DCDDE3;
-      border-radius: 9px;
-      background: white;
-      color: #444957;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .desktop-btn:hover { border-color: #FF9C82; color: #D94B2B; }
-    .desktop-btn:disabled { opacity: .55; cursor: wait; }
-    .status-msg {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 12px;
-      color: #10B981;
-      font-weight: 600;
-      min-height: 16px;
-    }
+    :root { color-scheme: light; --ink:#202721; --muted:#7a8179; --line:#e8e9e1; --paper:#f7f6f1; --card:#fff; --green:#315b47; --green-dark:#254a38; --coral:#e77c5d; --soft:#edf3ed; }
+    * { box-sizing:border-box; }
+    body { width:386px; margin:0; padding:14px; color:var(--ink); background:var(--paper); font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    button,input { font:inherit; }
+    .shell { overflow:hidden; border:1px solid #e9e6dd; border-radius:19px; background:#fbfaf7; box-shadow:0 14px 36px #2d382318; }
+    .header { height:58px; padding:0 17px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #eeece5; background:#fff; }
+    .brand { display:flex; align-items:center; gap:10px; font-size:16px; font-weight:760; letter-spacing:-.5px; }
+    .brand img { width:31px; height:31px; border-radius:10px; }
+    .header-kicker { color:#92978f; font-size:9px; font-weight:800; letter-spacing:1.2px; }
+    .content { padding:15px; }
+    .eyebrow { margin:0 0 8px; color:#888e84; font-size:9px; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; }
+    .preview { position:relative; min-height:100px; padding:15px 14px 13px; border:1px solid #e7e8df; border-radius:15px; background:linear-gradient(135deg,#fff 10%,#f2f5ef 100%); }
+    .preview-top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .site-label { display:flex; align-items:center; gap:7px; min-width:0; color:#70776f; font-size:10px; font-weight:650; }
+    .site-dot { width:7px; height:7px; flex:none; border-radius:50%; background:#80a88b; box-shadow:0 0 0 3px #e2eee3; }
+    .type-pill { flex:none; border:1px solid #e8dfd5; border-radius:999px; padding:4px 8px; background:#fffaf4; color:#a1674e; font-size:8px; font-weight:850; letter-spacing:.6px; text-transform:uppercase; }
+    .page-title { margin:0; color:#252b25; font:700 15px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; letter-spacing:-.25px; overflow-wrap:anywhere; }
+    .page-url { margin-top:7px; color:#8b918a; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .card { margin-top:12px; padding:13px; border:1px solid #e9e8e0; border-radius:14px; background:#fff; }
+    .label-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
+    label,.field-label { color:#767d74; font-size:9px; font-weight:800; letter-spacing:.7px; text-transform:uppercase; }
+    .hint { color:#a3a69e; font-size:9px; }
+    input[type=text] { width:100%; height:38px; border:1px solid #e4e6df; border-radius:10px; outline:0; padding:0 11px; background:#fcfcfa; color:#343b34; font-size:11px; transition:.16s; }
+    input[type=text]:focus { border-color:#87a58f; box-shadow:0 0 0 3px #dce9dd80; }
+    .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
+    .chip { padding:5px 8px; border:1px solid #ebede7; border-radius:999px; background:#f8f9f5; color:#737c72; font-size:9px; cursor:pointer; user-select:none; }
+    .chip.active { border-color:#cddfcf; background:#eaf2e9; color:#416b50; font-weight:700; }
+    .primary { width:100%; min-height:43px; margin-top:12px; border:0; border-radius:12px; background:linear-gradient(105deg,var(--green),#4b765c); color:#fff; box-shadow:0 7px 15px #315b4726; font-size:12px; font-weight:750; cursor:pointer; transition:transform .15s,filter .15s; }
+    .primary:hover { filter:brightness(1.05); transform:translateY(-1px); }
+    .primary:disabled,.secondary:disabled,.cloud-btn:disabled { opacity:.55; cursor:wait; transform:none; }
+    .desktop-heading { margin:15px 1px 7px; color:#7d847a; font-size:9px; font-weight:800; letter-spacing:.9px; text-transform:uppercase; }
+    .secondary-row { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+    .secondary { min-height:36px; padding:0 8px; border:1px solid #dfe4dc; border-radius:10px; background:#fff; color:#4b594c; font-size:10px; font-weight:700; cursor:pointer; }
+    .secondary:hover { border-color:#aebfaf; background:#f5f8f3; }
+    .quick-links { display:flex; flex-direction:column; gap:7px; margin-top:13px; padding-top:11px; border-top:1px solid #eeeee8; }
+    .quick-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .quick-link { border:0; padding:2px 0; background:none; color:#416c50; font-size:10px; font-weight:750; cursor:pointer; text-decoration:none; }
+    .quick-link:hover { color:#244b35; text-decoration:underline; }
+    .shortcut-note { color:#92978e; font-size:9px; text-align:right; }
+    .cloud { display:flex; align-items:center; gap:9px; margin:0 15px 12px; padding:10px 11px; border:1px solid #e8ebe3; border-radius:12px; background:#f5f7f2; }
+    .cloud-icon { width:27px; height:27px; flex:none; display:grid; place-items:center; border-radius:9px; background:#e5eee4; color:#4b7456; font-size:13px; }
+    .cloud-copy { min-width:0; flex:1; }
+    .cloud-copy strong { display:block; color:#455146; font-size:9px; }
+    .cloud-copy span { display:block; margin-top:2px; color:#92988e; font-size:8px; line-height:1.25; }
+    .cloud-btn { min-height:27px; padding:0 8px; border:1px solid #dbe3d8; border-radius:8px; background:#fff; color:#536b55; font-size:9px; font-weight:700; cursor:pointer; }
+    .cloud-btn:hover { background:#edf3eb; }
+    .status { min-height:17px; padding:0 12px 11px; color:#4c7756; font-size:10px; font-weight:650; text-align:center; }
+    .status.error { color:#bd543e; }
+    .footer { display:flex; justify-content:center; gap:5px; padding:8px; border-top:1px solid #efeee8; color:#aaada5; font-size:8px; }
+    .footer b { color:#7e8a7c; font-weight:700; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="brand">
-      <div class="logo-badge">🧠</div>
-      <span>KeepIt</span>
+  <main class="shell">
+    <header class="header">
+      <div class="brand"><img src="../icons/icon48.png" alt=""><span>KeepIt</span></div>
+      <span class="header-kicker">SAVE THE GOOD STUFF</span>
+    </header>
+    <div class="content">
+      <p class="eyebrow">Current tab</p>
+      <section class="preview" aria-live="polite">
+        <div class="preview-top">
+          <div class="site-label"><span class="site-dot"></span><span id="siteLabel">Loading page…</span></div>
+          <span class="type-pill" id="typePill">LINK</span>
+        </div>
+        <h1 class="page-title" id="pageTitle">Loading current page…</h1>
+        <div class="page-url" id="pageUrl"></div>
+      </section>
+
+      <section class="card">
+        <div class="label-row"><label for="tagsInput">Add a few tags</label><span class="hint">comma separated</span></div>
+        <input type="text" id="tagsInput" placeholder="ideas, inspiration, reels">
+        <div class="chips" id="suggestedTags">
+          <button class="chip" type="button" data-tag="ideas">#ideas</button>
+          <button class="chip" type="button" data-tag="research">#research</button>
+          <button class="chip" type="button" data-tag="bookmark">#bookmark</button>
+          <button class="chip" type="button" data-tag="reels">#reels</button>
+          <button class="chip" type="button" data-tag="instagram">#instagram</button>
+        </div>
+        <button class="primary" id="saveBtn" type="button">Save to KeepIt</button>
+        <div class="desktop-heading">Also send to desktop</div>
+        <div class="secondary-row">
+          <button class="secondary" id="sendPageBtn" type="button">Send page</button>
+          <button class="secondary" id="sendSelectionBtn" type="button">Send selected text</button>
+        </div>
+        <div class="quick-links">
+          <div class="quick-actions">
+            <button class="quick-link" id="openWebBtn" type="button">Open KeepIt Web ↗</button>
+            <a class="quick-link" id="openDesktopBtn" href="keepit://open">Open Desktop App ↗</a>
+          </div>
+          <span class="shortcut-note" id="desktopShortcut">Desktop hotkey: Ctrl+Alt+K</span>
+        </div>
+      </section>
     </div>
-  </div>
 
-  <div class="card-preview">
-    <div id="pageTitle" class="page-title">Loading current page...</div>
-    <div id="pageUrl" class="page-url"></div>
-  </div>
-
-  <div class="cloud-row">
-    <div id="cloudStatus" class="cloud-status">Checking cloud sync...</div>
-    <div class="cloud-actions">
-      <button id="connectBtn" class="cloud-btn" type="button">Connect</button>
-      <button id="syncBtn" class="cloud-btn" type="button" style="display:none">Sync</button>
-    </div>
-  </div>
-
-  <div class="input-group">
-    <label>Tags (comma separated)</label>
-    <input type="text" id="tagsInput" placeholder="inspiration, dev, read-later" />
-    <div class="tag-container" id="suggestedTags">
-      <span class="tag-chip active">#ideas</span>
-      <span class="tag-chip active">#research</span>
-      <span class="tag-chip">#bookmark</span>
-      <span class="tag-chip">#reels</span>
-    </div>
-  </div>
-
-  <button class="btn-save" id="saveBtn">
-    <span>Save to Mind</span>
-  </button>
-  <section class="desktop-send" aria-label="Send to KeepIt desktop">
-    <div class="desktop-label">KeepIt Desktop</div>
-    <div class="desktop-buttons">
-      <button class="desktop-btn" id="sendPageBtn" type="button">Send this page</button>
-      <button class="desktop-btn" id="sendSelectionBtn" type="button">Send selection</button>
-    </div>
-  </section>
-  <div class="status-msg" id="statusMsg" aria-live="polite">Ready to save.</div>
-
+    <section class="cloud">
+      <div class="cloud-icon">☁</div>
+      <div class="cloud-copy"><strong id="cloudStatus">Checking sync…</strong><span id="cloudHint">Local saving works without an account.</span></div>
+      <button class="cloud-btn" id="connectBtn" type="button">Connect</button>
+      <button class="cloud-btn" id="syncBtn" type="button" hidden>Sync</button>
+    </section>
+    <div class="status" id="statusMsg" aria-live="polite">Ready when you are.</div>
+    <footer class="footer">Open web shortcut: <b>Alt+Shift+K</b> · Change keys in Chrome Extensions → Shortcuts</footer>
+  </main>
+  <script src="../keepit-schema.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

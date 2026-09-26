@@ -33,4 +33,15 @@ assert.equal(second.items.length, 1);
 assert.equal(second.item.id, 'first');
 assert.deepEqual(Array.from(second.item.tags), ['read', 'dev', 'important']);
 
+const reel = schema.instagramReelInfo('https://www.instagram.com/reel/CrAb123/?igsh=abc&utm_source=share');
+assert.equal(reel.shortcode, 'CrAb123');
+assert.equal(reel.url, 'https://www.instagram.com/reel/CrAb123/');
+assert.equal(schema.detectType('https://m.instagram.com/reels/CrAb123/?igsh=abc'), 'instagramReel');
+assert.equal(schema.normalizeUrl('https://www.instagram.com/reel/CrAb123/?igsh=abc'), reel.url);
+assert.equal(schema.detectType('https://youtube.com/shorts/abc123'), 'youtubeVideo');
+const reelItem = schema.normalizeItem({ id: 'reel', title: 'Instagram', url: reel.url, type: 'webArticle' });
+assert.equal(reelItem.type, 'instagramReel');
+assert.equal(schema.normalizeItem({ id: 'quote', title: 'Quote', url: reel.url, type: 'quote' }).type, 'quote');
+assert.equal(schema.instagramReelInfo('https://example.com/reel/CrAb123/'), null);
+
 console.log('KeepIt extension schema tests passed.');

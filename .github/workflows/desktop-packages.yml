@@ -88,6 +88,9 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      - name: Package Chrome extension ZIP
+        run: python3 desktop/scripts/package-chrome-extension.py release-assets
+
       - name: Generate desktop release notes from commits
         run: node desktop/scripts/generate-release-notes.cjs release-notes.md
 

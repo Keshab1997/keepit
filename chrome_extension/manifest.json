@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "KeepIt - Smart Visual Bookmarks & Second Brain",
-  "version": "1.1.0",
-  "description": "Save reels, articles, tweets, quotes, and visual inspiration to your KeepIt mind with 1-click.",
+  "version": "1.2.0",
+  "description": "Save Instagram Reels, articles, quotes, and ideas to KeepIt. Open your library with a shortcut.",
   "permissions": [
     "activeTab",
     "storage",
@@ -33,6 +33,13 @@
         "mac": "Alt+S"
       },
       "description": "Quick save current page to KeepIt"
+    },
+    "open_keepit_web": {
+      "suggested_key": {
+        "default": "Alt+Shift+K",
+        "mac": "Alt+Shift+K"
+      },
+      "description": "Open the KeepIt web library"
     }
   },
   "icons": {

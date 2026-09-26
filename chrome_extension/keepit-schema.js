@@ -21,9 +21,47 @@
     return new Date(ms).toISOString();
   }
 
+  function instagramReelInfo(value) {
+    try {
+      const url = new URL(String(value || '').trim());
+      let host = url.hostname.toLowerCase();
+      if (host.startsWith('www.')) host = host.slice(4);
+      if (host.startsWith('m.')) host = host.slice(2);
+      if (host === 'l.instagram.com') {
+        const target = url.searchParams.get('u') || url.searchParams.get('url');
+        return target ? instagramReelInfo(target) : null;
+      }
+      if (host !== 'instagram.com' && host !== 'instagr.am') return null;
+      const segments = url.pathname.split('/').filter(Boolean);
+      const marker = segments.findIndex((part) => part.toLowerCase() === 'reel' || part.toLowerCase() === 'reels');
+      const shortcode = marker >= 0 ? segments[marker + 1] : '';
+      if (!shortcode) return null;
+      return {
+        shortcode,
+        url: `https://www.instagram.com/reel/${encodeURIComponent(shortcode)}/`,
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function detectType(value) {
+    if (instagramReelInfo(value)) return 'instagramReel';
+    try {
+      const url = new URL(String(value || '').trim());
+      let host = url.hostname.toLowerCase();
+      if (host.startsWith('www.')) host = host.slice(4);
+      if ((host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtu.be') &&
+          (url.pathname.startsWith('/shorts/') || host === 'youtu.be' || url.pathname === '/watch')) return 'youtubeVideo';
+    } catch (_) {}
+    return 'webArticle';
+  }
+
   function normalizeUrl(value) {
     const input = String(value || '').trim();
     if (!input) return '';
+    const reel = instagramReelInfo(input);
+    if (reel) return reel.url;
 
     try {
       const url = new URL(input);
@@ -70,7 +108,10 @@
     const updatedAt = toIso(source.updatedAt, updatedAtMs);
     const url = source.url ? String(source.url).trim() : null;
     const title = String(source.title || url || 'Saved item').trim() || 'Saved item';
-    const type = ITEM_TYPES.has(source.type) ? source.type : 'webArticle';
+    const isReelUrl = Boolean(instagramReelInfo(url));
+    const type = isReelUrl && (!ITEM_TYPES.has(source.type) || source.type === 'webArticle')
+      ? 'instagramReel'
+      : (ITEM_TYPES.has(source.type) ? source.type : detectType(url));
 
     return {
       id: String(source.id || `item_${now}_${Math.random().toString(36).slice(2, 8)}`),
@@ -136,7 +177,9 @@
 
   global.KeepItSchema = Object.freeze({
     cleanTags,
+    detectType,
     fingerprint,
+    instagramReelInfo,
     insertOrMerge,
     mergeItems,
     normalizeItem,

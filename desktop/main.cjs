@@ -15,6 +15,8 @@ const appOrigin = `http://127.0.0.1:${PORT}`;
 const bootToken = randomBytes(32).toString("hex");
 const captureShortcut = "CommandOrControl+Shift+K";
 const captureShortcutLabel = process.platform === "darwin" ? "⌘+Shift+K" : "Ctrl+Shift+K";
+const openAppShortcut = "CommandOrControl+Alt+K";
+const openAppShortcutLabel = process.platform === "darwin" ? "⌘+Option+K" : "Ctrl+Alt+K";
 let server;
 let mainWindow;
 let captureWindow;
@@ -24,6 +26,7 @@ let bridgePolling = false;
 let reminderTimer;
 let reminders = [];
 let quitting = false;
+let serverReady = false;
 
 app.setName("KeepIt");
 if (process.platform === "win32") app.setAppUserModelId("com.keshab.keepit");
@@ -58,6 +61,21 @@ if (!app.requestSingleInstanceLock()) {
     try { return ["http:", "https:"].includes(new URL(rawUrl).protocol); }
     catch { return false; }
   }
+
+  function handleProtocolUrl(rawUrl) {
+    try {
+      if (new URL(rawUrl).protocol !== "keepit:") return;
+      if (!serverReady) return;
+      showMainWindow();
+    } catch { /* Ignore malformed protocol URLs. */ }
+  }
+
+  app.on("open-url", (event, rawUrl) => {
+    if (String(rawUrl).startsWith("keepit://")) {
+      event.preventDefault();
+      handleProtocolUrl(rawUrl);
+    }
+  });
 
   app.on("web-contents-created", (_event, contents) => {
     contents.setWindowOpenHandler(({ url }) => {
@@ -159,6 +177,7 @@ if (!app.requestSingleInstanceLock()) {
   }
 
   function showMainWindow() {
+    if (!serverReady) return;
     if (!mainWindow || mainWindow.isDestroyed()) {
       createMainWindow();
       return;
@@ -256,7 +275,7 @@ if (!app.requestSingleInstanceLock()) {
     tray = new Tray(image);
     tray.setToolTip("KeepIt · Save ideas for later");
     tray.setContextMenu(Menu.buildFromTemplate([
-      { label: "Open KeepIt", click: showMainWindow },
+      { label: `Open KeepIt (${openAppShortcutLabel})`, click: showMainWindow },
       { label: `Quick Capture (${captureShortcutLabel})`, click: () => openCaptureWindow(true) },
       { label: "New blank note", click: () => openCaptureWindow(false) },
       { type: "separator" },
@@ -267,8 +286,10 @@ if (!app.requestSingleInstanceLock()) {
   }
 
   function setupShortcuts() {
-    const registered = globalShortcut.register(captureShortcut, () => openCaptureWindow(true));
-    if (!registered) console.warn(`Could not register ${captureShortcut}; it may be used by another app.`);
+    const captureRegistered = globalShortcut.register(captureShortcut, () => openCaptureWindow(true));
+    const openRegistered = globalShortcut.register(openAppShortcut, showMainWindow);
+    if (!captureRegistered) console.warn(`Could not register ${captureShortcut}; it may be used by another app.`);
+    if (!openRegistered) console.warn(`Could not register ${openAppShortcut}; it may be used by another app.`);
   }
 
   function startDesktopBridgePolling() {
@@ -366,12 +387,22 @@ if (!app.requestSingleInstanceLock()) {
     if (mainWindow && event.sender === mainWindow.webContents) syncReminders(next);
   });
 
-  app.on("second-instance", () => showMainWindow());
+  app.on("second-instance", (_event, commandLine) => {
+    const protocolUrl = Array.isArray(commandLine) ? commandLine.find((argument) => typeof argument === "string" && argument.startsWith("keepit://")) : null;
+    if (protocolUrl) handleProtocolUrl(protocolUrl);
+    showMainWindow();
+  });
   app.on("activate", () => showMainWindow());
 
   app.whenReady().then(async () => {
     try {
+      if (!app.isPackaged && process.platform === "win32") {
+        app.setAsDefaultProtocolClient("keepit", process.execPath, [path.resolve(process.argv[1] || ".")]);
+      } else {
+        app.setAsDefaultProtocolClient("keepit");
+      }
       await launchServer();
+      serverReady = true;
       loadReminders();
       createTray();
       setupShortcuts();

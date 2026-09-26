@@ -59,27 +59,43 @@ async function readPageMetadata(tabId) {
   }
 }
 
-async function enrichPageItem(rawItem, tabId) {
-  if (!tabId || rawItem.type !== 'webArticle') return rawItem;
-  const metadata = await readPageMetadata(tabId);
-  return {
+async function enrichPageItem(rawItem, tabId, activeTabUrl) {
+  const reel = KeepItSchema.instagramReelInfo(rawItem.url);
+  const activeReel = KeepItSchema.instagramReelInfo(activeTabUrl);
+  const item = {
     ...rawItem,
-    title: metadata.title || rawItem.title,
-    content: rawItem.content || metadata.content || null,
-    thumbnailUrl: rawItem.thumbnailUrl || metadata.thumbnailUrl || null,
-    authorName: rawItem.authorName || metadata.authorName || metadata.siteName || null,
+    ...(rawItem.url ? { url: KeepItSchema.normalizeUrl(rawItem.url) } : {}),
+    ...(reel ? { type: 'instagramReel' } : {}),
+  };
+  if (!tabId || !['webArticle', 'instagramReel'].includes(item.type) || (reel && activeReel?.url !== reel.url)) {
+    if (reel && (!item.title || item.title.toLowerCase() === 'instagram')) item.title = `Instagram Reel · ${reel.shortcode}`;
+    return item;
+  }
+  const metadata = await readPageMetadata(tabId);
+  const metadataTitle = String(metadata.title || '').trim();
+  const lowerMetadataTitle = metadataTitle.toLowerCase();
+  const genericInstagramTitle = lowerMetadataTitle === 'instagram' || lowerMetadataTitle.startsWith('instagram ·') || lowerMetadataTitle.startsWith('instagram •') || lowerMetadataTitle.startsWith('instagram |');
+  const fallbackTitle = reel ? `Instagram Reel · ${reel.shortcode}` : item.title;
+  return {
+    ...item,
+    title: metadataTitle && !genericInstagramTitle ? metadataTitle : (item.title && !/^instagram$/i.test(item.title) ? item.title : fallbackTitle),
+    content: item.content || metadata.content || null,
+    thumbnailUrl: item.thumbnailUrl || metadata.thumbnailUrl || null,
+    authorName: item.authorName || metadata.authorName || metadata.siteName || null,
   };
 }
 
-async function saveItem(rawItem, tabId) {
-  const enriched = await enrichPageItem(rawItem, tabId);
+async function saveItem(rawItem, tabId, activeTabUrl) {
+  const enriched = await enrichPageItem(rawItem, tabId, activeTabUrl);
   const result = await KeepItFirebaseSync.saveLocalItem(enriched);
   notifySaved(result.item, result.duplicate);
   return result;
 }
 
 function itemFromContext(info, tab) {
-  const pageUrl = tab?.url || info.pageUrl || info.linkUrl || '';
+  const rawPageUrl = tab?.url || info.pageUrl || info.linkUrl || '';
+  const pageReel = KeepItSchema.instagramReelInfo(rawPageUrl);
+  const pageUrl = rawPageUrl ? KeepItSchema.normalizeUrl(rawPageUrl) : '';
   const base = {
     id: `item_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     createdAt: timestamp(),
@@ -100,9 +116,7 @@ function itemFromContext(info, tab) {
   }
   if (info.menuItemId === 'keepit_save_image') {
     let hostname = 'web';
-    try {
-      hostname = new URL(pageUrl).hostname;
-    } catch (_) {}
+    try { hostname = new URL(rawPageUrl).hostname; } catch (_) {}
     return {
       ...base,
       title: `Saved image from ${hostname}`,
@@ -112,19 +126,22 @@ function itemFromContext(info, tab) {
     };
   }
   if (info.menuItemId === 'keepit_save_link') {
+    const target = info.linkUrl || rawPageUrl;
+    const reel = KeepItSchema.instagramReelInfo(target);
     return {
       ...base,
-      title: info.linkUrl || 'Saved link',
-      url: info.linkUrl || pageUrl,
-      type: 'webArticle',
-      tags: ['link'],
+      title: reel ? `Instagram Reel · ${reel.shortcode}` : (target || 'Saved link'),
+      url: reel ? reel.url : KeepItSchema.normalizeUrl(target),
+      type: reel ? 'instagramReel' : KeepItSchema.detectType(target),
+      tags: reel ? ['instagram', 'reels', 'video'] : ['link'],
     };
   }
   return {
     ...base,
-    title: tab?.title || 'Saved webpage',
-    type: 'webArticle',
-    tags: ['bookmark'],
+    title: pageReel ? `Instagram Reel · ${pageReel.shortcode}` : (tab?.title || 'Saved webpage'),
+    url: pageReel ? pageReel.url : pageUrl,
+    type: pageReel ? 'instagramReel' : KeepItSchema.detectType(rawPageUrl),
+    tags: pageReel ? ['instagram', 'reels', 'video'] : ['bookmark'],
   };
 }
 
@@ -165,26 +182,32 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   try {
-    await saveItem(itemFromContext(info, tab), tab?.id);
+    await saveItem(itemFromContext(info, tab), tab?.id, tab?.url);
   } catch (error) {
     console.error('KeepIt save failed:', error);
   }
 });
 
 chrome.commands.onCommand.addListener(async (command) => {
+  if (command === 'open_keepit_web') {
+    await chrome.tabs.create({ url: 'https://keepit-web-peach.vercel.app' });
+    return;
+  }
   if (command !== 'save_current_page') return;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
   try {
+    const reel = KeepItSchema.instagramReelInfo(tab.url || '');
+    const type = KeepItSchema.detectType(tab.url || '');
     await saveItem({
       id: `item_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      title: tab.title || 'Saved page',
-      url: tab.url || '',
-      type: 'webArticle',
-      tags: ['bookmark', 'quick-save'],
+      title: reel ? `Instagram Reel · ${reel.shortcode}` : (tab.title || 'Saved page'),
+      url: reel ? reel.url : KeepItSchema.normalizeUrl(tab.url || ''),
+      type,
+      tags: reel ? ['instagram', 'reels', 'video', 'quick-save'] : ['bookmark', 'quick-save'],
       createdAt: timestamp(),
       updatedAt: timestamp(),
-    }, tab?.id);
+    }, tab?.id, tab?.url);
   } catch (error) {
     console.error('KeepIt shortcut save failed:', error);
   }
@@ -193,7 +216,7 @@ chrome.commands.onCommand.addListener(async (command) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     if (message?.type === 'save_item') {
-      return saveItem(message.item || {}, sender.tab?.id);
+      return saveItem(message.item || {}, sender.tab?.id ?? message.tabId, sender.tab?.url ?? message.tabUrl);
     }
     if (message?.type === 'sync_now') {
       return KeepItFirebaseSync.syncNow({ interactive: false });

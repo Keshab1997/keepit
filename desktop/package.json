@@ -2,14 +2,14 @@
   "name": "keepit-desktop",
   "version": "1.0.0",
   "private": true,
-  "description": "Vercel-backed desktop app shell for KeepIt",
+  "description": "Self-contained KeepIt desktop app with bundled Next.js server",
   "main": "main.cjs",
   "scripts": {
-    "configure": "node scripts/write-app-config.cjs",
-    "start": "npm run configure && electron .",
-    "dist:win": "npm run configure && electron-builder --win nsis --x64",
-    "dist:mac": "npm run configure && electron-builder --mac dmg --x64 --arm64",
-    "dist": "npm run configure && electron-builder"
+    "build:web": "npm --prefix ../web-app ci && npm --prefix ../web-app run build && node scripts/prepare-web.cjs",
+    "start": "node scripts/prepare-web.cjs && electron .",
+    "dist:win": "node scripts/prepare-web.cjs && electron-builder --win nsis --x64",
+    "dist:mac": "node scripts/prepare-web.cjs && electron-builder --mac dmg --x64 --arm64",
+    "dist": "node scripts/prepare-web.cjs && electron-builder"
   },
   "devDependencies": {
     "electron": "44.4.5",
@@ -21,7 +21,6 @@
     "asar": true,
     "files": [
       "main.cjs",
-      "app-config.json",
       "build/icon.png"
     ],
     "directories": {
@@ -65,6 +64,12 @@
     "dmg": {
       "title": "KeepIt ${version}",
       "artifactName": "KeepIt-${version}-${arch}.${ext}"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "../web-app/.next/standalone",
+        "to": "next-server"
+      }
+    ]
   }
 }

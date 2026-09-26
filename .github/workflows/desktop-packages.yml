@@ -1,22 +1,17 @@
-name: Build desktop installers
+name: Build standalone desktop installers
 
 on:
   push:
     tags:
       - "desktop-v*"
   workflow_dispatch:
-    inputs:
-      keepit_web_url:
-        description: "Optional deployed KeepIt HTTPS URL (overrides the KEEPIT_WEB_URL repository variable)"
-        required: false
-        type: string
 
 permissions:
   contents: write
 
 jobs:
   build:
-    name: Build ${{ matrix.platform }} installer
+    name: Build ${{ matrix.platform }} standalone installer
     strategy:
       fail-fast: false
       matrix:
@@ -32,12 +27,16 @@ jobs:
             artifact: macos-disk-images
             file: desktop/release/*.dmg
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: desktop
     env:
-      KEEPIT_WEB_URL: ${{ github.event.inputs.keepit_web_url || vars.KEEPIT_WEB_URL }}
       CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Firebase Web config is public; configure repository variables only if
+      # you want optional Google sign-in / cloud sync in desktop builds.
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+      NEXT_PUBLIC_FIREBASE_APP_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -47,20 +46,24 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: desktop/package-lock.json
+          cache-dependency-path: |
+            web-app/package-lock.json
+            desktop/package-lock.json
 
-      - name: Verify deployed URL is configured
-        shell: bash
-        run: |
-          if [ -z "$KEEPIT_WEB_URL" ]; then
-            echo "Set the GitHub Actions repository variable KEEPIT_WEB_URL, or provide keepit_web_url when manually running this workflow."
-            exit 1
-          fi
-
-      - name: Install desktop packaging dependencies
+      - name: Install web dependencies
+        working-directory: web-app
         run: npm ci
 
-      - name: Build installer
+      - name: Build bundled web app and API
+        working-directory: web-app
+        run: npm run build
+
+      - name: Install desktop packaging dependencies
+        working-directory: desktop
+        run: npm ci
+
+      - name: Build standalone installer
+        working-directory: desktop
         run: npm run "${{ matrix.script }}"
 
       - name: Upload installer artifact

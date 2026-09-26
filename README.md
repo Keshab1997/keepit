@@ -168,16 +168,18 @@ flutter run
 > See [`docs/SECRETS_SETUP.md`](docs/SECRETS_SETUP.md) if you are setting up a
 > release pipeline (or a fork) of your own.
 
-### Run the desktop web companion
+### Run the web companion / build standalone desktop installers
 
 ```bash
 cd web-app
 npm install
-cp .env.example .env.local   # optional: add your Firebase Web app config for shared sync
+cp .env.example .env.local   # optional: Firebase Web app config for shared sync
 npm run dev
 ```
 
 The web app is empty-by-default and saves real items locally in IndexedDB; Firebase enables optional cross-device sync. See [`web-app/README.md`](web-app/README.md) for setup details.
+
+For **standalone Windows `.exe` and macOS `.dmg` apps**, use the **Build standalone desktop installers** GitHub Actions workflow. These installers bundle the web build and local server; no Vercel deployment or `KEEPIT_WEB_URL` is needed. See [`desktop/README.md`](desktop/README.md) for build instructions and offline/online feature limitations.
 
 # Load Chrome Extension
 # Open chrome://extensions -> Enable Developer Mode -> Load Unpacked -> select 'chrome_extension'

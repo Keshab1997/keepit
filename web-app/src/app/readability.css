@@ -12,3 +12,8 @@
 .brand-mark.app-logo{padding:0;overflow:hidden;background:none;border:0;box-shadow:none;flex:none}
 .brand-mark.app-logo img{display:block;width:42px;height:42px;object-fit:cover;border-radius:15px}
 .empty-orb img{display:block;width:42px;height:42px;object-fit:cover;border-radius:13px}
+.desktop-update-banner{display:flex;align-items:center;gap:12px;margin:12px clamp(18px,4.4vw,70px) 0;padding:11px 13px;border:1px solid #d3e5d6;border-radius:12px;background:linear-gradient(105deg,#f2f8f1,#edf5ee);color:#33483a;box-shadow:0 4px 14px #30472d0b}
+.desktop-update-copy{display:grid;gap:3px;flex:1;min-width:0}.desktop-update-copy strong{font-size:12px;font-weight:800}.desktop-update-copy span{font-size:10px;color:#667b69}
+.desktop-update-link{height:32px;padding:0 10px;border:1px solid #cadfce;border-radius:8px;background:#fff;color:#3e694e;display:inline-flex;align-items:center;gap:7px;text-decoration:none;font-size:10px;font-weight:800;white-space:nowrap}.desktop-update-link:hover{border-color:#90bb9a;background:#f9fff9}
+.desktop-update-dismiss{width:30px;height:30px;border:0;border-radius:7px;background:transparent;color:#78907c;display:grid;place-items:center;cursor:pointer}.desktop-update-dismiss:hover{background:#e0eee2;color:#3f654a}
+@media(max-width:760px){.desktop-update-banner{margin:10px 14px 0;padding:10px;gap:8px}.desktop-update-copy{flex-basis:calc(100% - 45px)}.desktop-update-link{order:3;margin-left:auto}.desktop-update-dismiss{margin-left:auto}}

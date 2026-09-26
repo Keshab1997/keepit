@@ -17,6 +17,7 @@ import { clearTombstone, loadItems, loadSpaces, loadTombstones, replaceItems, re
 type View = "everything" | "spaces" | "serendipity" | "profile";
 type ToastKind = "success" | "error";
 type Toast = { text: string; kind?: ToastKind } | null;
+type DesktopUpdate = { version: string; releaseUrl: string };
 const filters = ["All", "Reels", "AI", "Coding", "Design", "Productivity", "Articles"];
 const sourceIcon = (type: ItemType) => type === "instagramReel" || type === "youtubeVideo" ? <Video size={13} /> : type === "image" ? <ImageIcon size={13} /> : type === "quickNote" || type === "quote" ? <StickyNote size={13} /> : <BookOpen size={13} />;
 const sourceName = (type: ItemType) => ({ instagramReel: "Instagram", youtubeVideo: "YouTube", webArticle: "Article", quote: "Quote", image: "Image", quickNote: "Quick note" })[type];
@@ -53,6 +54,8 @@ export default function KeepItWeb() {
   const [noteDraft, setNoteDraft] = useState("");
   const [tagDraft, setTagDraft] = useState("");
   const [toast, setToast] = useState<Toast>(null);
+  const [desktopUpdate, setDesktopUpdate] = useState<DesktopUpdate | null>(null);
+  const [dismissedDesktopUpdate, setDismissedDesktopUpdate] = useState<string | null>(null);
   const [account, setAccount] = useState<User | null>(null);
   const accountUidRef = useRef<string | null>(null);
   const [authReady, setAuthReady] = useState(!firebaseReady);
@@ -182,6 +185,19 @@ export default function KeepItWeb() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/desktop-update", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((result) => {
+        if (active && result?.updateAvailable === true && typeof result.latestVersion === "string" && typeof result.releaseUrl === "string") {
+          setDesktopUpdate({ version: result.latestVersion, releaseUrl: result.releaseUrl });
+        }
+      })
+      .catch(() => { /* Update checks are optional; never block the library. */ });
+    return () => { active = false; };
   }, []);
 
   const notify = useCallback((text: string, kind: ToastKind = "success") => {
@@ -354,6 +370,11 @@ export default function KeepItWeb() {
       {mobileNav && <button className="mobile-scrim" aria-label="Close navigation" onClick={() => setMobileNav(false)} />}
 
       <main className="main-area">
+        {desktopUpdate && dismissedDesktopUpdate !== desktopUpdate.version && <div className="desktop-update-banner" role="status">
+          <div className="desktop-update-copy"><strong>KeepIt Desktop {desktopUpdate.version} is ready</strong><span>Download the latest version to get the newest improvements.</span></div>
+          <a className="desktop-update-link" href={desktopUpdate.releaseUrl} target="_blank" rel="noreferrer">View update <ExternalLink size={14} /></a>
+          <button className="desktop-update-dismiss" type="button" aria-label="Dismiss update notice" onClick={() => setDismissedDesktopUpdate(desktopUpdate.version)}><X size={16} /></button>
+        </div>}
         <header className="topbar">
           <button className="mobile-menu icon-button" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu size={20} /></button>
           <div className="breadcrumbs"><span>My mind</span><span className="crumb-slash">/</span><strong>{heading}</strong></div>

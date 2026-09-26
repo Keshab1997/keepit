@@ -2,7 +2,7 @@
 
 The desktop installers contain the **Next.js web build, its server/API routes, static assets, and Electron**. They do **not** open a deployed website or require Vercel. Electron starts the bundled server on `127.0.0.1:43819`, verifies that it is *its own* process, then shows the UI. You do not need a system Node.js installation on the user's machine.
 
-The address/port is intentionally stable because the web app stores items in IndexedDB, which is tied to the page origin. Do not change the port after users have saved items without migrating their IndexedDB data. Only one app instance runs at a time; if another program already owns the port, KeepIt reports a startup error instead of showing a different program's page.
+The address/port is intentionally stable because the web app stores items in IndexedDB, which is tied to the page origin. Do not change the port after users have saved items without migrating their IndexedDB data. Only one app instance runs at a time; if another program already owns the port, KeepIt reports a startup error instead of showing a different program's page. Desktop builds check GitHub for newer stable `desktop-v*` releases at startup and show a dismissible in-app notice with a link to the release page; updates are not silently installed.
 
 ## Build installers using GitHub Actions
 

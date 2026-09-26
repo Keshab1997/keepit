@@ -120,6 +120,7 @@ if (!app.requestSingleInstanceLock()) {
         PORT: String(PORT),
         NODE_PATH: path.join(path.dirname(entry), "runtime-deps"),
         KEEPIT_DESKTOP_BOOT_TOKEN: bootToken,
+        KEEPIT_DESKTOP_VERSION: app.getVersion(),
       },
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,

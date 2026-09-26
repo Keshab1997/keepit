@@ -1,0 +1,91 @@
+name: Build desktop installers
+
+on:
+  push:
+    tags:
+      - "desktop-v*"
+  workflow_dispatch:
+    inputs:
+      keepit_web_url:
+        description: "Optional deployed KeepIt HTTPS URL (overrides the KEEPIT_WEB_URL repository variable)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }} installer
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: Windows
+            script: dist:win
+            artifact: windows-installer
+            file: desktop/release/*.exe
+          - os: macos-latest
+            platform: macOS
+            script: dist:mac
+            artifact: macos-disk-images
+            file: desktop/release/*.dmg
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: desktop
+    env:
+      KEEPIT_WEB_URL: ${{ github.event.inputs.keepit_web_url || vars.KEEPIT_WEB_URL }}
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Verify deployed URL is configured
+        shell: bash
+        run: |
+          if [ -z "$KEEPIT_WEB_URL" ]; then
+            echo "Set the GitHub Actions repository variable KEEPIT_WEB_URL, or provide keepit_web_url when manually running this workflow."
+            exit 1
+          fi
+
+      - name: Install desktop packaging dependencies
+        run: npm ci
+
+      - name: Build installer
+        run: npm run "${{ matrix.script }}"
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.file }}
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-release:
+    name: Attach installers to GitHub Release
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download platform installers
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: KeepIt Desktop ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release-assets/*

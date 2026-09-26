@@ -1,0 +1,70 @@
+{
+  "name": "keepit-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vercel-backed desktop app shell for KeepIt",
+  "main": "main.cjs",
+  "scripts": {
+    "configure": "node scripts/write-app-config.cjs",
+    "start": "npm run configure && electron .",
+    "dist:win": "npm run configure && electron-builder --win nsis --x64",
+    "dist:mac": "npm run configure && electron-builder --mac dmg --x64 --arm64",
+    "dist": "npm run configure && electron-builder"
+  },
+  "devDependencies": {
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.keshab.keepit",
+    "productName": "KeepIt",
+    "asar": true,
+    "files": [
+      "main.cjs",
+      "app-config.json",
+      "build/icon.png"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "KeepIt-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "KeepIt"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "artifactName": "KeepIt-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "title": "KeepIt ${version}",
+      "artifactName": "KeepIt-${version}-${arch}.${ext}"
+    }
+  }
+}

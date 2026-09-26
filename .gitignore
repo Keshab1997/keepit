@@ -35,6 +35,13 @@ desktop.ini
 # Tooling
 # --------------------------------------------------------------------------- #
 node_modules/
+
+# Electron desktop build output and machine-specific generated URL config
+desktop/node_modules/
+desktop/release/
+desktop/app-config.json
+desktop/*.dmg
+desktop/*.exe
 .firebase/
 firebase-debug.log
 firebase-debug.*.log

@@ -197,13 +197,21 @@ if (!app.requestSingleInstanceLock()) {
     return window;
   }
 
-  function createCaptureWindow(useClipboard = true) {
+  async function createCaptureWindow(useClipboard = true) {
     if (captureWindow && !captureWindow.isDestroyed()) {
       captureWindow.show();
       captureWindow.focus();
       return;
     }
-    const text = useClipboard ? clipboard.readText().trim().slice(0, 12_000) : "";
+    let text = "";
+    if (useClipboard) {
+      try {
+        const copiedText = await clipboard.readText();
+        text = (typeof copiedText === "string" ? copiedText : "").trim().slice(0, 12_000);
+      } catch (error) {
+        console.warn("Could not read the clipboard for Quick Capture:", error.message);
+      }
+    }
     const mode = isSafeUrl(text) ? "link" : "note";
     const payload = encodeURIComponent(JSON.stringify({ mode, text }));
     const window = new BrowserWindow({
@@ -235,6 +243,13 @@ if (!app.requestSingleInstanceLock()) {
     });
   }
 
+  function openCaptureWindow(useClipboard = true) {
+    void createCaptureWindow(useClipboard).catch((error) => {
+      console.error("KeepIt Quick Capture failed:", error.message);
+      dialog.showErrorBox("Quick Capture failed", error.message || "Could not open the capture window.");
+    });
+  }
+
   function createTray() {
     if (tray) return;
     const image = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 });
@@ -242,8 +257,8 @@ if (!app.requestSingleInstanceLock()) {
     tray.setToolTip("KeepIt · Save ideas for later");
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: "Open KeepIt", click: showMainWindow },
-      { label: `Quick Capture (${captureShortcutLabel})`, click: () => createCaptureWindow(true) },
-      { label: "New blank note", click: () => createCaptureWindow(false) },
+      { label: `Quick Capture (${captureShortcutLabel})`, click: () => openCaptureWindow(true) },
+      { label: "New blank note", click: () => openCaptureWindow(false) },
       { type: "separator" },
       { label: "Quit KeepIt", click: () => { quitting = true; app.quit(); } },
     ]));
@@ -252,7 +267,7 @@ if (!app.requestSingleInstanceLock()) {
   }
 
   function setupShortcuts() {
-    const registered = globalShortcut.register(captureShortcut, createCaptureWindow);
+    const registered = globalShortcut.register(captureShortcut, () => openCaptureWindow(true));
     if (!registered) console.warn(`Could not register ${captureShortcut}; it may be used by another app.`);
   }
 

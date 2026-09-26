@@ -1,6 +1,6 @@
 {
   "name": "keepit-desktop",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "description": "Self-contained KeepIt desktop app with bundled Next.js server",
   "main": "main.cjs",

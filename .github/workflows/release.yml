@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   release-aab:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.7.0
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.8.1
     with:
       flutter-channel: stable
       working-directory: flutter_app
@@ -33,9 +33,14 @@ jobs:
       # or empty Firebase config.
       preflight: true
       preflight-require-firebase: true
+      verify-signing: true
+      fail-on-placeholders: true
+      max-artifact-size-mb: 150
     secrets:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+      # iOS equivalent (builder v1.8.0+), passed through for future iOS builds.
+      GOOGLE_SERVICES_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICES_PLIST_BASE64 }}

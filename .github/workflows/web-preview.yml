@@ -1,0 +1,44 @@
+name: Deploy Flutter Web Preview (GitHub Pages)
+
+# Builds flutter_app for the web on every push and pull request and deploys it
+# to GitHub Pages under preview/<branch>, so a change can be tested by opening a
+# URL in a browser instead of building and installing an APK.
+#
+# This is a *build preview*, not a debugging session: there is no hot reload.
+# For hot reload run locally:  cd flutter_app && flutter run -d chrome
+#
+# One-time setup in this repository:
+#   Settings -> Pages -> Build and deployment -> Deploy from a branch ->
+#   select the gh-pages branch (root). The first run creates the branch.
+#
+# The preview URL is printed in the Actions run summary, and on pull requests
+# the reusable workflow posts/updates a PR comment containing it.
+#
+# Keep the @ref in step with ci.yml, manual-build.yml, release.yml and
+# publish-release.yml — all five caller workflows ship together.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: web-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    uses: Keshab1997/flutter-builder/.github/workflows/web-preview.yml@v1.8.1
+    with:
+      flutter-channel: stable
+      working-directory: flutter_app
+      # Empty = preview/<branch>, so several branch previews can coexist.
+      destination-dir: ""
+      comment-on-pr: true
+    # The deploy uses GITHUB_TOKEN, so the caller must pass secrets through.
+    secrets: inherit

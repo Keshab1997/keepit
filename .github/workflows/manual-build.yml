@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   build:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.7.0
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.8.1
     with:
       flutter-channel: stable
       working-directory: flutter_app
@@ -47,6 +47,11 @@ jobs:
       # before you test the build on a phone.
       preflight: true
       preflight-require-firebase: true
+      # A test APK with a broken signature is not worth installing, and a
+      # placeholder ad unit is not worth debugging on a device.
+      verify-signing: true
+      fail-on-placeholders: true
+      max-artifact-size-mb: 150
     secrets:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -55,3 +60,6 @@ jobs:
       # Firebase client config: written to flutter_app/android/app/ before the
       # build (builder v1.6.0+). Missing secret = offline-only build.
       GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+      # iOS equivalent, written to flutter_app/ios/Runner/ (builder v1.8.0+).
+      # Not used by this Android build; passed so a future iOS job gets it.
+      GOOGLE_SERVICES_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICES_PLIST_BASE64 }}

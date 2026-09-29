@@ -3,6 +3,13 @@ name: Flutter CI
 # Runs the shared builder workflow from Keshab1997/flutter-builder, so every
 # project gets the same Dart format / analyze / test setup. The Flutter app
 # lives in the flutter_app/ subdirectory of this repository.
+#
+# Pinned to v1.8.1. Keep the @ref in step with manual-build.yml, release.yml,
+# publish-release.yml and web-preview.yml — all five ship together.
+#
+# This workflow also covers the two JavaScript surfaces of the repository, so a
+# broken Next.js build or a broken Electron packaging script fails here instead
+# of on the `desktop-v*` tag that builds the actual installers.
 
 on:
   pull_request:
@@ -20,7 +27,7 @@ concurrency:
 
 jobs:
   ci:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.7.0
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.8.1
     with:
       flutter-channel: stable
       working-directory: flutter_app
@@ -53,3 +60,116 @@ jobs:
           node --check chrome_extension/popup/popup.js
       - name: Run extension schema tests
         run: node chrome_extension/schema_test.js
+
+  web-app:
+    name: Build web app and stage desktop bundle
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Browser-side Firebase web config: public identifiers that ship in the
+      # JS bundle, so they live in repository Variables, never in git. The build
+      # succeeds without them (the app compiles with auth disabled).
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+      NEXT_PUBLIC_FIREBASE_APP_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web-app/package-lock.json
+      - name: Install dependencies
+        working-directory: web-app
+        run: npm ci
+      - name: Build Next.js app
+        working-directory: web-app
+        run: npm run build
+      # desktop/scripts/prepare-web.cjs is the step that silently dropped the
+      # Next.js runtime from the Windows/macOS installers once already, because
+      # .gitignore hides node_modules/ from electron-builder's extraResources.
+      # Running it here catches a broken bundle long before the desktop-v* tag.
+      - name: Stage the desktop web bundle
+        run: node desktop/scripts/prepare-web.cjs
+      - name: Verify the staged bundle
+        run: |
+          test -f web-app/.next/standalone/server.js
+          test -f web-app/.next/standalone/runtime-deps/next/package.json
+          test -d web-app/.next/standalone/public
+          ls -1 web-app/.next/standalone
+
+  desktop-packaging:
+    name: Validate desktop packaging
+    runs-on: ubuntu-latest
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      # This job only reads package.json and the .cjs scripts, so the Electron
+      # binary download that electron's postinstall performs is dead weight.
+      # desktop-packages.yml still runs a real `npm ci` when it needs the binary.
+      - name: Install desktop packaging dependencies
+        working-directory: desktop
+        run: npm ci --ignore-scripts
+      - name: Check packaging script syntax
+        run: |
+          node --check desktop/main.cjs
+          node --check desktop/scripts/prepare-web.cjs
+          node --check desktop/scripts/generate-release-notes.cjs
+      # desktop-packages.yml runs these on a desktop-v* tag; a missing script or
+      # a renamed npm script should fail here, not on release day.
+      - name: Verify the packaging scripts exist
+        run: |
+          for script in build:web dist:win dist:mac; do
+            node -e "
+              const pkg = require('./desktop/package.json');
+              if (!pkg.scripts['$script']) {
+                console.error('Missing desktop/package.json script: $script');
+                process.exit(1);
+              }
+            "
+          done
+      - name: Check the electron-builder configuration
+        run: |
+          node -e "
+            const build = require('./desktop/package.json').build;
+            const staged = require('node:fs')
+              .readFileSync('desktop/scripts/prepare-web.cjs', 'utf8');
+            if (!build.appId || /com\.example/.test(build.appId)) {
+              throw new Error('desktop build.appId is missing or still a placeholder: ' + build.appId);
+            }
+            const resources = build.extraResources.map((entry) => entry.from);
+            if (!resources.includes('../web-app/.next/standalone')) {
+              throw new Error('build.extraResources no longer bundles the standalone server: ' + JSON.stringify(resources));
+            }
+            if (!staged.includes('runtime-deps')) {
+              throw new Error('prepare-web.cjs no longer stages runtime-deps, but electron-builder still expects it');
+            }
+            for (const entry of build.extraResources) {
+              if (!staged.includes(entry.from.split('/').pop())) {
+                throw new Error('build.extraResources references ' + entry.from + ' but prepare-web.cjs does not stage it');
+              }
+            }
+          "
+      # The release notes script refuses any tag that does not match the desktop
+      # version, which is what stops a `desktop-v*` tag from publishing a broken
+      # download table. Exercise that guard here: a pull request checkout has no
+      # such tag, so the real generation only runs on the tag itself.
+      - name: Check the release-notes tag guard
+        run: |
+          if node desktop/scripts/generate-release-notes.cjs "$RUNNER_TEMP/unused.md" desktop-v0.0.0-nope; then
+            echo "::error::generate-release-notes.cjs accepted a tag that does not match the desktop version"
+            exit 1
+          fi

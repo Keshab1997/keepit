@@ -33,7 +33,7 @@ concurrency:
 
 jobs:
   preview:
-    uses: Keshab1997/flutter-builder/.github/workflows/web-preview.yml@v1.8.1
+    uses: Keshab1997/flutter-builder/.github/workflows/web-preview.yml@v1.10.0
     with:
       flutter-channel: stable
       working-directory: flutter_app

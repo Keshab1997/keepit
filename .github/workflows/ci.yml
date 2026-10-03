@@ -4,7 +4,7 @@ name: Flutter CI
 # project gets the same Dart format / analyze / test setup. The Flutter app
 # lives in the flutter_app/ subdirectory of this repository.
 #
-# Pinned to v1.8.1. Keep the @ref in step with manual-build.yml, release.yml,
+# Pinned to v1.13.1. Keep the @ref in step with manual-build.yml, release.yml,
 # publish-release.yml and web-preview.yml — all five ship together.
 #
 # This workflow also covers the two JavaScript surfaces of the repository, so a
@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   ci:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.13.0
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.13.1
     with:
       flutter-channel: stable
       working-directory: flutter_app

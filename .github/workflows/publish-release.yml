@@ -12,7 +12,8 @@ name: Publish Android Release
 # Play Console (com.keshabstudios.keepit). Play rejects a version code it has
 # already seen, so bump the +build number before every upload — a run that
 # fails *after* the AAB reached Play counts too, because the uploaded bundle
-# stays in the app's bundle library.
+# stays in the app's bundle library. The builder checks the package name and the
+# notes directory before the upload for exactly that reason.
 #
 # Bump flutter_app/pubspec.yaml (version: 1.0.1+2) in a PR before running this.
 # Needs the keystore secrets in this repository's Settings → Secrets.
@@ -47,68 +48,8 @@ permissions:
   contents: write
 
 jobs:
-  # Play wants the package name typed exactly, and a typo only shows up after
-  # the whole release has been built. So the name is read from the Gradle
-  # config instead; the dispatch input stays as an override for the day a
-  # flavour changes it. Cheap job, and it fails in seconds when the upload was
-  # asked for but the name cannot be resolved.
-  resolve_package:
-    name: Resolve the Play package name
-    runs-on: ubuntu-latest
-    outputs:
-      package_name: ${{ steps.resolve.outputs.package_name }}
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v5
-      - name: Resolve package name
-        id: resolve
-        env:
-          # Empty unless someone deliberately overrode it at dispatch time.
-          OVERRIDE: ${{ inputs.package_name }}
-          UPLOAD_REQUESTED: ${{ inputs.upload_to_play_internal }}
-        run: |
-          set -euo pipefail
-
-          if [ -n "${OVERRIDE}" ]; then
-            echo "package_name=${OVERRIDE}" >> "$GITHUB_OUTPUT"
-            echo "Using the dispatch override: ${OVERRIDE}"
-            exit 0
-          fi
-
-          file=""
-          for candidate in \
-            flutter_app/android/app/build.gradle.kts \
-            flutter_app/android/app/build.gradle; do
-            if [ -f "${candidate}" ]; then file="${candidate}"; break; fi
-          done
-
-          pkg=""
-          if [ -n "${file}" ]; then
-            # Handles both `applicationId = "x"` (Kotlin/Groovy) and
-            # `applicationId "x"` (older Groovy).
-            pkg=$(grep -oE 'applicationId[[:space:]]*=?[[:space:]]*"[^"]+"' "${file}" \
-              | head -1 | grep -oE '"[^"]+"' | tr -d '"' || true)
-          fi
-
-          if [ -z "${pkg}" ]; then
-            echo "::warning::No applicationId found in flutter_app/android/app/build.gradle(.kts)"
-            # A GitHub Release without a Play upload does not need this name;
-            # an upload does, and failing now is far cheaper than failing after
-            # the build. The AAB reaching Play cannot be undone by a retry
-            # either — the version code would be spent.
-            if [ "${UPLOAD_REQUESTED}" = "true" ]; then
-              echo "::error::Play upload requested but the package name could not be resolved. Set the package_name input."
-              exit 1
-            fi
-            exit 0
-          fi
-
-          echo "package_name=${pkg}" >> "$GITHUB_OUTPUT"
-          echo "Read from ${file}: ${pkg}"
-
   publish:
-    needs: resolve_package
-    uses: Keshab1997/flutter-builder/.github/workflows/publish-release.yml@v1.13.1
+    uses: Keshab1997/flutter-builder/.github/workflows/publish-release.yml@v1.14.0
     with:
       app-name: KeepIt
       working-directory: flutter_app
@@ -119,9 +60,9 @@ jobs:
       # step when play-track is blank), so the default dispatch behaves exactly
       # as before: GitHub Release only.
       play-track: ${{ inputs.upload_to_play_internal && 'internal' || '' }}
-      # Resolved in the job above: the Gradle applicationId unless the dispatch
-      # overrode it.
-      play-package-name: ${{ needs.resolve_package.outputs.package_name }}
+      # Optional override; empty means the builder reads the applicationId out
+      # of flutter_app/android/app/build.gradle.kts before it uploads.
+      play-package-name: ${{ inputs.package_name }}
       # Per-release "What's new" text for Play, one file per locale:
       # distribution/whatsnew/whatsnew-en-US, whatsnew-bn-BD. Update them in the
       # same commit as the version bump, or Play shows the previous release's

@@ -59,12 +59,12 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xF8FFFFFF),
+                color: palette.glassWhite,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(36),
                 ),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: palette.glassBorder,
                   width: 1.5,
                 ),
                 boxShadow: const [
@@ -111,10 +111,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xEBF1F3F6),
+                                color: palette.tagBg,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                  color: palette.glassBorder,
                                   width: 0.8,
                                 ),
                               ),
@@ -154,7 +154,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                     ),
                   ),
 
-                  const Divider(height: 1, color: Color(0x1AE5E7EB)),
+                  Divider(height: 1, color: palette.divider),
 
                   // 3. Scrollable Card Body
                   Expanded(
@@ -263,9 +263,9 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                             ),
                                           ],
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           LucideIcons.play,
-                                          color: Colors.white,
+                                          color: palette.tagBg,
                                           size: 34,
                                         ),
                                       ),
@@ -299,19 +299,19 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                               width: 1.0,
                                             ),
                                           ),
-                                          child: const Row(
+                                          child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(
                                                 LucideIcons.externalLink,
-                                                color: Colors.white,
+                                                color: palette.tagBg,
                                                 size: 15,
                                               ),
-                                              SizedBox(width: 8),
+                                              const SizedBox(width: 8),
                                               Text(
                                                 "Tap to open in app",
                                                 style: TextStyle(
-                                                  color: Colors.white,
+                                                  color: palette.tagBg,
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w700,
                                                   letterSpacing: 0.2,
@@ -501,7 +501,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                 color: const Color(0xE8F1F3F6),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                  color: palette.glassBorder,
                                   width: 0.8,
                                 ),
                               ),
@@ -538,10 +538,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                               child: Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xF4FFFFFF),
+                                  color: palette.glassCard,
                                   borderRadius: BorderRadius.circular(24),
                                   border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.95),
+                                    color: palette.glassBorder,
                                     width: 1.4,
                                   ),
                                 ),
@@ -554,14 +554,15 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                         horizontal: 18,
                                         vertical: 12,
                                       ),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0x59F1F3F6),
-                                        borderRadius: BorderRadius.vertical(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0x59F1F3F6),
+                                        borderRadius:
+                                            const BorderRadius.vertical(
                                           top: Radius.circular(24),
                                         ),
                                         border: Border(
                                           bottom: BorderSide(
-                                            color: Color(0x1AE5E7EB),
+                                            color: palette.divider,
                                             width: 1.0,
                                           ),
                                         ),
@@ -639,7 +640,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                 decoration: BoxDecoration(
                                                   color: _isCopied
                                                       ? const Color(0x1F10B981)
-                                                      : Colors.white,
+                                                      : palette.tagBg,
                                                   borderRadius:
                                                       BorderRadius.circular(10),
                                                   border: Border.all(
@@ -742,10 +743,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-          color: const Color(0xEBF1F3F6),
+          color: context.palette.tagBg,
           shape: BoxShape.circle,
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.8),
+            color: context.palette.glassBorder,
             width: 0.8,
           ),
         ),
@@ -766,12 +767,12 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
-                color: const Color(0xF8FFFFFF),
+                color: context.palette.glassWhite,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(30),
                 ),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: context.palette.glassBorder,
                   width: 1.2,
                 ),
               ),
@@ -970,14 +971,13 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Material(
-        color:
-            isDestructive ? const Color(0x14FF3B30) : const Color(0x66F9F9FB),
+        color: isDestructive ? const Color(0x14FF3B30) : context.palette.tagBg,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color: isDestructive
                 ? const Color(0x33FF3B30)
-                : Colors.white.withValues(alpha: 0.6),
+                : context.palette.cardBorder,
             width: 0.8,
           ),
         ),

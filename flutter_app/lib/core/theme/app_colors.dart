@@ -43,6 +43,9 @@ class AppColors {
   static const Color tagBg = Color(0xFFF1F3F6);
   static const Color tagText = Color(0xFF374151);
   static const Color cardBorder = Color(0xFFE5E7EB);
+
+  /// Faint rim used on light cards (20% of the light border).
+  static const Color cardBorderSoft = Color(0x33E5E7EB);
   static const Color divider = Color(0xFFF0F1F4);
 
   // Status Accents

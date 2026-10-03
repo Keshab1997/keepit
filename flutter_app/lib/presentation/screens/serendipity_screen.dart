@@ -281,10 +281,10 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xF7FFFFFF),
+              color: context.palette.glassWhite,
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: context.palette.glassBorder,
                 width: 1.5,
               ),
             ),
@@ -474,7 +474,7 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F3F6),
+                                  color: context.palette.tagBg,
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Icon(
@@ -493,7 +493,7 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F3F6),
+                                color: context.palette.tagBg,
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: Icon(
@@ -522,11 +522,11 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: const Color(0xF4FFFFFF),
+        color: context.palette.glassCard,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: Color(0x33E5E7EB), width: 0.8),
+          side: BorderSide(color: context.palette.cardBorderSoft, width: 0.8),
         ),
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(

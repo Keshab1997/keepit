@@ -33,7 +33,7 @@ class MindCardWidget extends StatelessWidget {
             border: Border.all(
               color: item.isTopMind
                   ? palette.primary.withValues(alpha: 0.7)
-                  : const Color(0x33E5E7EB),
+                  : palette.cardBorderSoft,
               width: item.isTopMind ? 1.6 : 1.0,
             ),
             boxShadow: [
@@ -70,7 +70,7 @@ class MindCardWidget extends StatelessWidget {
                         filterQuality: FilterQuality.low,
                         fadeInDuration: const Duration(milliseconds: 100),
                         placeholder: (context, url) => Container(
-                          color: const Color(0xFFF1F3F6),
+                          color: palette.tagBg,
                           child: const Center(
                             child: SizedBox(
                               width: 20,
@@ -299,10 +299,10 @@ class MindCardWidget extends StatelessWidget {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F3F6),
+                              color: palette.tagBg,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: const Color(0x33E5E7EB),
+                                color: palette.cardBorderSoft,
                                 width: 0.6,
                               ),
                             ),

@@ -108,10 +108,10 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
       builder: (ctx) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: AlertDialog(
-          backgroundColor: const Color(0xF7FFFFFF),
+          backgroundColor: context.palette.glassWhite,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
-            side: const BorderSide(color: Color(0xCCFFFFFF), width: 1.5),
+            side: BorderSide(color: context.palette.glassBorder, width: 1.5),
           ),
           title: Row(
             children: [
@@ -219,7 +219,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F8FA),
+        backgroundColor: palette.background,
         body: Stack(
           children: [
             // 1. Reactive Background Glow
@@ -322,7 +322,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                                 border: Border.all(
                                   color: isSelected
                                       ? palette.primary
-                                      : const Color(0x33E5E7EB),
+                                      : palette.cardBorderSoft,
                                   width: 1,
                                 ),
                                 boxShadow: [
@@ -640,10 +640,10 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
             height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
-              color: const Color(0xF8FFFFFF),
+              color: context.palette.glassWhite,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: context.palette.glassBorder,
                 width: 1.2,
               ),
               boxShadow: const [
@@ -791,10 +791,10 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
       builder: (ctx) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: AlertDialog(
-          backgroundColor: const Color(0xF7FFFFFF),
+          backgroundColor: context.palette.glassWhite,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
-            side: const BorderSide(color: Color(0xCCFFFFFF), width: 1.5),
+            side: BorderSide(color: context.palette.glassBorder, width: 1.5),
           ),
           title: Row(
             children: [

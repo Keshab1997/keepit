@@ -286,14 +286,14 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xFFEDEEF2)),
+        side: BorderSide(color: context.palette.cardBorder),
       ),
       child: Column(children: children),
     );
   }
 
   Widget _divider() =>
-      const Divider(height: 1, indent: 56, color: Color(0xFFF0F1F4));
+      Divider(height: 1, indent: 56, color: context.palette.divider);
 
   Widget _leadingIcon(IconData icon, bool enabled) {
     return Container(

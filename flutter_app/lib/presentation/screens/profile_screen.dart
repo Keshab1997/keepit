@@ -326,7 +326,7 @@ class ProfileScreen extends ConsumerWidget {
   ) async {
     final choice = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: context.palette.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -705,9 +705,9 @@ class _StatsRow extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: palette.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFEDEEF2)),
+              border: Border.all(color: palette.cardBorder),
             ),
             child: Column(
               children: [
@@ -867,11 +867,11 @@ class _CloudSyncCard extends ConsumerWidget {
             ],
           ),
         ),
-        const Divider(
+        Divider(
           height: 1,
           indent: 14,
           endIndent: 14,
-          color: Color(0xFFF0F1F4),
+          color: palette.divider,
         ),
         SwitchListTile.adaptive(
           contentPadding: const EdgeInsets.symmetric(horizontal: 14),
@@ -940,21 +940,22 @@ class _Group extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final spaced = <Widget>[];
     for (var i = 0; i < children.length; i++) {
       if (i > 0 && children[i] is _Tile && children[i - 1] is _Tile) {
         spaced.add(
-          const Divider(height: 1, indent: 58, color: Color(0xFFF0F1F4)),
+          Divider(height: 1, indent: 58, color: palette.divider),
         );
       }
       spaced.add(children[i]);
     }
     return Material(
-      color: Colors.white,
+      color: palette.surface,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Color(0xFFEDEEF2)),
+        side: BorderSide(color: palette.cardBorder),
       ),
       child: Column(children: spaced),
     );
@@ -1033,9 +1034,9 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFEDEEF2)),
+        border: Border.all(color: palette.cardBorder),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1154,7 +1155,7 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
     final enabled =
         needs == null || _controller.text.trim().toUpperCase() == needs;
     return AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: palette.surfaceElevated,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Text(
         widget.title,

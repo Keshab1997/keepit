@@ -34,6 +34,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.tagBg,
     required this.tagText,
     required this.cardBorder,
+    required this.cardBorderSoft,
     required this.divider,
     required this.success,
     required this.danger,
@@ -69,6 +70,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color tagBg;
   final Color tagText;
   final Color cardBorder;
+
+  /// Faint hairline used on light cards; softens further on dark.
+  final Color cardBorderSoft;
   final Color divider;
 
   // Status Accents
@@ -97,6 +101,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     tagBg: AppColors.tagBg,
     tagText: AppColors.tagText,
     cardBorder: AppColors.cardBorder,
+    cardBorderSoft: AppColors.cardBorderSoft,
     divider: AppColors.divider,
     success: AppColors.success,
     danger: AppColors.danger,
@@ -127,6 +132,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     tagBg: Color(0xFF232833),
     tagText: Color(0xFFCBD3DF),
     cardBorder: Color(0xFF272D38),
+    cardBorderSoft: Color(0x29FFFFFF),
     divider: Color(0xFF232833),
     success: Color(0xFF34D399),
     danger: Color(0xFFFF6B6B),
@@ -163,6 +169,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? tagBg,
     Color? tagText,
     Color? cardBorder,
+    Color? cardBorderSoft,
     Color? divider,
     Color? success,
     Color? danger,
@@ -187,6 +194,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       tagBg: tagBg ?? this.tagBg,
       tagText: tagText ?? this.tagText,
       cardBorder: cardBorder ?? this.cardBorder,
+      cardBorderSoft: cardBorderSoft ?? this.cardBorderSoft,
       divider: divider ?? this.divider,
       success: success ?? this.success,
       danger: danger ?? this.danger,
@@ -217,6 +225,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       tagBg: mix(tagBg, other.tagBg),
       tagText: mix(tagText, other.tagText),
       cardBorder: mix(cardBorder, other.cardBorder),
+      cardBorderSoft: mix(cardBorderSoft, other.cardBorderSoft),
       divider: mix(divider, other.divider),
       success: mix(success, other.success),
       danger: mix(danger, other.danger),

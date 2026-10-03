@@ -122,7 +122,7 @@ class MindToast {
                           vertical: 13,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xF8FFFFFF),
+                          color: context.palette.glassWhite,
                           borderRadius: BorderRadius.circular(22),
                           border: Border.all(color: borderColor, width: 1.2),
                           boxShadow: [

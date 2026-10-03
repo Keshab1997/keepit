@@ -42,7 +42,7 @@ class SpaceItemScreen extends ConsumerWidget {
             .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: palette.background,
       appBar: AppBar(
         title: Row(
           children: [
@@ -342,7 +342,7 @@ class _SpacesScreenState extends ConsumerState<SpacesScreen> {
                         decoration: BoxDecoration(
                           color: selected
                               ? selectedColor.withValues(alpha: 0.15)
-                              : const Color(0xFFF1F3F6),
+                              : context.palette.tagBg,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color:
@@ -553,10 +553,10 @@ class _SpacesScreenState extends ConsumerState<SpacesScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xF4FFFFFF),
+              color: context.palette.glassCard,
               borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: context.palette.glassBorder,
                 width: 1.2,
               ),
               boxShadow: const [
@@ -699,7 +699,7 @@ class _EmptyCustomSpaceCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.75),
+            color: context.palette.glassCard,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: context.palette.primary.withValues(alpha: 0.2),

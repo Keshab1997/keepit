@@ -51,8 +51,8 @@ class HomeScreen extends ConsumerWidget {
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: palette.surface,
-            border: const Border(
-              top: BorderSide(color: Color(0x33E5E7EB), width: 1.0),
+            border: Border(
+              top: BorderSide(color: palette.cardBorderSoft, width: 1.0),
             ),
           ),
           child: SafeArea(

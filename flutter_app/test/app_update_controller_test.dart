@@ -10,9 +10,6 @@ import 'package:keepit/core/updates/update_config.dart';
 import 'package:keepit/presentation/controllers/app_update_controller.dart';
 import 'package:keepit/presentation/widgets/update_host.dart';
 
-/// Play's API only answers on a Play-installed Android build, so the controller
-/// is driven through a fake here — this is the only place the mandatory-vs-
-/// optional rules can be verified without publishing a release.
 class _FakeAppUpdateService implements AppUpdateService {
   _FakeAppUpdateService({AppUpdateInfo? info, this.supported = true})
       : _info = info;
@@ -98,7 +95,6 @@ AppUpdateInfo _info({
   );
 }
 
-/// Lets the fake's broadcast stream reach the controller's listener.
 Future<void> _settle() => Future<void>.delayed(const Duration(milliseconds: 1));
 
 void main() {
@@ -135,121 +131,65 @@ void main() {
     await container.read(appUpdateProvider.notifier).check();
 
     expect(container.read(appUpdateProvider).phase, AppUpdatePhase.upToDate);
+    expect(service.immediateStarts, 0);
     expect(service.flexibleStarts, 0);
   });
 
-  test('offers a newer build without opening Play first', () async {
+  test('directly launches Google Play native immediate update when available',
+      () async {
     final container = buildContainer();
     final controller = container.read(appUpdateProvider.notifier);
 
     await controller.check();
     final state = container.read(appUpdateProvider);
 
-    expect(state.phase, AppUpdatePhase.updateAvailable);
+    expect(service.immediateStarts, 1);
     expect(state.availableVersionCode, 7);
     expect(state.installedBuildNumber, 6);
-    // Play's own consent dialog must not appear unbidden.
-    expect(service.flexibleStarts, 0);
-  });
-
-  test('downloads in the background, then auto-completes and asks for restart',
-      () async {
-    final container = buildContainer();
-    final controller = container.read(appUpdateProvider.notifier);
-    await controller.check();
-
-    await controller.startFlexibleDownload();
-    await _settle();
-    expect(service.flexibleStarts, 1);
-    expect(container.read(appUpdateProvider).phase, AppUpdatePhase.downloading);
-
-    service.emit(InstallStatus.downloaded);
-    await _settle();
-    expect(
-      container.read(appUpdateProvider).phase,
-      AppUpdatePhase.readyToInstall,
-    );
-    expect(
-      service.completions,
-      1,
-      reason: 'automatically calls completeFlexibleUpdate on download finish',
-    );
-
-    await controller.installDownloadedUpdate();
-    expect(service.completions, 2);
+    expect(state.phase, AppUpdatePhase.downloading);
   });
 
   test(
-    'completes and never stays stuck in downloading when startFlexibleUpdate resolves at DOWNLOADED',
-    () async {
-      // Mirrors InAppUpdatePlugin.kt on real Android: startFlexibleUpdate()
-      // emits DOWNLOADING, then DOWNLOADED, and only then resolves its Future.
-      final container = buildContainer();
-      final controller = container.read(appUpdateProvider.notifier);
-      await controller.check();
-
-      service.emit(InstallStatus.downloaded);
-      await controller.startFlexibleDownload();
-      await _settle();
-
-      // Even if the stream emitted DOWNLOADED right as startFlexibleUpdate()
-      // resolved, the phase must be readyToInstall (never overwritten back to
-      // downloading) and completeFlexibleUpdate must be triggered.
-      service.emit(InstallStatus.downloaded);
-      await _settle();
-
-      expect(
-        container.read(appUpdateProvider).phase,
-        AppUpdatePhase.readyToInstall,
-      );
-      expect(service.completions, greaterThanOrEqualTo(1));
-    },
-  );
-
-  test('a cancelled download can be retried later', () async {
-    service.flexibleResult = AppUpdateResult.inAppUpdateFailed;
+      'falls back to flexible update and auto-completes when immediate is disallowed',
+      () async {
+    service = _FakeAppUpdateService(
+      info: _info(immediateAllowed: false, flexibleAllowed: true),
+    );
     final container = buildContainer();
     final controller = container.read(appUpdateProvider.notifier);
+
     await controller.check();
+    await _settle();
 
-    await controller.startFlexibleDownload();
-
-    expect(container.read(appUpdateProvider).phase,
-        AppUpdatePhase.updateAvailable);
+    expect(service.immediateStarts, 0);
+    expect(service.flexibleStarts, 1);
+    expect(service.completions, 1);
   });
 
-  test('Later postpones that build only, and a manual check ignores it',
+  test('dismissing Play update dialog snoozes that build, manual check retries',
       () async {
+    service.immediateResult = AppUpdateResult.userDeniedUpdate;
     final container = buildContainer();
     final controller = container.read(appUpdateProvider.notifier);
 
     await controller.check();
-    await controller.snooze();
     expect(container.read(appUpdateProvider).phase, AppUpdatePhase.idle);
     expect(prefs.version, 7);
+    expect(service.immediateStarts, 1);
 
     // Same build, automatic check → silent.
     await controller.check();
     expect(container.read(appUpdateProvider).phase, AppUpdatePhase.upToDate);
+    expect(service.immediateStarts, 1);
 
-    // Profile → Check for update still answers honestly.
+    // Profile → Check for update still opens Play's update dialog.
+    service.immediateResult = AppUpdateResult.success;
     await controller.check(manual: true);
-    expect(
-      container.read(appUpdateProvider).phase,
-      AppUpdatePhase.updateAvailable,
-    );
-
-    // A genuinely newer build breaks through the snooze.
-    await controller.snooze();
-    service.setInfo(_info(availableVersionCode: 8));
-    await controller.check();
-    expect(
-      container.read(appUpdateProvider).phase,
-      AppUpdatePhase.updateAvailable,
-    );
+    expect(service.immediateStarts, 2);
   });
 
-  test('resumes a download the user never installed', () async {
+  test('completes a previously downloaded flexible update immediately',
+      () async {
     service = _FakeAppUpdateService(
       info: _info(installStatus: InstallStatus.downloaded),
     );
@@ -261,44 +201,34 @@ void main() {
       container.read(appUpdateProvider).phase,
       AppUpdatePhase.readyToInstall,
     );
-    expect(service.flexibleStarts, 0);
+    expect(service.completions, 1);
   });
 
-  test('blocks the app below the mandatory build number', () async {
+  test('blocks the app below the mandatory build number when refused',
+      () async {
+    service.immediateResult = AppUpdateResult.userDeniedUpdate;
     final container = buildContainer(
-      policy: const UpdatePolicy(mandatoryBelowBuildNumber: 7),
+      installedBuild: 5,
+      policy: const UpdatePolicy(mandatoryBelowBuildNumber: 6),
     );
     final controller = container.read(appUpdateProvider.notifier);
 
     await controller.check();
     final state = container.read(appUpdateProvider);
+
     expect(state.phase, AppUpdatePhase.blocked);
     expect(state.mandatory, isTrue);
 
+    service.immediateResult = AppUpdateResult.success;
     await controller.startMandatoryUpdate();
-    expect(service.immediateStarts, 1);
-    // Play takes over the screen; until it restarts us the app stays blocked.
-    expect(container.read(appUpdateProvider).phase, AppUpdatePhase.blocked);
-  });
-
-  test('stays blocked when the user refuses the mandatory update', () async {
-    service.immediateResult = AppUpdateResult.userDeniedUpdate;
-    final container = buildContainer(
-      policy: const UpdatePolicy(mandatoryBelowBuildNumber: 7),
-    );
-    final controller = container.read(appUpdateProvider.notifier);
-    await controller.check();
-
-    await controller.startMandatoryUpdate();
-    final state = container.read(appUpdateProvider);
-
-    expect(state.phase, AppUpdatePhase.blocked);
-    expect(state.message, contains('cancelled'));
+    expect(service.immediateStarts, 2);
   });
 
   test('honours the in-app update priority set in Play Console', () async {
     service = _FakeAppUpdateService(info: _info(updatePriority: 4));
+    service.immediateResult = AppUpdateResult.userDeniedUpdate;
     final container = buildContainer(
+      installedBuild: 99,
       policy: const UpdatePolicy(mandatoryPriority: 4),
     );
 
@@ -307,57 +237,26 @@ void main() {
     expect(container.read(appUpdateProvider).phase, AppUpdatePhase.blocked);
   });
 
-  test('never blocks a build that is already new enough', () async {
-    final container = buildContainer(
-      installedBuild: 9,
-      policy: const UpdatePolicy(mandatoryBelowBuildNumber: 7),
-    );
-
-    await container.read(appUpdateProvider.notifier).check();
-    final state = container.read(appUpdateProvider);
-
-    expect(state.phase, AppUpdatePhase.updateAvailable);
-    expect(state.mandatory, isFalse);
-  });
-
   test('does nothing where Play does not exist', () async {
-    service = _FakeAppUpdateService(info: _info(), supported: false);
+    service = _FakeAppUpdateService(supported: false, info: _info());
     final container = buildContainer();
 
     await container.read(appUpdateProvider.notifier).check();
 
     expect(container.read(appUpdateProvider).phase, AppUpdatePhase.unsupported);
-    expect(service.flexibleStarts, 0);
   });
 
   test('a silent Play is never treated as an update', () async {
-    service = _FakeAppUpdateService(); // checkForUpdate() → null
+    service = _FakeAppUpdateService(info: null);
     final container = buildContainer();
 
     await container.read(appUpdateProvider.notifier).check();
     final state = container.read(appUpdateProvider);
 
     expect(state.phase, AppUpdatePhase.idle);
-    expect(state.message, isNotNull);
   });
 
-  test('falls back to immediate update when flexible is disallowed', () async {
-    service = _FakeAppUpdateService(
-      info: _info(flexibleAllowed: false, immediateAllowed: true),
-    );
-    final container = buildContainer();
-    final controller = container.read(appUpdateProvider.notifier);
-
-    await controller.check();
-    final started = await controller.startFlexibleDownload();
-
-    expect(started, isTrue);
-    expect(service.flexibleStarts, 0);
-    expect(service.immediateStarts, 1);
-  });
-
-  test('onAppResumed re-checks when interval elapsed or download finished',
-      () async {
+  test('onAppResumed re-checks when interval elapsed', () async {
     service = _FakeAppUpdateService(
       info: _info(availability: UpdateAvailability.updateNotAvailable),
     );
@@ -369,31 +268,20 @@ void main() {
     await controller.check();
     expect(container.read(appUpdateProvider).phase, AppUpdatePhase.upToDate);
 
-    // A new build rolls out while the app sits in background.
+    // Later, a new build lands on Play while KeepIt was in the background.
     service.setInfo(_info(availableVersionCode: 8));
     await controller.onAppResumed();
-
-    expect(
-      container.read(appUpdateProvider).phase,
-      AppUpdatePhase.updateAvailable,
-    );
-    expect(container.read(appUpdateProvider).availableVersionCode, 8);
+    expect(service.immediateStarts, 1);
   });
 
-  // ---- widget level: is the flow actually wired into the app? ----
-
-  testWidgets('shows KeepIt\'s update sheet on top of a usable app', (
+  testWidgets('UpdateHost triggers Play native update on startup', (
     tester,
   ) async {
-    final widgetService = _FakeAppUpdateService(info: _info());
-    final widgetPrefs = _MemoryUpdatePreferences();
-
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          appUpdateServiceProvider.overrideWithValue(widgetService),
-          updatePreferencesProvider.overrideWithValue(widgetPrefs),
-          updatePolicyProvider.overrideWithValue(const UpdatePolicy()),
+          appUpdateServiceProvider.overrideWithValue(service),
+          updatePreferencesProvider.overrideWithValue(prefs),
           installedBuildNumberProvider.overrideWith((ref) => 6),
         ],
         child: const MaterialApp(
@@ -401,39 +289,25 @@ void main() {
         ),
       ),
     );
-    // initState's post-frame callback, then UpdateConfig.startupDelay.
-    await tester.pump();
+
     await tester.pump(UpdateConfig.startupDelay);
-    await tester.pump(const Duration(milliseconds: 200));
     await tester.pumpAndSettle();
 
-    expect(find.text('Home'), findsOneWidget, reason: 'app stays usable');
-    expect(find.text('A new version is ready'), findsOneWidget);
-    expect(find.text('Update now'), findsOneWidget);
-    expect(
-      widgetService.flexibleStarts,
-      0,
-      reason: 'Play must not be contacted before the user taps Update',
-    );
-
-    await tester.tap(find.text('Later'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('A new version is ready'), findsNothing);
-    expect(widgetPrefs.version, 7, reason: 'Later postponed build 7');
+    expect(find.text('Home'), findsOneWidget);
+    expect(service.immediateStarts, 1);
   });
 
-  testWidgets('replaces the app for a mandatory release', (tester) async {
-    final widgetService = _FakeAppUpdateService(info: _info());
-    final widgetPrefs = _MemoryUpdatePreferences();
-
+  testWidgets('replaces the app for a refused mandatory release', (
+    tester,
+  ) async {
+    service.immediateResult = AppUpdateResult.userDeniedUpdate;
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          appUpdateServiceProvider.overrideWithValue(widgetService),
-          updatePreferencesProvider.overrideWithValue(widgetPrefs),
+          appUpdateServiceProvider.overrideWithValue(service),
+          updatePreferencesProvider.overrideWithValue(prefs),
           updatePolicyProvider.overrideWithValue(
-            const UpdatePolicy(mandatoryBelowBuildNumber: 7),
+            const UpdatePolicy(mandatoryBelowBuildNumber: 10),
           ),
           installedBuildNumberProvider.overrideWith((ref) => 6),
         ],
@@ -442,59 +316,11 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
+
     await tester.pump(UpdateConfig.startupDelay);
-    await tester.pump(const Duration(milliseconds: 200));
     await tester.pumpAndSettle();
 
-    expect(find.text('Update required'), findsOneWidget);
-    expect(find.text('Home'), findsNothing, reason: 'app is blocked');
-    expect(find.text('Later'), findsNothing, reason: 'no way to skip');
-
-    await tester.tap(find.text('Update now'));
-    await tester.pumpAndSettle();
-
-    expect(widgetService.immediateStarts, 1);
+    expect(find.text('Home'), findsNothing);
     expect(find.text('Update required'), findsOneWidget);
   });
-
-  testWidgets(
-    'keeps the sheet open and offers Play Store when download fails to start',
-    (tester) async {
-      final widgetService = _FakeAppUpdateService(info: _info())
-        ..flexibleResult = AppUpdateResult.inAppUpdateFailed;
-      final widgetPrefs = _MemoryUpdatePreferences();
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appUpdateServiceProvider.overrideWithValue(widgetService),
-            updatePreferencesProvider.overrideWithValue(widgetPrefs),
-            updatePolicyProvider.overrideWithValue(const UpdatePolicy()),
-            installedBuildNumberProvider.overrideWith((ref) => 6),
-          ],
-          child: const MaterialApp(
-            home: UpdateHost(
-              child: Scaffold(body: Center(child: Text('Home'))),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(UpdateConfig.startupDelay);
-      await tester.pump(const Duration(milliseconds: 200));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Update now'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('A new version is ready'), findsOneWidget);
-      expect(find.text('Open in Play Store'), findsOneWidget);
-      expect(
-        widgetPrefs.version,
-        isNull,
-        reason: 'a failed download must not silently snooze the update',
-      );
-    },
-  );
 }

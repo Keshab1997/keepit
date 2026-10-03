@@ -16,6 +16,7 @@ import 'package:keepit/domain/entities/mind_item.dart';
 import 'package:keepit/main.dart';
 import 'package:keepit/presentation/controllers/mind_feed_controller.dart';
 import 'package:keepit/presentation/screens/home_screen.dart';
+import 'package:keepit/presentation/widgets/keepit_3d_splash.dart';
 
 void main() {
   late Directory tempDir;
@@ -107,5 +108,23 @@ void main() {
 
   test('KeepItApp is exported from main.dart', () {
     expect(const KeepItApp(), isA<ConsumerStatefulWidget>());
+  });
+
+  testWidgets('KeepIt3DSplashScreen renders 3D scene and orbiting cards', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: KeepIt3DSplashScreen(forceDark: true),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('KeepIt'), findsOneWidget);
+    expect(find.text('Your visual second brain'), findsOneWidget);
+    expect(find.text('Reel'), findsOneWidget);
+    expect(find.text('Article'), findsOneWidget);
+    expect(find.text('Idea'), findsOneWidget);
+    expect(find.text('Saved'), findsOneWidget);
   });
 }

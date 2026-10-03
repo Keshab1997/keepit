@@ -4,12 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import 'core/ads/ad_service.dart';
 import 'core/cloud/firebase_bootstrap.dart';
-import 'core/theme/app_palette.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/notification_service.dart';
 import 'data/datasources/local_mind_datasource.dart';
@@ -17,6 +15,7 @@ import 'presentation/controllers/mind_feed_controller.dart';
 import 'presentation/controllers/theme_mode_controller.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
+import 'presentation/widgets/keepit_3d_splash.dart';
 import 'presentation/widgets/notification_host.dart';
 import 'presentation/widgets/share_capture_overlay.dart';
 import 'presentation/widgets/sync_host.dart';
@@ -24,51 +23,14 @@ import 'presentation/widgets/update_host.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-Future<void> _boot() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Local .env (git-ignored). Optional so CI and tests without the file
-  // still boot; features that need a key report "not configured".
-  await dotenv.load(isOptional: true);
-
-  // 1. Initialize Hive Local Database
-  await Hive.initFlutter();
-  final localDataSource = LocalMindDataSource();
-  await localDataSource.init();
-
-  // Firebase and notifications are independent after Hive is ready. Start
-  // them together so a slow optional service does not delay the other one.
-  await Future.wait<void>([
-    // Firebase is optional — the app runs fully offline without it.
-    FirebaseBootstrap.init(),
-    // Scheduling happens in NotificationHost once the saved items are loaded.
-    NotificationService().init(),
-  ]);
-
-  // Ads (AdMob) — optional monetization. Best-effort: a failure here must
-  //    never block startup. Frequency counters persist in the Hive meta box.
-  try {
-    await AdService.instance.init(prefs: localDataSource.meta);
-  } catch (_) {
-    // Ads are optional; keep booting.
-  }
-
-  _appStarted = true;
-  runApp(
-    ProviderScope(
-      overrides: [localDataSourceProvider.overrideWithValue(localDataSource)],
-      child: const KeepItApp(),
-    ),
-  );
-}
-
 /// Set once the first [runApp] has been reached. Zone errors after that point
 /// must not tear a running app down to show the boot-error screen.
 bool _appStarted = false;
 
 void main() {
   runZonedGuarded(
-    () async {
+    () {
+      WidgetsFlutterBinding.ensureInitialized();
       // In release builds a framework error would otherwise paint a silent
       // grey screen; make the failure visible and keep a log line.
       FlutterError.onError = (details) {
@@ -84,7 +46,12 @@ void main() {
               ),
             ),
           );
-      await _boot();
+
+      // Call runApp immediately so Android dismisses the static native splash
+      // screen on the very first frame and shows KeepIt3DSplashScreen while
+      // Hive, Firebase, and Notifications initialize in the background.
+      _appStarted = true;
+      runApp(const _KeepItBootstrapHost());
     },
     (error, stack) {
       debugPrint('KeepIt uncaught error: $error\n$stack');
@@ -93,6 +60,96 @@ void main() {
       }
     },
   );
+}
+
+/// Immediately paints [KeepIt3DSplashScreen] on frame 1 (replacing the static
+/// Android native splash screen right away) while initializing Hive, Firebase,
+/// and Notifications in the background, then smoothly cross-fades into
+/// [KeepItApp].
+class _KeepItBootstrapHost extends StatefulWidget {
+  const _KeepItBootstrapHost();
+
+  @override
+  State<_KeepItBootstrapHost> createState() => _KeepItBootstrapHostState();
+}
+
+class _KeepItBootstrapHostState extends State<_KeepItBootstrapHost> {
+  LocalMindDataSource? _localDataSource;
+  Object? _bootError;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_bootServices());
+  }
+
+  Future<void> _bootServices() async {
+    try {
+      final minSplashTime = Future<void>.delayed(
+        const Duration(milliseconds: 1450),
+      );
+
+      // Local .env (git-ignored). Optional so CI and tests without the file
+      // still boot; features that need a key report "not configured".
+      await dotenv.load(isOptional: true);
+
+      // 1. Initialize Hive Local Database
+      await Hive.initFlutter();
+      final localDataSource = LocalMindDataSource();
+      await localDataSource.init();
+
+      // 2. Initialize Firebase and Notifications in parallel while the 3D
+      //    splash animation plays.
+      await Future.wait<void>([
+        FirebaseBootstrap.init(),
+        NotificationService().init(),
+        minSplashTime,
+      ]);
+
+      // 3. Ads (AdMob) — initialize non-blocking in the background so slow
+      //    WebView/Play Services startup never delays app launch.
+      unawaited(
+        AdService.instance
+            .init(prefs: localDataSource.meta)
+            .catchError((Object _) {}),
+      );
+
+      if (!mounted) return;
+      setState(() => _localDataSource = localDataSource);
+    } catch (error, stack) {
+      debugPrint('KeepIt boot error: $error\n$stack');
+      if (!mounted) return;
+      setState(() => _bootError = error);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final error = _bootError;
+    if (error != null) {
+      return _BootErrorApp(error: error);
+    }
+
+    final dataSource = _localDataSource;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 420),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: dataSource == null
+          ? const MaterialApp(
+              key: ValueKey('keepit-3d-splash'),
+              debugShowCheckedModeBanner: false,
+              home: KeepIt3DSplashScreen(),
+            )
+          : ProviderScope(
+              key: const ValueKey('keepit-ready'),
+              overrides: [
+                localDataSourceProvider.overrideWithValue(dataSource),
+              ],
+              child: const KeepItApp(),
+            ),
+    );
+  }
 }
 
 /// Minimal emergency UI shown when startup itself throws — better a visible
@@ -190,79 +247,13 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeMode,
-          // UpdateHost asks Google Play (silently) whether a newer build
-          // exists and swaps in its own update screen — or the blocking
-          // "Update required" screen for a mandatory release.
           home: showOnboarding == null
-              ? const _BrandSplash()
+              ? const KeepIt3DSplashScreen()
               : UpdateHost(
                   child: showOnboarding
                       ? const OnboardingScreen()
                       : const HomeScreen(),
                 ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Shown for the few milliseconds it takes to read the first-launch flag.
-class _BrandSplash extends StatelessWidget {
-  const _BrandSplash();
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Scaffold(
-      backgroundColor: palette.background,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 84,
-              height: 84,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFFFF8A65),
-                    Color(0xFFFF5B37),
-                    Color(0xFFE03C1C),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(26),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x4DFF5B37),
-                    blurRadius: 24,
-                    offset: Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                LucideIcons.sparkles,
-                color: Colors.white,
-                size: 40,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'KeepIt',
-              style: TextStyle(
-                fontSize: 27,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-                color: palette.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Your visual second brain',
-              style: TextStyle(fontSize: 13, color: palette.textSecondary),
-            ),
-          ],
         ),
       ),
     );

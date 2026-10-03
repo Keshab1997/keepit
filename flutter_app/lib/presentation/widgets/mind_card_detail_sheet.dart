@@ -498,7 +498,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                 vertical: 7,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xE8F1F3F6),
+                                color: palette.tagBg,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: palette.glassBorder,
@@ -555,7 +555,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                         vertical: 12,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0x59F1F3F6),
+                                        color: palette.tagBg
+                                            .withValues(alpha: 0.35),
                                         borderRadius:
                                             const BorderRadius.vertical(
                                           top: Radius.circular(24),

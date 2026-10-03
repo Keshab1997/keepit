@@ -317,7 +317,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? palette.primary
-                                    : const Color(0xF2FFFFFF),
+                                    : palette.glassWhite,
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: isSelected
@@ -817,7 +817,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                 color: context.palette.textMuted,
               ),
               filled: true,
-              fillColor: const Color(0x99F1F3F6),
+              fillColor: context.palette.tagBg.withValues(alpha: 0.6),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,

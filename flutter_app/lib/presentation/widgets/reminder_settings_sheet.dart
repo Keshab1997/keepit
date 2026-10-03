@@ -94,9 +94,9 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
       maxChildSize: 0.94,
       builder: (context, controller) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFFDFDFE),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          decoration: BoxDecoration(
+            color: context.palette.surfaceElevated,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: ListView(
             controller: controller,
@@ -107,7 +107,7 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
                   width: 42,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E4E9),
+                    color: context.palette.cardBorder,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -299,7 +299,8 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: enabled ? context.palette.tagBg : const Color(0xFFF7F7F9),
+        color:
+            enabled ? context.palette.tagBg : context.palette.surfaceElevated,
         borderRadius: BorderRadius.circular(11),
       ),
       child: Icon(

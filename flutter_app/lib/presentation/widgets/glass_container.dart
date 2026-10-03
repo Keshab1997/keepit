@@ -2,12 +2,16 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_palette.dart';
+
 class GlassContainer extends StatelessWidget {
   final Widget child;
   final double blur;
   final double borderRadius;
-  final Color backgroundColor;
-  final Color borderColor;
+
+  /// Null means "take the active palette's glass colour".
+  final Color? backgroundColor;
+  final Color? borderColor;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
   final double borderWidth;
@@ -18,8 +22,8 @@ class GlassContainer extends StatelessWidget {
     required this.child,
     this.blur = 16.0,
     this.borderRadius = 20.0,
-    this.backgroundColor = const Color(0xB3FFFFFF), // 70% opacity white frost
-    this.borderColor = const Color(0x66FFFFFF), // Subtle glassy rim
+    this.backgroundColor,
+    this.borderColor,
     this.padding,
     this.margin,
     this.borderWidth = 1.0,
@@ -47,9 +51,12 @@ class GlassContainer extends StatelessWidget {
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: backgroundColor,
+              color: backgroundColor ?? context.palette.glassCard,
               borderRadius: BorderRadius.circular(borderRadius),
-              border: Border.all(color: borderColor, width: borderWidth),
+              border: Border.all(
+                color: borderColor ?? context.palette.glassBorder,
+                width: borderWidth,
+              ),
             ),
             child: child,
           ),

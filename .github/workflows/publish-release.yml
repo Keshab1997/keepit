@@ -10,7 +10,9 @@ name: Publish Android Release
 # build — and lands on the `internal` track only, never production. Needs the
 # PLAY_SERVICE_ACCOUNT_JSON secret and the package name typed exactly as in
 # Play Console (com.keshabstudios.keepit). Play rejects a version code it has
-# already seen, so bump the +build number in pubspec.yaml before every upload.
+# already seen, so bump the +build number before every upload — a run that
+# fails *after* the AAB reached Play counts too, because the uploaded bundle
+# stays in the app's bundle library.
 #
 # Bump flutter_app/pubspec.yaml (version: 1.0.1+2) in a PR before running this.
 # Needs the keystore secrets in this repository's Settings → Secrets.
@@ -59,7 +61,13 @@ jobs:
       # distribution/whatsnew/whatsnew-en-US, whatsnew-bn-BD. Update them in the
       # same commit as the version bump, or Play shows the previous release's
       # notes.
-      play-whats-new-directory: ${{ inputs.upload_to_play_internal && 'distribution/whatsnew' || '' }}
+      #
+      # The reusable workflow joins this with working-directory
+      # (format('{0}/{1}', …)), so a plain 'distribution/whatsnew' resolves to
+      # flutter_app/distribution/whatsnew and the run dies on ENOENT after the
+      # AAB is already up. '../' steps back out to the repository root, where
+      # the notes actually live — the same layout docify uses.
+      play-whats-new-directory: ${{ inputs.upload_to_play_internal && '../distribution/whatsnew' || '' }}
       # completed = published to internal testers straight away; production is
       # never touched by this workflow.
       play-status: completed

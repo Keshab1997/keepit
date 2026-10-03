@@ -94,10 +94,10 @@ To see the real thing:
 
 1. Add yourself as a tester → Play Console → **Testing → Internal testing**,
    create/choose a testers list that includes your own account.
-2. Publish build **N** (e.g. `1.0.5+8`) to that track.
+2. Publish build **N** (e.g. `1.0.6+10`) to that track.
 3. Install KeepIt **from the Play Store** on a device signed in with that
    account (the opt-in link from the Testers tab).
-4. Bump to build **N+1** (`1.0.6+9`) and publish it to the same track.
+4. Bump to build **N+1** (`1.0.6+11`) and publish it to the same track.
 5. Wait for Play to pick it up (minutes to a few hours), then open the app from
    the device. The *"A new version is ready"* sheet appears.
 

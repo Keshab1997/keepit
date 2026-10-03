@@ -8,7 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/mind_toast.dart';
 import '../../core/utils/external_link_launcher.dart';
 import '../../core/utils/notification_service.dart';
@@ -29,6 +29,7 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final allItems = ref.watch(mindFeedProvider).items;
 
     // Filter unwatched / unprocessed items
@@ -64,7 +65,7 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                   ? LucideIcons.bellRing
                   : LucideIcons.bellOff,
               size: 21,
-              color: AppColors.textPrimary,
+              color: palette.textPrimary,
             ),
             onPressed: () async {
               await ReminderSettingsSheet.show(context);
@@ -87,27 +88,27 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                         color: Color(0x2610B981),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.checkCheck,
-                        color: AppColors.success,
+                        color: palette.success,
                         size: 44,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       "Your Mind is Up to Date!",
                       style: TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: palette.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       "You've watched and reviewed all your saved items. Save new links to spark serendipity.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: palette.textSecondary,
                         height: 1.5,
                         fontSize: 13.5,
                       ),
@@ -123,7 +124,7 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -133,16 +134,16 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                               fontSize: 11.5,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 1.2,
-                              color: AppColors.textSecondary,
+                              color: palette.textSecondary,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
                             "Resurfaced forgotten gem",
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: palette.textPrimary,
                             ),
                           ),
                         ],
@@ -170,27 +171,27 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                           vertical: 7,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryLight,
+                          color: palette.primaryLight,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: const Color(0x66FF5B37),
                             width: 0.8,
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
                             Icon(
                               LucideIcons.shuffle,
                               size: 14,
-                              color: AppColors.primary,
+                              color: palette.primary,
                             ),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
                               "Shuffle",
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
+                                color: palette.primary,
                               ),
                             ),
                           ],
@@ -211,13 +212,13 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                 // 3. Unwatched Queue Header
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       "UNWATCHED IN YOUR MIND",
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.2,
-                        color: AppColors.textSecondary,
+                        color: palette.textSecondary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -232,10 +233,10 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                       ),
                       child: Text(
                         '${unwatchedItems.length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+                          color: palette.primary,
                         ),
                       ),
                     ),
@@ -379,19 +380,19 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                         item.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16.5,
                           fontWeight: FontWeight.w800,
                           height: 1.35,
-                          color: AppColors.textPrimary,
+                          color: context.palette.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         item.authorName ?? 'KeepIt Mind',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12.5,
-                          color: AppColors.textSecondary,
+                          color: context.palette.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -412,17 +413,17 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                                   title: "Marked as watched!",
                                 );
                               },
-                              icon: const Icon(
+                              icon: Icon(
                                 LucideIcons.checkCheck,
                                 size: 16,
-                                color: AppColors.success,
+                                color: context.palette.success,
                               ),
-                              label: const Text(
+                              label: Text(
                                 "Mark as Watched",
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.success,
+                                  color: context.palette.success,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
@@ -476,10 +477,10 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                                   color: const Color(0xFFF1F3F6),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   LucideIcons.alarmClock,
                                   size: 18,
-                                  color: AppColors.textPrimary,
+                                  color: context.palette.textPrimary,
                                 ),
                               ),
                             ),
@@ -495,10 +496,10 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                                 color: const Color(0xFFF1F3F6),
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 LucideIcons.arrowUpRight,
                                 size: 18,
-                                color: AppColors.textPrimary,
+                                color: context.palette.textPrimary,
                               ),
                             ),
                           ),
@@ -547,11 +548,11 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                 : Container(
                     width: 48,
                     height: 48,
-                    color: AppColors.tagBg,
-                    child: const Icon(
+                    color: context.palette.tagBg,
+                    child: Icon(
                       LucideIcons.link2,
                       size: 20,
-                      color: AppColors.textMuted,
+                      color: context.palette.textMuted,
                     ),
                   ),
           ),
@@ -559,24 +560,24 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
             item.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: context.palette.textPrimary,
             ),
           ),
           subtitle: Text(
             "${item.authorName ?? 'Saved'} • $dateStr",
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11.5,
-              color: AppColors.textSecondary,
+              color: context.palette.textSecondary,
             ),
           ),
           trailing: IconButton(
-            icon: const Icon(
+            icon: Icon(
               LucideIcons.check,
               size: 18,
-              color: AppColors.textSecondary,
+              color: context.palette.textSecondary,
             ),
             tooltip: "Mark Watched",
             onPressed: () {

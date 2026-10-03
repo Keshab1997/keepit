@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../data/datasources/local_mind_datasource.dart';
 import '../controllers/mind_feed_controller.dart';
 import 'home_screen.dart';
@@ -93,8 +93,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: palette.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -104,10 +105,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 padding: const EdgeInsets.only(right: 12, top: 8),
                 child: TextButton(
                   onPressed: _finish,
-                  child: const Text(
+                  child: Text(
                     'Skip',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: palette.textSecondary,
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
@@ -141,7 +142,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 child: ElevatedButton(
                   onPressed: _next,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: palette.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -172,6 +173,7 @@ class _OnboardingPageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(
@@ -183,9 +185,9 @@ class _OnboardingPageView extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: palette.surface,
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: AppColors.cardBorder, width: 0.8),
+                border: Border.all(color: palette.cardBorder, width: 0.8),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x0A000000),
@@ -201,22 +203,22 @@ class _OnboardingPageView extends StatelessWidget {
           Text(
             page.title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
               height: 1.25,
-              color: AppColors.textPrimary,
+              color: palette.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
           Text(
             page.body,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14.5,
               height: 1.55,
-              color: AppColors.textSecondary,
+              color: palette.textSecondary,
             ),
           ),
         ],
@@ -232,6 +234,7 @@ class _Dot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOut,
@@ -239,7 +242,7 @@ class _Dot extends StatelessWidget {
       width: active ? 26 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: active ? AppColors.primary : const Color(0x33FF5B37),
+        color: active ? palette.primary : const Color(0x33FF5B37),
         borderRadius: BorderRadius.circular(4),
       ),
     );

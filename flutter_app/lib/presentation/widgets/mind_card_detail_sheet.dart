@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/mind_toast.dart';
 import '../../core/utils/external_link_launcher.dart';
 import '../../domain/entities/mind_item.dart';
@@ -37,6 +37,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final liveItem = ref.watch(mindFeedProvider).items.firstWhere(
           (element) => element.id == widget.item.id,
           orElse: () => widget.item,
@@ -83,7 +84,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                       height: 4.5,
                       margin: const EdgeInsets.only(top: 12, bottom: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.textMuted.withValues(alpha: 0.35),
+                        color: palette.textMuted.withValues(alpha: 0.35),
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
@@ -123,7 +124,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                   Icon(
                                     _getSourceIcon(liveItem.type),
                                     size: 14,
-                                    color: AppColors.primary,
+                                    color: palette.primary,
                                   ),
                                   const SizedBox(width: 6),
                                   Flexible(
@@ -131,10 +132,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                       liveItem.authorName ?? 'KeepIt Mind',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
+                                        color: palette.textPrimary,
                                       ),
                                     ),
                                   ),
@@ -193,12 +194,12 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                           (context, error, stackTrace) =>
                                               Container(
                                         height: 260,
-                                        color: AppColors.tagBg,
-                                        child: const Center(
+                                        color: palette.tagBg,
+                                        child: Center(
                                           child: Icon(
                                             LucideIcons.image,
                                             size: 48,
-                                            color: AppColors.textMuted,
+                                            color: palette.textMuted,
                                           ),
                                         ),
                                       ),
@@ -206,12 +207,12 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                   else
                                     Container(
                                       height: 220,
-                                      color: AppColors.tagBg,
-                                      child: const Center(
+                                      color: palette.tagBg,
+                                      child: Center(
                                         child: Icon(
                                           LucideIcons.link2,
                                           size: 48,
-                                          color: AppColors.textMuted,
+                                          color: palette.textMuted,
                                         ),
                                       ),
                                     ),
@@ -333,12 +334,12 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                         // B. Title Showcase
                         Text(
                           liveItem.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
                             height: 1.35,
                             letterSpacing: -0.4,
-                            color: AppColors.textPrimary,
+                            color: palette.textPrimary,
                           ),
                         ),
 
@@ -347,17 +348,17 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                         // Timestamp & Pinned status
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               LucideIcons.clock,
                               size: 13,
-                              color: AppColors.textMuted,
+                              color: palette.textMuted,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               formattedDate,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: palette.textSecondary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -369,22 +370,22 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primaryLight,
+                                  color: palette.primaryLight,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       LucideIcons.sparkles,
                                       size: 11,
-                                      color: AppColors.primary,
+                                      color: palette.primary,
                                     ),
-                                    SizedBox(width: 4),
+                                    const SizedBox(width: 4),
                                     Text(
                                       "Top of Mind",
                                       style: TextStyle(
-                                        color: AppColors.primary,
+                                        color: palette.primary,
                                         fontSize: 10.5,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -415,8 +416,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                     ? LucideIcons.checkCheck
                                     : LucideIcons.eye,
                                 color: liveItem.isWatched
-                                    ? AppColors.success
-                                    : AppColors.primary,
+                                    ? palette.success
+                                    : palette.primary,
                                 size: 20,
                               ),
                               label: Text(
@@ -427,15 +428,15 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                   color: liveItem.isWatched
-                                      ? AppColors.success
-                                      : AppColors.primary,
+                                      ? palette.success
+                                      : palette.primary,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
                                 elevation: 0,
                                 backgroundColor: liveItem.isWatched
                                     ? const Color(0x1F10B981)
-                                    : AppColors.primaryLight,
+                                    : palette.primaryLight,
                                 minimumSize: const Size(double.infinity, 56),
                                 side: BorderSide(
                                   color: liveItem.isWatched
@@ -456,13 +457,13 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                         // D. Mind Tags Section
                         Row(
                           children: [
-                            const Text(
+                            Text(
                               "MIND TAGS",
                               style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 1.2,
-                                color: AppColors.textSecondary,
+                                color: palette.textSecondary,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -472,15 +473,15 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryLight,
+                                color: palette.primaryLight,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
                                 '${liveItem.tags.length}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
+                                  color: palette.primary,
                                 ),
                               ),
                             ),
@@ -506,8 +507,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                               ),
                               child: Text(
                                 '#$tag',
-                                style: const TextStyle(
-                                  color: AppColors.tagText,
+                                style: TextStyle(
+                                  color: palette.tagText,
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -575,24 +576,24 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                 width: 28,
                                                 height: 28,
                                                 decoration: BoxDecoration(
-                                                  color: AppColors.primaryLight,
+                                                  color: palette.primaryLight,
                                                   borderRadius:
                                                       BorderRadius.circular(8),
                                                 ),
-                                                child: const Icon(
+                                                child: Icon(
                                                   LucideIcons.fileText,
                                                   size: 15,
-                                                  color: AppColors.primary,
+                                                  color: palette.primary,
                                                 ),
                                               ),
                                               const SizedBox(width: 10),
-                                              const Text(
+                                              Text(
                                                 "ORIGINAL CAPTION",
                                                 style: TextStyle(
                                                   fontSize: 11.5,
                                                   fontWeight: FontWeight.w800,
                                                   letterSpacing: 1.0,
-                                                  color: AppColors.textPrimary,
+                                                  color: palette.textPrimary,
                                                 ),
                                               ),
                                             ],
@@ -667,8 +668,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                           : LucideIcons.copy,
                                                       size: 13,
                                                       color: _isCopied
-                                                          ? AppColors.success
-                                                          : AppColors
+                                                          ? palette.success
+                                                          : palette
                                                               .textSecondary,
                                                     ),
                                                     const SizedBox(width: 5),
@@ -681,8 +682,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                         fontWeight:
                                                             FontWeight.w700,
                                                         color: _isCopied
-                                                            ? AppColors.success
-                                                            : AppColors
+                                                            ? palette.success
+                                                            : palette
                                                                 .textSecondary,
                                                       ),
                                                     ),
@@ -704,8 +705,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                         style: TextStyle(
                                           fontSize: 14,
                                           color: hasDescription
-                                              ? AppColors.textPrimary
-                                              : AppColors.textMuted,
+                                              ? palette.textPrimary
+                                              : palette.textMuted,
                                           height: 1.6,
                                           fontWeight: FontWeight.w400,
                                           letterSpacing: -0.1,
@@ -748,7 +749,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
             width: 0.8,
           ),
         ),
-        child: Icon(icon, size: 18, color: AppColors.textPrimary),
+        child: Icon(icon, size: 18, color: context.palette.textPrimary),
       ),
     );
   }
@@ -782,7 +783,7 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 20),
                     decoration: BoxDecoration(
-                      color: AppColors.textMuted.withValues(alpha: 0.4),
+                      color: context.palette.textMuted.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -988,7 +989,9 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
           ),
           leading: Icon(
             icon,
-            color: isDestructive ? AppColors.danger : AppColors.textPrimary,
+            color: isDestructive
+                ? context.palette.danger
+                : context.palette.textPrimary,
             size: 20,
           ),
           title: Text(
@@ -996,7 +999,9 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: isDestructive ? AppColors.danger : AppColors.textPrimary,
+              color: isDestructive
+                  ? context.palette.danger
+                  : context.palette.textPrimary,
             ),
           ),
           onTap: onTap,

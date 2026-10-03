@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../domain/entities/mind_item.dart';
 
 class MindCardWidget extends StatelessWidget {
@@ -19,6 +19,7 @@ class MindCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     // RepaintBoundary isolates this card's render tree so scrolling never triggers unnecessary repaints
     return RepaintBoundary(
       child: GestureDetector(
@@ -31,7 +32,7 @@ class MindCardWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: item.isTopMind
-                  ? AppColors.primary.withValues(alpha: 0.7)
+                  ? palette.primary.withValues(alpha: 0.7)
                   : const Color(0x33E5E7EB),
               width: item.isTopMind ? 1.6 : 1.0,
             ),
@@ -82,11 +83,11 @@ class MindCardWidget extends StatelessWidget {
                           ),
                         ),
                         errorWidget: (context, url, error) => Container(
-                          color: AppColors.tagBg,
-                          child: const Center(
+                          color: palette.tagBg,
+                          child: Center(
                             child: Icon(
                               LucideIcons.image,
-                              color: AppColors.textMuted,
+                              color: palette.textMuted,
                               size: 28,
                             ),
                           ),
@@ -159,10 +160,10 @@ class MindCardWidget extends StatelessWidget {
                         right: 10,
                         child: Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
+                          decoration: BoxDecoration(
+                            color: palette.primary,
                             shape: BoxShape.circle,
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
                                 color: Color(0x66FF5B37),
                                 blurRadius: 8,
@@ -251,12 +252,12 @@ class MindCardWidget extends StatelessWidget {
                       item.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.2,
                         height: 1.35,
-                        color: AppColors.textPrimary,
+                        color: palette.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -267,7 +268,7 @@ class MindCardWidget extends StatelessWidget {
                             width: 5,
                             height: 5,
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.8),
+                              color: palette.primary.withValues(alpha: 0.8),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -277,9 +278,9 @@ class MindCardWidget extends StatelessWidget {
                               item.authorName!,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.textSecondary,
+                                color: palette.textSecondary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -307,9 +308,9 @@ class MindCardWidget extends StatelessWidget {
                             ),
                             child: Text(
                               '#$tag',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 10,
-                                color: AppColors.tagText,
+                                color: palette.tagText,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

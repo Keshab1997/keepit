@@ -10,7 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/cloud/auth_service.dart';
 import '../../core/ads/ad_service.dart';
 import '../../core/config/app_config.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/mind_toast.dart';
 import '../../core/updates/app_update_service.dart';
 import '../../core/utils/data_export.dart';
@@ -342,9 +342,10 @@ class ProfileScreen extends ConsumerWidget {
                 style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Your items are safely stored in the cloud. What should happen to the copy on this phone?',
-                style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+                style: TextStyle(
+                    color: context.palette.textSecondary, height: 1.4),
               ),
               const SizedBox(height: 16),
               _SheetButton(
@@ -361,10 +362,10 @@ class ProfileScreen extends ConsumerWidget {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Center(
+                child: Center(
                   child: Text(
                     'Cancel',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: context.palette.textSecondary),
                   ),
                 ),
               ),
@@ -455,12 +456,17 @@ class _AccountCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
     final user = state.user;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFF7A59), AppColors.primary, Color(0xFFE04420)],
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFFF7A59),
+            palette.primary,
+            const Color(0xFFE04420)
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -542,6 +548,7 @@ class _SignInButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
@@ -575,24 +582,24 @@ class _SignInButton extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           child: busy
-              ? const SizedBox(
+              ? SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.primary,
+                    color: palette.primary,
                   ),
                 )
-              : const Row(
+              : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _GoogleG(size: 16),
-                    SizedBox(width: 7),
+                    const _GoogleG(size: 16),
+                    const SizedBox(width: 7),
                     Text(
                       'Sign in',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: palette.textPrimary,
                       ),
                     ),
                   ],
@@ -693,6 +700,7 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     Widget stat(String value, String label, IconData icon) => Expanded(
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -703,7 +711,7 @@ class _StatsRow extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Icon(icon, size: 17, color: AppColors.primary),
+                Icon(icon, size: 17, color: palette.primary),
                 const SizedBox(height: 6),
                 Text(
                   value,
@@ -712,9 +720,9 @@ class _StatsRow extends StatelessWidget {
                 ),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11.5,
-                    color: AppColors.textSecondary,
+                    color: palette.textSecondary,
                   ),
                 ),
               ],
@@ -743,6 +751,7 @@ class _CloudSyncCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
     if (!state.available) {
       return const _InfoCard(
         icon: LucideIcons.cloudOff,
@@ -769,15 +778,15 @@ class _CloudSyncCard extends ConsumerWidget {
     ) = switch (state.status) {
       SyncStatus.syncing => (
           LucideIcons.refreshCw,
-          AppColors.primary,
+          palette.primary,
           'Syncing…',
         ),
       SyncStatus.error => (
           LucideIcons.alertCircle,
-          AppColors.danger,
+          palette.danger,
           'Sync problem',
         ),
-      _ => (LucideIcons.checkCircle2, AppColors.success, 'Up to date'),
+      _ => (LucideIcons.checkCircle2, palette.success, 'Up to date'),
     };
 
     return _Group(
@@ -823,8 +832,8 @@ class _CloudSyncCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: state.status == SyncStatus.error
-                            ? AppColors.danger
-                            : AppColors.textSecondary,
+                            ? palette.danger
+                            : palette.textSecondary,
                       ),
                     ),
                   ],
@@ -846,8 +855,8 @@ class _CloudSyncCard extends ConsumerWidget {
                         }
                       },
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primaryLight,
-                  foregroundColor: AppColors.primary,
+                  backgroundColor: palette.primaryLight,
+                  foregroundColor: palette.primary,
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                 ),
                 child: const Text(
@@ -867,15 +876,15 @@ class _CloudSyncCard extends ConsumerWidget {
         SwitchListTile.adaptive(
           contentPadding: const EdgeInsets.symmetric(horizontal: 14),
           value: state.autoSync,
-          activeTrackColor: AppColors.primary,
+          activeTrackColor: palette.primary,
           onChanged: controller.setAutoSync,
           title: const Text(
             'Auto sync',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
           ),
-          subtitle: const Text(
+          subtitle: Text(
             'Sync automatically after changes and when you open the app',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: palette.textSecondary),
           ),
         ),
       ],
@@ -915,11 +924,11 @@ class _SectionLabel extends StatelessWidget {
         padding: const EdgeInsets.only(left: 4, bottom: 8),
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11.5,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
-            color: AppColors.textSecondary,
+            color: context.palette.textSecondary,
           ),
         ),
       );
@@ -969,13 +978,14 @@ class _Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? AppColors.danger : AppColors.textPrimary;
+    final palette = context.palette;
+    final color = destructive ? palette.danger : palette.textPrimary;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: destructive ? const Color(0x14FF3B30) : AppColors.tagBg,
+          color: destructive ? const Color(0x14FF3B30) : palette.tagBg,
           borderRadius: BorderRadius.circular(11),
         ),
         child: Icon(icon, size: 17, color: color),
@@ -992,15 +1002,15 @@ class _Tile extends StatelessWidget {
           ? null
           : Text(
               subtitle!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: palette.textSecondary,
               ),
             ),
-      trailing: const Icon(
+      trailing: Icon(
         LucideIcons.chevronRight,
         size: 17,
-        color: AppColors.textMuted,
+        color: palette.textMuted,
       ),
       onTap: onTap,
     );
@@ -1019,6 +1029,7 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1032,10 +1043,10 @@ class _InfoCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-              color: AppColors.primaryLight,
+              color: palette.primaryLight,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 18, color: AppColors.primary),
+            child: Icon(icon, size: 18, color: palette.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1052,9 +1063,9 @@ class _InfoCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   message,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
-                    color: AppColors.textSecondary,
+                    color: palette.textSecondary,
                     height: 1.4,
                   ),
                 ),
@@ -1081,7 +1092,8 @@ class _SheetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? AppColors.danger : AppColors.textPrimary;
+    final palette = context.palette;
+    final color = destructive ? palette.danger : palette.textPrimary;
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -1137,6 +1149,7 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final needs = widget.requireTyping;
     final enabled =
         needs == null || _controller.text.trim().toUpperCase() == needs;
@@ -1153,7 +1166,7 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
         children: [
           Text(
             widget.message,
-            style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+            style: TextStyle(color: palette.textSecondary, height: 1.4),
           ),
           if (needs != null) ...[
             const SizedBox(height: 14),
@@ -1190,7 +1203,7 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
           onPressed: enabled ? () => Navigator.pop(context, true) : null,
           style: FilledButton.styleFrom(
             backgroundColor:
-                widget.destructive ? AppColors.danger : AppColors.primary,
+                widget.destructive ? palette.danger : palette.primary,
           ),
           child: Text(widget.confirmLabel),
         ),
@@ -1204,25 +1217,26 @@ class _VersionFooter extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
     final info = ref.watch(packageInfoProvider).valueOrNull;
     return Column(
       children: [
-        const Icon(LucideIcons.sparkles, size: 18, color: AppColors.primary),
+        Icon(LucideIcons.sparkles, size: 18, color: palette.primary),
         const SizedBox(height: 6),
         Text(
           info == null
               ? AppConfig.appName
               : '${AppConfig.appName} v${info.version} (${info.buildNumber})',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
+            color: palette.textSecondary,
           ),
         ),
         const SizedBox(height: 2),
-        const Text(
+        Text(
           'Made with ❤️ by Keshab Studios',
-          style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+          style: TextStyle(fontSize: 11.5, color: palette.textMuted),
         ),
       ],
     );

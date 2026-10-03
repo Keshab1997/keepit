@@ -8,7 +8,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/mind_toast.dart';
 import '../controllers/mind_feed_controller.dart';
 import '../widgets/mind_card_widget.dart';
@@ -121,9 +121,9 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                   color: Color(0x1FFF3B30),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.trash2,
-                  color: AppColors.danger,
+                  color: context.palette.danger,
                   size: 20,
                 ),
               ),
@@ -141,19 +141,19 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
             count == 1
                 ? "This item will be permanently removed from your mind."
                 : "These $count items will be permanently removed from your mind.",
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.5,
-              color: AppColors.textSecondary,
+              color: context.palette.textSecondary,
               height: 1.4,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text(
+              child: Text(
                 "Cancel",
                 style: TextStyle(
-                  color: AppColors.textSecondary,
+                  color: context.palette.textSecondary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -172,7 +172,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger,
+                backgroundColor: context.palette.danger,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(
@@ -207,6 +207,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final state = ref.watch(mindFeedProvider);
     final items = state.filteredItems;
 
@@ -315,12 +316,12 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                               ),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppColors.primary
+                                    ? palette.primary
                                     : const Color(0xF2FFFFFF),
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
                                   color: isSelected
-                                      ? AppColors.primary
+                                      ? palette.primary
                                       : const Color(0x33E5E7EB),
                                   width: 1,
                                 ),
@@ -342,7 +343,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                                       : FontWeight.w600,
                                   color: isSelected
                                       ? Colors.white
-                                      : AppColors.textSecondary,
+                                      : palette.textSecondary,
                                 ),
                               ),
                             ),
@@ -369,19 +370,19 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                                         color: Color(0x26FF5B37),
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         LucideIcons.sparkles,
-                                        color: AppColors.primary,
+                                        color: palette.primary,
                                         size: 32,
                                       ),
                                     ),
                                     const SizedBox(height: 16),
-                                    const Text(
+                                    Text(
                                       "No items found in this category",
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.textPrimary,
+                                        color: palette.textPrimary,
                                       ),
                                     ),
                                     const SizedBox(height: 6),
@@ -391,10 +392,10 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                                             .read(mindFeedProvider.notifier)
                                             .setSelectedTag(null);
                                       },
-                                      child: const Text(
+                                      child: Text(
                                         "Show all items",
                                         style: TextStyle(
-                                          color: AppColors.primary,
+                                          color: palette.primary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -475,12 +476,12 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                                                     height: 30,
                                                     decoration: BoxDecoration(
                                                       color: isSelected
-                                                          ? AppColors.danger
+                                                          ? palette.danger
                                                           : Colors.white,
                                                       shape: BoxShape.circle,
                                                       border: Border.all(
                                                         color: isSelected
-                                                            ? AppColors.danger
+                                                            ? palette.danger
                                                             : const Color(
                                                                 0x66000000,
                                                               ),
@@ -534,9 +535,10 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
             child: Container(
               height: 50,
               decoration: BoxDecoration(
-                color: AppColors.glassWhite,
+                color: context.palette.glassWhite,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.glassBorder, width: 1.1),
+                border:
+                    Border.all(color: context.palette.glassBorder, width: 1.1),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x08000000),
@@ -560,14 +562,14 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                 },
                 decoration: InputDecoration(
                   hintText: "Search my mind...",
-                  hintStyle: const TextStyle(
-                    color: AppColors.textMuted,
+                  hintStyle: TextStyle(
+                    color: context.palette.textMuted,
                     fontSize: 14.5,
                     fontWeight: FontWeight.w400,
                   ),
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     LucideIcons.search,
-                    color: AppColors.textSecondary,
+                    color: context.palette.textSecondary,
                     size: 19,
                   ),
                   suffixIcon: _searchController.text.isNotEmpty
@@ -596,7 +598,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: context.palette.primary,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: Colors.white.withValues(alpha: 0.4),
@@ -658,12 +660,12 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                 InkWell(
                   onTap: _exitSelectionMode,
                   borderRadius: BorderRadius.circular(10),
-                  child: const Padding(
-                    padding: EdgeInsets.all(6),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
                     child: Icon(
                       LucideIcons.x,
                       size: 19,
-                      color: AppColors.textPrimary,
+                      color: context.palette.textPrimary,
                     ),
                   ),
                 ),
@@ -673,10 +675,10 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                 // Selected Count Title
                 Text(
                   "$count",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: context.palette.textPrimary,
                   ),
                 ),
 
@@ -705,8 +707,8 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                     ),
                     child: Text(
                       isAllSelected ? "Deselect" : "Select All",
-                      style: const TextStyle(
-                        color: AppColors.primary,
+                      style: TextStyle(
+                        color: context.palette.primary,
                         fontWeight: FontWeight.w700,
                         fontSize: 12.5,
                       ),
@@ -726,7 +728,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.danger,
+                      color: context.palette.danger,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: const [
                         BoxShadow(
@@ -794,11 +796,12 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
             borderRadius: BorderRadius.circular(24),
             side: const BorderSide(color: Color(0xCCFFFFFF), width: 1.5),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(LucideIcons.sparkles, color: AppColors.primary, size: 20),
-              SizedBox(width: 8),
-              Text(
+              Icon(LucideIcons.sparkles,
+                  color: context.palette.primary, size: 20),
+              const SizedBox(width: 8),
+              const Text(
                 "Save to Mind",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
@@ -809,9 +812,9 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
             autofocus: true,
             decoration: InputDecoration(
               hintText: "Paste Instagram reel, video, or link...",
-              hintStyle: const TextStyle(
+              hintStyle: TextStyle(
                 fontSize: 13,
-                color: AppColors.textMuted,
+                color: context.palette.textMuted,
               ),
               filled: true,
               fillColor: const Color(0x99F1F3F6),
@@ -834,8 +837,8 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
               icon: const Icon(LucideIcons.image, size: 16),
               label: const Text('Image'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
+                foregroundColor: context.palette.primary,
+                side: BorderSide(color: context.palette.primary),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -843,9 +846,9 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text(
+              child: Text(
                 "Cancel",
-                style: TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.palette.textSecondary),
               ),
             ),
             ElevatedButton(
@@ -865,7 +868,7 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: context.palette.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(

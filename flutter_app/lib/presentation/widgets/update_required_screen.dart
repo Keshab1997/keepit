@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../controllers/app_update_controller.dart';
 
 /// Full-screen barrier shown **instead of** the app when the installed build
@@ -18,6 +18,7 @@ class UpdateRequiredScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
     final state = ref.watch(appUpdateProvider);
     final controller = ref.read(appUpdateProvider.notifier);
 
@@ -31,7 +32,7 @@ class UpdateRequiredScreen extends ConsumerWidget {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: palette.background,
         body: SafeArea(
           minimum: const EdgeInsets.fromLTRB(28, 24, 28, 26),
           child: Column(
@@ -69,18 +70,18 @@ class UpdateRequiredScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 28),
-              const Text(
+              Text(
                 'Update required',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.6,
-                  color: AppColors.textPrimary,
+                  color: palette.textPrimary,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'This version of KeepIt can no longer be used. Install the '
                 'latest update from Google Play — it takes a few seconds and '
                 'everything you saved stays on this device.',
@@ -88,7 +89,7 @@ class UpdateRequiredScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 14.5,
                   height: 1.5,
-                  color: AppColors.textSecondary,
+                  color: palette.textSecondary,
                 ),
               ),
               if (state.message != null) ...[
@@ -96,10 +97,10 @@ class UpdateRequiredScreen extends ConsumerWidget {
                 Text(
                   state.message!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     height: 1.45,
-                    color: AppColors.danger,
+                    color: palette.danger,
                   ),
                 ),
               ],
@@ -108,9 +109,9 @@ class UpdateRequiredScreen extends ConsumerWidget {
                 Text(
                   versionLine,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12.5,
-                    color: AppColors.textMuted,
+                    color: palette.textMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -123,9 +124,9 @@ class UpdateRequiredScreen extends ConsumerWidget {
                       ? null
                       : () => controller.startMandatoryUpdate(),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: palette.primary,
                     disabledBackgroundColor:
-                        AppColors.primary.withValues(alpha: 0.45),
+                        palette.primary.withValues(alpha: 0.45),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -153,12 +154,12 @@ class UpdateRequiredScreen extends ConsumerWidget {
                 height: 46,
                 child: TextButton(
                   onPressed: () => controller.openPlayStore(),
-                  child: const Text(
+                  child: Text(
                     'Open in Play Store',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
+                      color: palette.textSecondary,
                     ),
                   ),
                 ),

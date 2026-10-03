@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'app_colors.dart';
+import 'app_palette.dart';
 
 class MindToast {
   static void showDuplicateToast(
@@ -13,7 +13,7 @@ class MindToast {
     _showFloatingToast(
       context: context,
       icon: LucideIcons.bookmark,
-      accentColor: AppColors.primary,
+      accentColor: context.palette.primary,
       iconBgColor: const Color(0x26FF5B37),
       borderColor: const Color(0x66FF5B37),
       title: title,
@@ -28,7 +28,7 @@ class MindToast {
     _showFloatingToast(
       context: context,
       icon: LucideIcons.sparkles,
-      accentColor: AppColors.success,
+      accentColor: context.palette.success,
       iconBgColor: const Color(0x2610B981),
       borderColor: const Color(0x6610B981),
       title: title,
@@ -43,7 +43,7 @@ class MindToast {
     _showFloatingToast(
       context: context,
       icon: LucideIcons.trash2,
-      accentColor: AppColors.danger,
+      accentColor: context.palette.danger,
       iconBgColor: const Color(0x26FF3B30),
       borderColor: const Color(0x66FF3B30),
       title: title,
@@ -61,7 +61,7 @@ class MindToast {
     _showFloatingToast(
       context: context,
       icon: LucideIcons.info,
-      accentColor: AppColors.primary,
+      accentColor: context.palette.primary,
       iconBgColor: const Color(0x26FF5B37),
       borderColor: const Color(0x66FF5B37),
       title: title,
@@ -156,19 +156,19 @@ class MindToast {
                                 children: [
                                   Text(
                                     title,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 14,
                                       letterSpacing: -0.2,
-                                      color: AppColors.textPrimary,
+                                      color: context.palette.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     subtitle,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11.5,
-                                      color: AppColors.textSecondary,
+                                      color: context.palette.textSecondary,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),

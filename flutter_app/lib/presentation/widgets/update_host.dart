@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/updates/update_config.dart';
 import '../controllers/app_update_controller.dart';
 import 'update_prompt_sheet.dart';
@@ -100,6 +100,7 @@ class _DownloadingBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -107,9 +108,9 @@ class _DownloadingBanner extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: palette.surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: palette.cardBorder),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x14000000),
@@ -118,31 +119,31 @@ class _DownloadingBanner extends StatelessWidget {
               ),
             ],
           ),
-          child: const Row(
+          child: Row(
             children: [
               SizedBox(
                 width: 15,
                 height: 15,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.primary,
+                  color: palette.primary,
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'Downloading update…',
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: palette.textPrimary,
                   ),
                 ),
               ),
               Icon(
                 LucideIcons.download,
                 size: 16,
-                color: AppColors.textMuted,
+                color: palette.textMuted,
               ),
             ],
           ),

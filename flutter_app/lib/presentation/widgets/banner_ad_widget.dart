@@ -3,7 +3,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../core/ads/ad_config.dart';
 import '../../core/ads/ad_service.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 
 /// Bottom banner ad slot (anchored adaptive sizing).
 ///
@@ -61,12 +61,13 @@ class _BannerAdSlotState extends State<BannerAdSlot> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final ad = _ad;
     if (ad == null) return const SizedBox.shrink();
     return Container(
       width: double.infinity,
       height: ad.size.height.toDouble(),
-      color: AppColors.surface,
+      color: palette.surface,
       alignment: Alignment.center,
       child: AdWidget(ad: ad),
     );

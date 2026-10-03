@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/ads/ad_config.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../controllers/navigation_controller.dart';
 import '../widgets/banner_ad_widget.dart';
 import 'mind_feed_screen.dart';
@@ -27,6 +27,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
     final currentIndex = ref.watch(homeTabProvider);
     return PopScope(
       // Back from a secondary tab returns to Everything instead of popping
@@ -38,7 +39,7 @@ class HomeScreen extends ConsumerWidget {
         ref.read(homeTabProvider.notifier).state = HomeTab.everything;
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: palette.background,
         body: Column(
           children: [
             Expanded(child: _pages[currentIndex]),
@@ -48,9 +49,9 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(
+          decoration: BoxDecoration(
+            color: palette.surface,
+            border: const Border(
               top: BorderSide(color: Color(0x33E5E7EB), width: 1.0),
             ),
           ),
@@ -64,8 +65,8 @@ class HomeScreen extends ConsumerWidget {
                     ref.read(homeTabProvider.notifier).state = index,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                selectedItemColor: AppColors.primary,
-                unselectedItemColor: AppColors.textSecondary,
+                selectedItemColor: palette.primary,
+                unselectedItemColor: palette.textSecondary,
                 selectedLabelStyle: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 11.5,
@@ -75,63 +76,63 @@ class HomeScreen extends ConsumerWidget {
                   fontSize: 11.5,
                 ),
                 type: BottomNavigationBarType.fixed,
-                items: const [
+                items: [
                   BottomNavigationBarItem(
-                    icon: Padding(
+                    icon: const Padding(
                       padding: EdgeInsets.only(bottom: 3),
                       child: Icon(LucideIcons.layoutGrid, size: 22),
                     ),
                     activeIcon: Padding(
-                      padding: EdgeInsets.only(bottom: 3),
+                      padding: const EdgeInsets.only(bottom: 3),
                       child: Icon(
                         LucideIcons.layoutGrid,
                         size: 22,
-                        color: AppColors.primary,
+                        color: palette.primary,
                       ),
                     ),
                     label: 'Everything',
                   ),
                   BottomNavigationBarItem(
-                    icon: Padding(
+                    icon: const Padding(
                       padding: EdgeInsets.only(bottom: 3),
                       child: Icon(LucideIcons.folder, size: 22),
                     ),
                     activeIcon: Padding(
-                      padding: EdgeInsets.only(bottom: 3),
+                      padding: const EdgeInsets.only(bottom: 3),
                       child: Icon(
                         LucideIcons.folder,
                         size: 22,
-                        color: AppColors.primary,
+                        color: palette.primary,
                       ),
                     ),
                     label: 'Spaces',
                   ),
                   BottomNavigationBarItem(
-                    icon: Padding(
+                    icon: const Padding(
                       padding: EdgeInsets.only(bottom: 3),
                       child: Icon(LucideIcons.sparkles, size: 22),
                     ),
                     activeIcon: Padding(
-                      padding: EdgeInsets.only(bottom: 3),
+                      padding: const EdgeInsets.only(bottom: 3),
                       child: Icon(
                         LucideIcons.sparkles,
                         size: 22,
-                        color: AppColors.primary,
+                        color: palette.primary,
                       ),
                     ),
                     label: 'Serendipity',
                   ),
                   BottomNavigationBarItem(
-                    icon: Padding(
+                    icon: const Padding(
                       padding: EdgeInsets.only(bottom: 3),
                       child: Icon(LucideIcons.userCircle, size: 22),
                     ),
                     activeIcon: Padding(
-                      padding: EdgeInsets.only(bottom: 3),
+                      padding: const EdgeInsets.only(bottom: 3),
                       child: Icon(
                         LucideIcons.userCircle,
                         size: 22,
-                        color: AppColors.primary,
+                        color: palette.primary,
                       ),
                     ),
                     label: 'Profile',

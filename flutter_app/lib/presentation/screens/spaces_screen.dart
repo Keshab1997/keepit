@@ -6,7 +6,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../domain/entities/custom_space.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/cloud_sync_controller.dart';
@@ -32,6 +32,7 @@ class SpaceItemScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
     final liveItems = customSpaceId == null
         ? items
         : ref
@@ -78,10 +79,10 @@ class SpaceItemScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Text(
                     'No items in $spaceName yet',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: palette.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -90,8 +91,8 @@ class SpaceItemScreen extends ConsumerWidget {
                         ? 'Items matching this smart Space will appear here.'
                         : 'Open an item and choose this Space to assign it here.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: palette.textSecondary,
                       fontSize: 13,
                     ),
                   ),
@@ -410,7 +411,8 @@ class _SpacesScreenState extends ConsumerState<SpacesScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            style:
+                FilledButton.styleFrom(backgroundColor: context.palette.danger),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: const Text('Delete'),
           ),
@@ -588,10 +590,10 @@ class _SpacesScreenState extends ConsumerState<SpacesScreen> {
                               name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15.5,
-                                color: AppColors.textPrimary,
+                                color: context.palette.textPrimary,
                               ),
                             ),
                           ),
@@ -619,8 +621,8 @@ class _SpacesScreenState extends ConsumerState<SpacesScreen> {
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
+                        style: TextStyle(
+                          color: context.palette.textSecondary,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -630,10 +632,10 @@ class _SpacesScreenState extends ConsumerState<SpacesScreen> {
                 ),
                 if (menu != null) menu,
                 if (menu == null)
-                  const Icon(
+                  Icon(
                     LucideIcons.chevronRight,
                     size: 18,
-                    color: AppColors.textMuted,
+                    color: context.palette.textMuted,
                   ),
               ],
             ),
@@ -676,11 +678,11 @@ class _SectionTitle extends StatelessWidget {
         padding: const EdgeInsets.only(left: 4, bottom: 10),
         child: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
-            color: AppColors.textSecondary,
+            color: context.palette.textSecondary,
           ),
         ),
       );
@@ -700,24 +702,24 @@ class _EmptyCustomSpaceCard extends StatelessWidget {
             color: Colors.white.withValues(alpha: 0.75),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.2),
+              color: context.palette.primary.withValues(alpha: 0.2),
               width: 1.2,
             ),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(LucideIcons.folderPlus, color: AppColors.primary),
-              SizedBox(width: 12),
+              Icon(LucideIcons.folderPlus, color: context.palette.primary),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'Create a Space for your own collections',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: context.palette.textPrimary,
                   ),
                 ),
               ),
-              Icon(LucideIcons.chevronRight, color: AppColors.textMuted),
+              Icon(LucideIcons.chevronRight, color: context.palette.textMuted),
             ],
           ),
         ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../controllers/app_update_controller.dart';
 
 /// KeepIt's own update screen.
@@ -43,6 +43,7 @@ class _UpdateSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = context.palette;
     final state = ref.watch(appUpdateProvider);
     final controller = ref.read(appUpdateProvider.notifier);
     final navigator = Navigator.of(context);
@@ -52,9 +53,9 @@ class _UpdateSheet extends ConsumerWidget {
 
     return SafeArea(
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        decoration: BoxDecoration(
+          color: palette.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         padding: const EdgeInsets.fromLTRB(24, 10, 24, 22),
         child: Column(
@@ -66,7 +67,7 @@ class _UpdateSheet extends ConsumerWidget {
                 width: 38,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.cardBorder,
+                  color: palette.cardBorder,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -76,13 +77,13 @@ class _UpdateSheet extends ConsumerWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.all(11),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryLight,
+                  decoration: BoxDecoration(
+                    color: palette.primaryLight,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     ready ? LucideIcons.refreshCw : LucideIcons.download,
-                    color: AppColors.primary,
+                    color: palette.primary,
                     size: 20,
                   ),
                 ),
@@ -90,11 +91,11 @@ class _UpdateSheet extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     ready ? 'Update downloaded' : 'A new version is ready',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.4,
-                      color: AppColors.textPrimary,
+                      color: palette.textPrimary,
                     ),
                   ),
                 ),
@@ -105,10 +106,10 @@ class _UpdateSheet extends ConsumerWidget {
               ready
                   ? 'KeepIt needs to restart to finish installing. Everything you saved stays on this device.'
                   : 'A newer build$buildLabel is on Google Play. It downloads in the background while you keep using KeepIt.',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 height: 1.45,
-                color: AppColors.textSecondary,
+                color: palette.textSecondary,
               ),
             ),
             const SizedBox(height: 22),
@@ -127,9 +128,9 @@ class _UpdateSheet extends ConsumerWidget {
                         }
                       },
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: palette.primary,
                   disabledBackgroundColor:
-                      AppColors.primary.withValues(alpha: 0.45),
+                      palette.primary.withValues(alpha: 0.45),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -165,12 +166,12 @@ class _UpdateSheet extends ConsumerWidget {
                         if (!ready) await controller.snooze();
                         if (context.mounted) navigator.pop();
                       },
-                child: const Text(
+                child: Text(
                   'Later',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                    color: palette.textSecondary,
                   ),
                 ),
               ),

@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/notifications/serendipity_planner.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/utils/notification_service.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/mind_feed_controller.dart';
@@ -77,6 +77,7 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final items = ref.watch(mindFeedProvider).items;
     final byId = {for (final i in items) i.id: i};
     final upcoming = _service.upcoming
@@ -117,17 +118,17 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
+                      color: palette.primaryLight,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       LucideIcons.bellRing,
-                      color: AppColors.primary,
+                      color: palette.primary,
                       size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -136,27 +137,27 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
                           style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
+                            color: palette.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           'Resurface forgotten saves on day 3, 14, 45 & 90',
                           style: TextStyle(
                             fontSize: 12.5,
-                            color: AppColors.textSecondary,
+                            color: palette.textSecondary,
                           ),
                         ),
                       ],
                     ),
                   ),
                   if (_busy)
-                    const SizedBox(
+                    SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.primary,
+                        color: palette.primary,
                       ),
                     ),
                 ],
@@ -195,13 +196,13 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
                 ],
               ),
               const SizedBox(height: 22),
-              const Text(
+              Text(
                 'COMING UP',
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
-                  color: AppColors.textSecondary,
+                  color: palette.textSecondary,
                 ),
               ),
               const SizedBox(height: 10),
@@ -221,12 +222,12 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
                   ],
                 ),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 'Tip: use “Mark Watched” or “In 1 Week” right on the notification — no need to open the app.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 11.5,
-                  color: AppColors.textMuted,
+                  color: palette.textMuted,
                   height: 1.4,
                 ),
               ),
@@ -248,14 +249,14 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
       ),
       child: Row(
         children: [
-          const Icon(LucideIcons.bellOff, color: AppColors.danger, size: 18),
+          Icon(LucideIcons.bellOff, color: context.palette.danger, size: 18),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text(
               'Notifications are off for KeepIt. Allow them so reminders can reach you.',
               style: TextStyle(
                 fontSize: 12.5,
-                color: AppColors.textPrimary,
+                color: context.palette.textPrimary,
                 height: 1.35,
               ),
             ),
@@ -265,11 +266,11 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
               await _service.requestPermission();
               await _refreshPermission();
             },
-            child: const Text(
+            child: Text(
               'Allow',
               style: TextStyle(
                 fontWeight: FontWeight.w800,
-                color: AppColors.danger,
+                color: context.palette.danger,
               ),
             ),
           ),
@@ -298,13 +299,14 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: enabled ? AppColors.tagBg : const Color(0xFFF7F7F9),
+        color: enabled ? context.palette.tagBg : const Color(0xFFF7F7F9),
         borderRadius: BorderRadius.circular(11),
       ),
       child: Icon(
         icon,
         size: 17,
-        color: enabled ? AppColors.textPrimary : AppColors.textMuted,
+        color:
+            enabled ? context.palette.textPrimary : context.palette.textMuted,
       ),
     );
   }
@@ -325,16 +327,17 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: enabled ? AppColors.textPrimary : AppColors.textMuted,
+          color:
+              enabled ? context.palette.textPrimary : context.palette.textMuted,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
       ),
       trailing: Switch.adaptive(
         value: value && enabled,
-        activeTrackColor: AppColors.primary,
+        activeTrackColor: context.palette.primary,
         onChanged: enabled ? onChanged : null,
       ),
       onTap: enabled ? () => onChanged(!value) : null,
@@ -357,17 +360,18 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: enabled ? AppColors.textPrimary : AppColors.textMuted,
+          color:
+              enabled ? context.palette.textPrimary : context.palette.textMuted,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
       ),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: enabled ? AppColors.primaryLight : AppColors.tagBg,
+          color: enabled ? context.palette.primaryLight : context.palette.tagBg,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -375,7 +379,8 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
           style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 13,
-            color: enabled ? AppColors.primary : AppColors.textMuted,
+            color:
+                enabled ? context.palette.primary : context.palette.textMuted,
           ),
         ),
       ),
@@ -404,15 +409,15 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
         isDigest ? 'Sunday Mind Digest' : (item?.title ?? 'Saved item'),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13.5,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: context.palette.textPrimary,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
       ),
     );
   }
@@ -445,14 +450,14 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.tagBg,
+        color: context.palette.tagBg,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12.5,
-          color: AppColors.textSecondary,
+          color: context.palette.textSecondary,
           height: 1.4,
         ),
       ),

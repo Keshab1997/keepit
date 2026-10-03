@@ -110,7 +110,7 @@ class ProfileScreen extends ConsumerWidget {
                 _Tile(
                   icon: LucideIcons.refreshCw,
                   title: 'Check for update',
-                  subtitle: 'Looks for a newer build on Google Play',
+                  subtitle: _updateSubtitle(ref.watch(appUpdateProvider)),
                   onTap: () => _checkForUpdate(context, ref),
                 ),
               _Tile(
@@ -206,6 +206,27 @@ class ProfileScreen extends ConsumerWidget {
         context,
         title: 'Ad not ready — try again in a moment',
       );
+    }
+  }
+
+  static String _updateSubtitle(AppUpdateState state) {
+    switch (state.phase) {
+      case AppUpdatePhase.readyToInstall:
+        return 'Update downloaded • tap to restart & install';
+      case AppUpdatePhase.updateAvailable:
+        final code = state.availableVersionCode;
+        return code == null
+            ? 'New version available on Google Play'
+            : 'Build $code available on Google Play';
+      case AppUpdatePhase.downloading:
+        return 'Downloading update in the background…';
+      case AppUpdatePhase.checking:
+        return 'Checking Google Play…';
+      case AppUpdatePhase.upToDate:
+      case AppUpdatePhase.idle:
+      case AppUpdatePhase.blocked:
+      case AppUpdatePhase.unsupported:
+        return 'Looks for a newer build on Google Play';
     }
   }
 
@@ -592,12 +613,12 @@ class _SignInButton extends ConsumerWidget {
                     color: palette.primary,
                   ),
                 )
-              : Row(
+              : const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const _GoogleG(size: 16),
-                    const SizedBox(width: 7),
-                    const Text(
+                    _GoogleG(size: 16),
+                    SizedBox(width: 7),
+                    Text(
                       'Sign in',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,

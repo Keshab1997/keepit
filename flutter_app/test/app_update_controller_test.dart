@@ -308,6 +308,45 @@ void main() {
     expect(state.message, isNotNull);
   });
 
+  test('falls back to immediate update when flexible is disallowed', () async {
+    service = _FakeAppUpdateService(
+      info: _info(flexibleAllowed: false, immediateAllowed: true),
+    );
+    final container = buildContainer();
+    final controller = container.read(appUpdateProvider.notifier);
+
+    await controller.check();
+    final started = await controller.startFlexibleDownload();
+
+    expect(started, isTrue);
+    expect(service.flexibleStarts, 0);
+    expect(service.immediateStarts, 1);
+  });
+
+  test('onAppResumed re-checks when interval elapsed or download finished',
+      () async {
+    service = _FakeAppUpdateService(
+      info: _info(availability: UpdateAvailability.updateNotAvailable),
+    );
+    final container = buildContainer(
+      policy: const UpdatePolicy(resumeRecheckInterval: Duration.zero),
+    );
+    final controller = container.read(appUpdateProvider.notifier);
+
+    await controller.check();
+    expect(container.read(appUpdateProvider).phase, AppUpdatePhase.upToDate);
+
+    // A new build rolls out while the app sits in background.
+    service.setInfo(_info(availableVersionCode: 8));
+    await controller.onAppResumed();
+
+    expect(
+      container.read(appUpdateProvider).phase,
+      AppUpdatePhase.updateAvailable,
+    );
+    expect(container.read(appUpdateProvider).availableVersionCode, 8);
+  });
+
   // ---- widget level: is the flow actually wired into the app? ----
 
   testWidgets('shows KeepIt\'s update sheet on top of a usable app', (
@@ -385,4 +424,44 @@ void main() {
     expect(widgetService.immediateStarts, 1);
     expect(find.text('Update required'), findsOneWidget);
   });
+
+  testWidgets(
+    'keeps the sheet open and offers Play Store when download fails to start',
+    (tester) async {
+      final widgetService = _FakeAppUpdateService(info: _info())
+        ..flexibleResult = AppUpdateResult.inAppUpdateFailed;
+      final widgetPrefs = _MemoryUpdatePreferences();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appUpdateServiceProvider.overrideWithValue(widgetService),
+            updatePreferencesProvider.overrideWithValue(widgetPrefs),
+            updatePolicyProvider.overrideWithValue(const UpdatePolicy()),
+            installedBuildNumberProvider.overrideWith((ref) => 6),
+          ],
+          child: const MaterialApp(
+            home: UpdateHost(
+              child: Scaffold(body: Center(child: Text('Home'))),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(UpdateConfig.startupDelay);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Update now'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('A new version is ready'), findsOneWidget);
+      expect(find.text('Open in Play Store'), findsOneWidget);
+      expect(
+        widgetPrefs.version,
+        isNull,
+        reason: 'a failed download must not silently snooze the update',
+      );
+    },
+  );
 }

@@ -12,7 +12,8 @@ import 'update_required_screen.dart';
 
 /// Wraps the app and owns the update flow.
 ///
-/// * asks Play once per cold start whether a newer KeepIt exists,
+/// * asks Play on cold start and when resuming from the background whether a
+///   newer KeepIt exists,
 /// * shows KeepIt's own update screen when there is one,
 /// * replaces the app with [UpdateRequiredScreen] for a mandatory release.
 ///
@@ -27,18 +28,33 @@ class UpdateHost extends ConsumerStatefulWidget {
   ConsumerState<UpdateHost> createState() => _UpdateHostState();
 }
 
-class _UpdateHostState extends ConsumerState<UpdateHost> {
+class _UpdateHostState extends ConsumerState<UpdateHost>
+    with WidgetsBindingObserver {
   bool _sheetOpen = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Let the first frame, Hive and Firebase settle before touching Play.
       await Future<void>.delayed(UpdateConfig.startupDelay);
       if (!mounted) return;
       await ref.read(appUpdateProvider.notifier).check();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      unawaited(ref.read(appUpdateProvider.notifier).onAppResumed());
+    }
   }
 
   @override

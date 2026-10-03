@@ -35,4 +35,9 @@ class UpdateConfig {
   /// Grace period after the first frame before asking Play anything, so the
   /// update check never competes with Hive, Firebase or the first paint.
   static const Duration startupDelay = Duration(milliseconds: 1200);
+
+  /// Minimum interval between automatic Play Store checks when the user
+  /// brings KeepIt back from the background. Downloads that are already in
+  /// progress bypass this interval so a finished download is caught right away.
+  static const Duration resumeRecheckInterval = Duration(minutes: 15);
 }

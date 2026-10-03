@@ -19,6 +19,7 @@ class UpdatePromptSheet {
   static Future<void> showUpdateAvailable(BuildContext context) {
     return showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (_) => const _UpdateSheet(ready: false),
@@ -28,6 +29,7 @@ class UpdatePromptSheet {
   static Future<void> showReadyToInstall(BuildContext context) {
     return showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (_) => const _UpdateSheet(ready: true),
@@ -112,6 +114,17 @@ class _UpdateSheet extends ConsumerWidget {
                 color: palette.textSecondary,
               ),
             ),
+            if (state.message != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                state.message!,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: palette.danger,
+                ),
+              ),
+            ],
             const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
@@ -123,8 +136,9 @@ class _UpdateSheet extends ConsumerWidget {
                         if (ready) {
                           await controller.installDownloadedUpdate();
                         } else {
-                          await controller.startFlexibleDownload();
-                          if (context.mounted) navigator.pop();
+                          final started =
+                              await controller.startFlexibleDownload();
+                          if (started && context.mounted) navigator.pop();
                         }
                       },
                 style: FilledButton.styleFrom(
@@ -153,6 +167,29 @@ class _UpdateSheet extends ConsumerWidget {
                       ),
               ),
             ),
+            if (state.message != null && !ready) ...[
+              const SizedBox(height: 4),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: TextButton(
+                  onPressed: state.busy
+                      ? null
+                      : () async {
+                          await controller.openPlayStore();
+                          if (context.mounted) navigator.pop();
+                        },
+                  child: Text(
+                    'Open in Play Store',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: palette.primary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 4),
             SizedBox(
               width: double.infinity,

@@ -61,7 +61,7 @@ class AppUpdateState {
   /// A Play call (consent dialog, install, …) is in flight.
   final bool busy;
 
-  /// Human-readable detail for logs; surfaced only on the blocking screen.
+  /// Human-readable detail for logs; surfaced on the update/blocking screens.
   final String? message;
 
   final DateTime? lastCheckedAt;
@@ -104,11 +104,13 @@ class UpdatePolicy {
     this.mandatoryBelowBuildNumber = UpdateConfig.mandatoryBelowBuildNumber,
     this.mandatoryPriority = UpdateConfig.mandatoryPriority,
     this.snoozeDuration = UpdateConfig.snoozeDuration,
+    this.resumeRecheckInterval = UpdateConfig.resumeRecheckInterval,
   });
 
   final int mandatoryBelowBuildNumber;
   final int mandatoryPriority;
   final Duration snoozeDuration;
+  final Duration resumeRecheckInterval;
 }
 
 /// Remembers that the user postponed one specific Play build.
@@ -186,10 +188,36 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
   final Ref _ref;
   StreamSubscription<InstallStatus>? _installSub;
   bool _checking = false;
+  bool _flexibleAllowed = true;
+  bool _immediateAllowed = true;
 
   AppUpdateService get _service => _ref.read(appUpdateServiceProvider);
   UpdatePolicy get _policy => _ref.read(updatePolicyProvider);
   UpdatePreferences get _prefs => _ref.read(updatePreferencesProvider);
+
+  /// Called when KeepIt returns to the foreground.
+  ///
+  /// Re-queries Play immediately if a background download was running (Play's
+  /// own recommendation so `InstallStatus.downloaded` is never missed), or
+  /// after [UpdatePolicy.resumeRecheckInterval] so a user who leaves KeepIt in
+  /// Android recents still sees new Play releases without force-closing the app.
+  Future<void> onAppResumed() async {
+    if (!UpdateConfig.enabled || !_service.isSupported || _checking) return;
+    if (state.phase == AppUpdatePhase.downloading) {
+      await check();
+      return;
+    }
+    if (state.phase == AppUpdatePhase.blocked ||
+        state.phase == AppUpdatePhase.updateAvailable ||
+        state.phase == AppUpdatePhase.readyToInstall) {
+      return;
+    }
+    final last = state.lastCheckedAt;
+    if (last == null ||
+        DateTime.now().difference(last) >= _policy.resumeRecheckInterval) {
+      await check();
+    }
+  }
 
   /// Asks Play whether a newer build exists.
   ///
@@ -224,6 +252,8 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
         return;
       }
 
+      _flexibleAllowed = info.flexibleUpdateAllowed;
+      _immediateAllowed = info.immediateUpdateAllowed;
       final available = info.availableVersionCode;
       final finishedDownload = info.installStatus == InstallStatus.downloaded;
       final inProgress = info.updateAvailability ==
@@ -245,7 +275,7 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
         return;
       }
 
-      if (!isAvailable) {
+      if (!isAvailable && !inProgress) {
         state = state.copyWith(
           phase: AppUpdatePhase.upToDate,
           busy: false,
@@ -314,41 +344,55 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
   }
 
   /// "Update" on the prompt: downloads the new build in the background while
-  /// the user keeps using KeepIt.
-  Future<void> startFlexibleDownload() async {
-    if (!_service.isSupported) return;
+  /// the user keeps using KeepIt (or falls back to Play's immediate flow when
+  /// Play only permits an immediate update).
+  ///
+  /// Returns `true` when the sheet can close (download started or user
+  /// cancelled), and `false` when starting failed so the sheet stays open.
+  Future<bool> startFlexibleDownload() async {
+    if (!_service.isSupported) return false;
     final version = state.availableVersionCode;
-    state = state.copyWith(phase: AppUpdatePhase.checking, busy: true);
+    state = state.copyWith(
+      phase: AppUpdatePhase.checking,
+      busy: true,
+      clearMessage: true,
+    );
 
-    final result = await _service.startFlexibleUpdate();
-    if (!mounted) return;
+    final useImmediate = !_flexibleAllowed && _immediateAllowed;
+    final result = useImmediate
+        ? await _service.performImmediateUpdate()
+        : await _service.startFlexibleUpdate();
+    if (!mounted) return false;
 
     switch (result) {
       case AppUpdateResult.success:
-        _watchInstallState();
+        if (!useImmediate) {
+          _watchInstallState();
+        }
         state = state.copyWith(
           phase: AppUpdatePhase.downloading,
           busy: false,
           clearMessage: true,
         );
-        break;
+        return true;
       case AppUpdateResult.userDeniedUpdate:
         // Play's dialog was dismissed — do not nag again today.
         await _prefs.snooze(_policy.snoozeDuration, versionCode: version);
-        if (!mounted) return;
+        if (!mounted) return false;
         state = state.copyWith(
           phase: AppUpdatePhase.idle,
           busy: false,
           message: 'Update postponed.',
         );
-        break;
+        return true;
       case AppUpdateResult.inAppUpdateFailed:
         state = state.copyWith(
           phase: AppUpdatePhase.updateAvailable,
           busy: false,
-          message: 'Play could not start the download.',
+          message:
+              'Play could not start the download. Try "Open in Play Store".',
         );
-        break;
+        return false;
     }
   }
 
@@ -403,7 +447,7 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
     state = state.copyWith(phase: AppUpdatePhase.idle, busy: false);
   }
 
-  /// Escape hatch on the blocking screen: the user updates by hand.
+  /// Escape hatch on the update or blocking screen: the user updates by hand.
   Future<void> openPlayStore() async {
     try {
       await launchUrl(

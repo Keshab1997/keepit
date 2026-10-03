@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_palette.dart';
 import '../../data/datasources/local_mind_datasource.dart';
 import '../controllers/mind_feed_controller.dart';
+import '../widgets/update_host.dart';
 import 'home_screen.dart';
 
 /// One onboarding page.
@@ -70,8 +71,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       // Best-effort: never block the user from entering the app.
     }
     if (!mounted) return;
-    Navigator.of(context)
-        .pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => const UpdateHost(child: HomeScreen()),
+      ),
+    );
   }
 
   void _next() {

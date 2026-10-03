@@ -42,3 +42,9 @@
 -keep class * extends androidx.room3.RoomDatabase { <init>(); }
 # WorkManager instantiates InputMerger implementations reflectively too.
 -keep class * extends androidx.work.InputMerger { <init>(); }
+
+# Google Play Core in-app update API (in_app_update plugin). Keep Play Core and
+# plugin wrapper classes so R8 full mode never strips service bindings or callbacks.
+-keep class com.google.android.play.core.** { *; }
+-keep class de.ffuf.in_app_update.** { *; }
+-dontwarn com.google.android.play.core.**

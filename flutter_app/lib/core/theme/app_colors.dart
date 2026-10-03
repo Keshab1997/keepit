@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 
+/// The light palette's literal values.
+///
+/// Widgets should **not** read these: a `const` colour cannot change with the
+/// brightness, so a direct reference renders light-mode colours on a dark
+/// screen. Read `context.palette.x` instead — [AppPalette.light] is built from
+/// these constants, [AppPalette.dark] holds the dark counterparts, and the
+/// palette in the active theme is what a widget sees. Edit a brand colour here
+/// and both themes pick it up.
 class AppColors {
   // Brand Radiant Accents
   static const Color primary = Color(
@@ -35,6 +43,7 @@ class AppColors {
   static const Color tagBg = Color(0xFFF1F3F6);
   static const Color tagText = Color(0xFF374151);
   static const Color cardBorder = Color(0xFFE5E7EB);
+  static const Color divider = Color(0xFFF0F1F4);
 
   // Status Accents
   static const Color success = Color(0xFF10B981);

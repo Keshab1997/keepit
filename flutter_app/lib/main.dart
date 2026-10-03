@@ -9,7 +9,7 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import 'core/ads/ad_service.dart';
 import 'core/cloud/firebase_bootstrap.dart';
-import 'core/theme/app_colors.dart';
+import 'core/theme/app_palette.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/mind_toast.dart';
 import 'core/utils/notification_service.dart';
@@ -230,8 +230,9 @@ class _BrandSplash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: palette.background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -265,19 +266,19 @@ class _BrandSplash extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'KeepIt',
               style: TextStyle(
                 fontSize: 27,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.5,
-                color: AppColors.textPrimary,
+                color: palette.textPrimary,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Your visual second brain',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 13, color: palette.textSecondary),
             ),
           ],
         ),

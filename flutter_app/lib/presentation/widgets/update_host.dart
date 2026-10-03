@@ -31,21 +31,25 @@ class UpdateHost extends ConsumerStatefulWidget {
 class _UpdateHostState extends ConsumerState<UpdateHost>
     with WidgetsBindingObserver {
   bool _sheetOpen = false;
+  Timer? _startupTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Let the first frame, Hive and Firebase settle before touching Play.
-      await Future<void>.delayed(UpdateConfig.startupDelay);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      await ref.read(appUpdateProvider.notifier).check();
+      // Let the first frame, Hive and Firebase settle before touching Play.
+      _startupTimer = Timer(UpdateConfig.startupDelay, () {
+        if (!mounted) return;
+        unawaited(ref.read(appUpdateProvider.notifier).check());
+      });
     });
   }
 
   @override
   void dispose() {
+    _startupTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

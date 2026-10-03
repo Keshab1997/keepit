@@ -11,7 +11,6 @@ import 'core/ads/ad_service.dart';
 import 'core/cloud/firebase_bootstrap.dart';
 import 'core/theme/app_palette.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/mind_toast.dart';
 import 'core/utils/notification_service.dart';
 import 'data/datasources/local_mind_datasource.dart';
 import 'presentation/controllers/mind_feed_controller.dart';
@@ -19,6 +18,7 @@ import 'presentation/controllers/theme_mode_controller.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
 import 'presentation/widgets/notification_host.dart';
+import 'presentation/widgets/share_capture_overlay.dart';
 import 'presentation/widgets/sync_host.dart';
 import 'presentation/widgets/update_host.dart';
 
@@ -154,6 +154,7 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
     ) {
       if (value.isNotEmpty) {
         final path = value.first.path;
+        ReceiveSharingIntent.instance.reset();
         _handleIncomingShare(path);
       }
     });
@@ -164,39 +165,16 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
     ) {
       if (value.isNotEmpty) {
         final path = value.first.path;
+        ReceiveSharingIntent.instance.reset();
         _handleIncomingShare(path);
       }
     });
   }
 
   Future<void> _handleIncomingShare(String sharedText) async {
-    try {
-      final notifier = ref.read(mindFeedProvider.notifier);
-      final result = _looksLikeImagePath(sharedText)
-          ? await notifier.addImagePath(sharedText)
-          : await notifier.addUrl(sharedText);
-      if (!mounted) return;
-      final context = navigatorKey.currentContext;
-      if (context != null && context.mounted) {
-        if (result == SaveResult.duplicate) {
-          MindToast.showDuplicateToast(context);
-        } else if (result == SaveResult.success) {
-          MindToast.showSuccessToast(context);
-        }
-      }
-    } catch (e) {
-      if (!mounted) return;
-      final context = navigatorKey.currentContext;
-      if (context != null && context.mounted) {
-        MindToast.showDeleteToast(context, title: e.toString());
-      }
-    }
+    if (!mounted) return;
+    await ref.read(shareCaptureProvider.notifier).capture(sharedText);
   }
-
-  static bool _looksLikeImagePath(String value) => RegExp(
-        r'\.(?:jpe?g|png|webp|gif|heic|heif)(?:[?#].*)?$',
-        caseSensitive: false,
-      ).hasMatch(value.trim());
 
   @override
   Widget build(BuildContext context) {

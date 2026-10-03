@@ -17,12 +17,14 @@ class MindFeedState {
   final bool isLoading;
   final String searchQuery;
   final String? selectedTag;
+  final MindItem? lastSavedItem;
 
   const MindFeedState({
     this.items = const [],
     this.isLoading = false,
     this.searchQuery = '',
     this.selectedTag,
+    this.lastSavedItem,
   });
 
   MindFeedState copyWith({
@@ -31,12 +33,14 @@ class MindFeedState {
     String? searchQuery,
     String? selectedTag,
     bool clearTag = false,
+    MindItem? lastSavedItem,
   }) {
     return MindFeedState(
       items: items ?? this.items,
       isLoading: isLoading ?? this.isLoading,
       searchQuery: searchQuery ?? this.searchQuery,
       selectedTag: clearTag ? null : (selectedTag ?? this.selectedTag),
+      lastSavedItem: lastSavedItem ?? this.lastSavedItem,
     );
   }
 
@@ -125,6 +129,10 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     final cleanInput = rawText.trim();
     if (cleanInput.isEmpty) return SaveResult.empty;
 
+    // Wait for the initial Hive load so a cold-start share never races with
+    // loadItems() and gets overwritten when loadItems() completes.
+    await ready;
+
     final targetUrl = _extractCleanUrl(cleanInput);
 
     // Duplicate Check: Check if URL already exists in current mind items
@@ -152,7 +160,10 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     }
 
     await _localDataSource.saveItem(newItem);
-    state = state.copyWith(items: [newItem, ...state.items]);
+    state = state.copyWith(
+      items: [newItem, ...state.items],
+      lastSavedItem: newItem,
+    );
     _changed();
     // Reward-moment ad: an interstitial may appear (frequency caps
     // permitting) right after a successful save. See AdService.
@@ -164,6 +175,7 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   /// local database. The URL then syncs through Firestore like any other item;
   /// raw image bytes never enter Firestore.
   Future<SaveResult> addImage(XFile image) async {
+    await ready;
     final imageUrl = await ImgBbUploader.upload(image);
     final now = DateTime.now().toUtc();
     final title = _imageTitle(image.name);
@@ -180,7 +192,10 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     );
 
     await _localDataSource.saveItem(newItem);
-    state = state.copyWith(items: [newItem, ...state.items]);
+    state = state.copyWith(
+      items: [newItem, ...state.items],
+      lastSavedItem: newItem,
+    );
     _changed();
     AdService.instance.onItemSaved();
     return SaveResult.success;

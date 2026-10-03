@@ -7,6 +7,7 @@ import '../../core/theme/app_palette.dart';
 import '../controllers/navigation_controller.dart';
 import '../widgets/banner_ad_widget.dart';
 import '../widgets/clipboard_prompt_banner.dart';
+import '../widgets/share_capture_overlay.dart';
 import 'mind_feed_screen.dart';
 import 'spaces_screen.dart';
 import 'serendipity_screen.dart';
@@ -52,6 +53,12 @@ class HomeScreen extends ConsumerWidget {
                     right: 16,
                     bottom: 12,
                     child: ClipboardPromptBanner(),
+                  ),
+                  const Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 12,
+                    child: ShareCaptureOverlay(),
                   ),
                 ],
               ),

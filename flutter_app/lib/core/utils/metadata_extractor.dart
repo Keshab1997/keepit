@@ -75,57 +75,71 @@ class MetadataExtractor {
       );
     }
 
-    // 2. Instagram Handler (Reels & Posts)
-    if (cleanUrl.contains('instagram.com/reel') ||
-        cleanUrl.contains('instagram.com/p/')) {
+    // 2. Instagram Handler (Reels, Posts & Share links)
+    if (cleanUrl.contains('instagram.com/')) {
       String? igThumb;
       String author = 'Instagram';
       String rawCaption = '';
 
-      // First attempt: Instagram oEmbed API (Returns clean author & caption without metric clutter)
-      try {
-        final oembedUri = Uri.parse(
-          'https://api.instagram.com/oembed/?url=${Uri.encodeComponent(cleanUrl)}',
-        );
-        final oembedRes =
-            await http.get(oembedUri).timeout(const Duration(seconds: 4));
-        if (oembedRes.statusCode == 200) {
-          final json = jsonDecode(oembedRes.body);
-          author = json['author_name'] ?? author;
-          igThumb = json['thumbnail_url'];
-          if (json['title'] != null &&
-              json['title'].toString().trim().isNotEmpty) {
-            rawCaption = json['title'].toString().trim();
-          }
-        }
-      } catch (_) {}
-
-      // Second attempt: Scrape Open Graph meta tags
-      if (rawCaption.isEmpty || igThumb == null) {
-        try {
-          final scraped = await _scrapeOpenGraph(cleanUrl);
-          if (scraped['image'] != null && scraped['image']!.isNotEmpty) {
-            igThumb ??= scraped['image'];
-          }
-          // Some Instagram meta tags hold the caption in og:title, twitter:title or og:description
-          final candidateDesc = scraped['description'] ?? '';
-          final candidateTitle = scraped['title'] ?? '';
-
-          // Prefer the text that doesn't say "likes, comments"
-          if (!_isInstagramMetricClutter(candidateTitle) &&
-              candidateTitle.isNotEmpty &&
-              candidateTitle != 'Instagram') {
-            rawCaption = candidateTitle;
-          } else if (!_isInstagramMetricClutter(candidateDesc) &&
-              candidateDesc.isNotEmpty) {
-            rawCaption = candidateDesc;
-          } else {
-            // Strip the "X likes, Y comments:" prefix from description
-            rawCaption = _stripInstagramMetricPrefix(
-              candidateDesc.isNotEmpty ? candidateDesc : candidateTitle,
+      // Run oEmbed and Open Graph scraping in parallel so a cold-start share
+      // does not pay two sequential network timeouts when one endpoint stalls.
+      Map<String, dynamic>? oembedJson;
+      Map<String, String?> scraped = const {};
+      await Future.wait<void>([
+        () async {
+          try {
+            final oembedUri = Uri.parse(
+              'https://api.instagram.com/oembed/?url=${Uri.encodeComponent(cleanUrl)}',
             );
-          }
-        } catch (_) {}
+            final oembedRes = await http
+                .get(oembedUri)
+                .timeout(const Duration(milliseconds: 3200));
+            if (oembedRes.statusCode == 200) {
+              final decoded = jsonDecode(oembedRes.body);
+              if (decoded is Map<String, dynamic>) {
+                oembedJson = decoded;
+              }
+            }
+          } catch (_) {}
+        }(),
+        () async {
+          try {
+            scraped = await _scrapeOpenGraph(cleanUrl);
+          } catch (_) {}
+        }(),
+      ]);
+
+      if (oembedJson != null) {
+        author = (oembedJson!['author_name'] as String?) ?? author;
+        igThumb = oembedJson!['thumbnail_url'] as String?;
+        final title = oembedJson!['title']?.toString().trim() ?? '';
+        if (title.isNotEmpty) {
+          rawCaption = title;
+        }
+      }
+
+      if (rawCaption.isEmpty || igThumb == null) {
+        if (scraped['image'] != null && scraped['image']!.isNotEmpty) {
+          igThumb ??= scraped['image'];
+        }
+        // Some Instagram meta tags hold the caption in og:title, twitter:title or og:description
+        final candidateDesc = scraped['description'] ?? '';
+        final candidateTitle = scraped['title'] ?? '';
+
+        // Prefer the text that doesn't say "likes, comments"
+        if (!_isInstagramMetricClutter(candidateTitle) &&
+            candidateTitle.isNotEmpty &&
+            candidateTitle != 'Instagram') {
+          rawCaption = candidateTitle;
+        } else if (!_isInstagramMetricClutter(candidateDesc) &&
+            candidateDesc.isNotEmpty) {
+          rawCaption = candidateDesc;
+        } else {
+          // Strip the "X likes, Y comments:" prefix from description
+          rawCaption = _stripInstagramMetricPrefix(
+            candidateDesc.isNotEmpty ? candidateDesc : candidateTitle,
+          );
+        }
       }
 
       // Fallback to text shared from Instagram share sheet

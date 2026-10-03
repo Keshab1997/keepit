@@ -10,6 +10,7 @@ import 'package:keepit/data/datasources/local_mind_datasource.dart';
 import 'package:keepit/domain/entities/mind_item.dart';
 import 'package:keepit/presentation/controllers/mind_feed_controller.dart';
 import 'package:keepit/presentation/widgets/clipboard_prompt_banner.dart';
+import 'package:keepit/presentation/widgets/share_capture_overlay.dart';
 
 class _InMemoryMetaDataSource extends LocalMindDataSource {
   final Map<String, Object?> _metaValues = <String, Object?>{};
@@ -184,4 +185,80 @@ void main() {
 
     expect(find.text('Save GitHub link?'), findsNothing);
   });
+
+  testWidgets(
+    'ShareCaptureOverlay animates saving to saved and survives cold-start race',
+    (tester) async {
+      final dataSource = _InMemoryMetaDataSource();
+      await dataSource.putMeta(LocalMindDataSource.demoSeededKey, true);
+      await dataSource.saveItem(
+        MindItem(
+          id: 'existing-1',
+          title: 'Existing note',
+          type: ItemType.quickNote,
+          createdAt: DateTime(2026, 10, 1),
+          updatedAt: DateTime(2026, 10, 1),
+        ),
+      );
+
+      final container = ProviderContainer(
+        overrides: [localDataSourceProvider.overrideWithValue(dataSource)],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: AppTheme.darkTheme,
+            home: const Scaffold(
+              body: Stack(
+                children: [
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 12,
+                    child: ShareCaptureOverlay(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Fire capture immediately (simulating getInitialMedia on cold start
+      // before MindFeedController.loadItems() has settled) and a duplicate
+      // emission from getMediaStream right after.
+      final future1 = container
+          .read(shareCaptureProvider.notifier)
+          .capture('https://www.instagram.com/reel/COLD_START_1/');
+      final future2 = container
+          .read(shareCaptureProvider.notifier)
+          .capture('https://www.instagram.com/reel/COLD_START_1/');
+
+      expect(
+        container.read(shareCaptureProvider).phase,
+        ShareCapturePhase.saving,
+      );
+      expect(container.read(shareCaptureProvider).sourceLabel, 'Instagram');
+
+      await Future.wait([future1, future2]);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+
+      expect(find.text('Saved to your Mind ✨'), findsOneWidget);
+      final items = container.read(mindFeedProvider).items;
+      expect(items.length, 2, reason: 'existing + newly shared item preserved');
+      expect(
+        items.any((i) => i.url?.contains('COLD_START_1') == true),
+        isTrue,
+      );
+
+      // Let the auto-hide timer complete cleanly.
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(find.text('Saved to your Mind ✨'), findsNothing);
+    },
+  );
 }

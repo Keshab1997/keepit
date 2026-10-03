@@ -5,6 +5,13 @@ name: Publish Android Release
 # release notes from the commit titles since the previous tag, publishes the
 # GitHub Release and uploads the versioned APK/AAB plus SHA256SUMS.txt.
 #
+# Uploading to Google Play is opt-in per run: set "Upload to Play internal
+# testing" to true when dispatching. It reuses this same signed AAB — no second
+# build — and lands on the `internal` track only, never production. Needs the
+# PLAY_SERVICE_ACCOUNT_JSON secret and the package name typed exactly as in
+# Play Console (com.keshabstudios.keepit). Play rejects a version code it has
+# already seen, so bump the +build number in pubspec.yaml before every upload.
+#
 # Bump flutter_app/pubspec.yaml (version: 1.0.1+2) in a PR before running this.
 # Needs the keystore secrets in this repository's Settings → Secrets.
 
@@ -21,6 +28,15 @@ on:
         required: false
         type: boolean
         default: false
+      upload_to_play_internal:
+        description: Also upload the signed AAB to Google Play Internal testing?
+        required: false
+        type: boolean
+        default: false
+      package_name:
+        description: Android applicationId / Play Console package name (required if Play upload is enabled)
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -33,6 +49,20 @@ jobs:
       working-directory: flutter_app
       release-draft: ${{ inputs.draft }}
       release-prerelease: ${{ inputs.prerelease }}
+      # Play upload, opt-in per run. An empty play-track is what switches the
+      # AAB upload off inside the reusable build (flutter-build.yml skips the
+      # step when play-track is blank), so the default dispatch behaves exactly
+      # as before: GitHub Release only.
+      play-track: ${{ inputs.upload_to_play_internal && 'internal' || '' }}
+      play-package-name: ${{ inputs.package_name }}
+      # Per-release "What's new" text for Play, one file per locale:
+      # distribution/whatsnew/whatsnew-en-US, whatsnew-bn-BD. Update them in the
+      # same commit as the version bump, or Play shows the previous release's
+      # notes.
+      play-whats-new-directory: ${{ inputs.upload_to_play_internal && 'distribution/whatsnew' || '' }}
+      # completed = published to internal testers straight away; production is
+      # never touched by this workflow.
+      play-status: completed
       # Real AdMob IDs come from repository Variables, never from git. A
       # reusable workflow's `with:` inputs cannot read the secrets context, and
       # AdMob IDs are public identifiers that ship inside every APK anyway.

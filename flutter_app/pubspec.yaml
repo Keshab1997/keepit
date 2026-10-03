@@ -1,7 +1,7 @@
 name: keepit
 description: "KeepIt - AI Powered Second Brain & Smart Visual Bookmarks"
 publish_to: "none"
-version: 1.0.11+15
+version: 1.0.12+16
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

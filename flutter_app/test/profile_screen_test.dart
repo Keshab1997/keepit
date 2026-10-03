@@ -15,6 +15,28 @@ import 'package:keepit/presentation/controllers/mind_feed_controller.dart';
 import 'package:keepit/presentation/controllers/navigation_controller.dart';
 import 'package:keepit/presentation/screens/home_screen.dart';
 
+/// Keeps the meta box in memory: a Hive write issued from a widget test's
+/// fake-async zone never completes, and a pending one can stall the Hive reads
+/// of whatever test runs next.
+class _InMemoryMetaDataSource extends LocalMindDataSource {
+  final Map<String, Object?> _metaValues = <String, Object?>{};
+
+  @override
+  T? getMeta<T>(String key) {
+    final value = _metaValues[key];
+    return value is T ? value : null;
+  }
+
+  @override
+  Future<void> putMeta(String key, Object? value) async {
+    if (value == null) {
+      _metaValues.remove(key);
+    } else {
+      _metaValues[key] = value;
+    }
+  }
+}
+
 class _FakeSignedInAuth implements AuthService {
   static const user = AppUser(
     uid: 'u1',
@@ -93,13 +115,14 @@ void main() {
     WidgetTester tester, {
     AuthService? auth,
     CloudSyncRemote? remote,
+    LocalMindDataSource? local,
   }) async {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     final container = ProviderContainer(
       overrides: [
-        localDataSourceProvider.overrideWithValue(dataSource),
+        localDataSourceProvider.overrideWithValue(local ?? dataSource),
         if (auth != null) authServiceProvider.overrideWithValue(auth),
         if (auth != null) cloudSyncRemoteProvider.overrideWithValue(remote),
       ],
@@ -129,8 +152,26 @@ void main() {
     expect(find.text('Guest'), findsOneWidget);
     expect(find.text('Saved only on this device'), findsOneWidget);
     expect(find.text('Cloud sync not set up yet'), findsOneWidget);
-    expect(find.text('Export my data'), findsOneWidget);
+    expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('Serendipity reminders'), findsOneWidget);
+
+    // The preferences list gained a row, so the data section sits below the
+    // fold and the lazy list has not built it yet.
+    await tester.scrollUntilVisible(
+      find.text('Export my data'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Export my data'), findsOneWidget);
+
+    // Sections sit in order, and the lazy list only builds what is near the
+    // viewport, so each one is scrolled to before it is asserted.
+    await tester.scrollUntilVisible(
+      find.text('Delete all local data'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Delete all local data'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Privacy policy'),
@@ -139,8 +180,30 @@ void main() {
     );
     expect(find.text('Privacy policy'), findsOneWidget);
     expect(find.text('Terms of service'), findsOneWidget);
-    expect(find.text('Delete all local data'), findsOneWidget);
     expect(find.text('Delete account'), findsNothing); // only when signed in
+  });
+
+  testWidgets('Appearance offers system, light and dark', (tester) async {
+    final meta = _InMemoryMetaDataSource();
+    await meta.init();
+    await pumpProfile(tester, local: meta);
+
+    // Unset means follow the phone, and the test binding reports light.
+    expect(find.text('Follow system • currently light'), findsOneWidget);
+
+    await tester.tap(find.text('Appearance'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('System'), findsOneWidget);
+    expect(find.text('Light'), findsOneWidget);
+    expect(find.text('Dark'), findsOneWidget);
+
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Always dark'), findsOneWidget);
+    expect(find.text('Dark'), findsNothing);
+    expect(meta.getMeta<String>('theme_mode'), 'dark');
   });
 
   testWidgets(

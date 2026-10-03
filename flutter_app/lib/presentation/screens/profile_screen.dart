@@ -17,6 +17,7 @@ import '../../core/utils/data_export.dart';
 import '../../core/utils/notification_service.dart';
 import '../controllers/app_update_controller.dart';
 import '../controllers/cloud_sync_controller.dart';
+import '../controllers/theme_mode_controller.dart';
 import '../controllers/mind_feed_controller.dart';
 import '../widgets/reminder_settings_sheet.dart';
 
@@ -63,6 +64,7 @@ class ProfileScreen extends ConsumerWidget {
           const _SectionLabel('PREFERENCES'),
           _Group(
             children: [
+              const _AppearanceTile(),
               _Tile(
                 icon: LucideIcons.bellRing,
                 title: 'Serendipity reminders',
@@ -1014,6 +1016,126 @@ class _Tile extends StatelessWidget {
         color: palette.textMuted,
       ),
       onTap: onTap,
+    );
+  }
+}
+
+/// Appearance row: System / Light / Dark.
+///
+/// The choice is device-local (Hive meta box) and the app follows the phone by
+/// default, so someone who has already set the OS to dark gets a dark app
+/// without hunting for a setting.
+class _AppearanceTile extends ConsumerWidget {
+  const _AppearanceTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(themeModeProvider);
+    return _Tile(
+      icon: LucideIcons.moon,
+      title: 'Appearance',
+      subtitle: _describe(context, mode),
+      onTap: () => _pick(context, ref),
+    );
+  }
+
+  static String _describe(BuildContext context, ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'Always light';
+      case ThemeMode.dark:
+        return 'Always dark';
+      case ThemeMode.system:
+        final systemDark =
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+        return 'Follow system • currently ${systemDark ? 'dark' : 'light'}';
+    }
+  }
+
+  static Future<void> _pick(BuildContext context, WidgetRef ref) {
+    return showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: context.palette.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) => _AppearanceSheet(
+        selected: ref.read(themeModeProvider),
+        onSelected: (mode) {
+          ref.read(themeModeProvider.notifier).setMode(mode);
+          Navigator.of(sheetContext).pop();
+        },
+      ),
+    );
+  }
+}
+
+class _AppearanceSheet extends StatelessWidget {
+  const _AppearanceSheet({required this.selected, required this.onSelected});
+
+  final ThemeMode selected;
+  final ValueChanged<ThemeMode> onSelected;
+
+  static const List<(ThemeMode, String, IconData, String)> _options = [
+    (
+      ThemeMode.system,
+      'System',
+      LucideIcons.smartphone,
+      "Follow your phone's setting",
+    ),
+    (ThemeMode.light, 'Light', LucideIcons.sun, 'Always use the light theme'),
+    (ThemeMode.dark, 'Dark', LucideIcons.moon, 'Always use the dark theme'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
+            child: Text(
+              'Appearance',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: palette.textPrimary,
+              ),
+            ),
+          ),
+          for (final (mode, label, icon, subtitle) in _options)
+            ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+              leading: Icon(
+                icon,
+                size: 19,
+                color:
+                    mode == selected ? palette.primary : palette.textSecondary,
+              ),
+              title: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: palette.textPrimary,
+                ),
+              ),
+              subtitle: Text(
+                subtitle,
+                style: TextStyle(fontSize: 12, color: palette.textSecondary),
+              ),
+              trailing: mode == selected
+                  ? Icon(LucideIcons.check, size: 18, color: palette.primary)
+                  : null,
+              onTap: () => onSelected(mode),
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 }

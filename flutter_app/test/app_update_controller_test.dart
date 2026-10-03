@@ -152,7 +152,8 @@ void main() {
     expect(service.flexibleStarts, 0);
   });
 
-  test('downloads in the background, then asks for a restart', () async {
+  test('downloads in the background, then auto-completes and asks for restart',
+      () async {
     final container = buildContainer();
     final controller = container.read(appUpdateProvider.notifier);
     await controller.check();
@@ -168,10 +169,42 @@ void main() {
       container.read(appUpdateProvider).phase,
       AppUpdatePhase.readyToInstall,
     );
+    expect(
+      service.completions,
+      1,
+      reason: 'automatically calls completeFlexibleUpdate on download finish',
+    );
 
     await controller.installDownloadedUpdate();
-    expect(service.completions, 1);
+    expect(service.completions, 2);
   });
+
+  test(
+    'completes and never stays stuck in downloading when startFlexibleUpdate resolves at DOWNLOADED',
+    () async {
+      // Mirrors InAppUpdatePlugin.kt on real Android: startFlexibleUpdate()
+      // emits DOWNLOADING, then DOWNLOADED, and only then resolves its Future.
+      final container = buildContainer();
+      final controller = container.read(appUpdateProvider.notifier);
+      await controller.check();
+
+      service.emit(InstallStatus.downloaded);
+      await controller.startFlexibleDownload();
+      await _settle();
+
+      // Even if the stream emitted DOWNLOADED right as startFlexibleUpdate()
+      // resolved, the phase must be readyToInstall (never overwritten back to
+      // downloading) and completeFlexibleUpdate must be triggered.
+      service.emit(InstallStatus.downloaded);
+      await _settle();
+
+      expect(
+        container.read(appUpdateProvider).phase,
+        AppUpdatePhase.readyToInstall,
+      );
+      expect(service.completions, greaterThanOrEqualTo(1));
+    },
+  );
 
   test('a cancelled download can be retried later', () async {
     service.flexibleResult = AppUpdateResult.inAppUpdateFailed;

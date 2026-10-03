@@ -27,13 +27,12 @@ class MindCardWidget extends StatelessWidget {
         onLongPress: onLongPress,
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(
-                0xF5FFFFFF), // High performance opaque frosted tint (No GPU expensive backdrop filter)
+            color: palette.surface,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: item.isTopMind
                   ? palette.primary.withValues(alpha: 0.7)
-                  : palette.cardBorderSoft,
+                  : palette.cardBorder,
               width: item.isTopMind ? 1.6 : 1.0,
             ),
             boxShadow: [

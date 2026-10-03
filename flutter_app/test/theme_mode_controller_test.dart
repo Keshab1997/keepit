@@ -7,7 +7,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:keepit/core/theme/app_palette.dart';
 import 'package:keepit/core/theme/app_theme.dart';
 import 'package:keepit/data/datasources/local_mind_datasource.dart';
+import 'package:keepit/domain/entities/mind_item.dart';
 import 'package:keepit/presentation/controllers/theme_mode_controller.dart';
+import 'package:keepit/presentation/widgets/mind_card_widget.dart';
 
 /// Keeps the meta box in memory: a Hive write from a test's fake-async zone
 /// never completes, and this test is about what gets stored, not about Hive.
@@ -90,5 +92,41 @@ void main() {
     expect(dark, isNotNull);
     expect(light!.isDark, isFalse);
     expect(dark!.isDark, isTrue);
+  });
+
+  testWidgets('MindCardWidget uses dark palette surface in dark mode', (
+    tester,
+  ) async {
+    final item = MindItem(
+      id: 'card-1',
+      title: 'Dark Mode Title',
+      content: 'Visible on dark surface',
+      type: ItemType.quickNote,
+      createdAt: DateTime(2026, 10, 3),
+      updatedAt: DateTime(2026, 10, 3),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.dark,
+        home: Scaffold(
+          body: MindCardWidget(item: item, onTap: () {}, onLongPress: () {}),
+        ),
+      ),
+    );
+
+    expect(find.text('Dark Mode Title'), findsOneWidget);
+    final containers = tester
+        .widgetList<Container>(
+          find.descendant(
+            of: find.byType(MindCardWidget),
+            matching: find.byType(Container),
+          ),
+        )
+        .toList();
+    final cardSurface = containers.first.decoration as BoxDecoration?;
+    expect(cardSurface?.color, AppPalette.dark.surface);
   });
 }

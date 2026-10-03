@@ -188,6 +188,8 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
   final Ref _ref;
   StreamSubscription<InstallStatus>? _installSub;
   bool _checking = false;
+  bool _downloadInFlight = false;
+  InstallStatus? _lastInstallStatus;
   bool _flexibleAllowed = true;
   bool _immediateAllowed = true;
 
@@ -197,12 +199,17 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
 
   /// Called when KeepIt returns to the foreground.
   ///
-  /// Re-queries Play immediately if a background download was running (Play's
-  /// own recommendation so `InstallStatus.downloaded` is never missed), or
-  /// after [UpdatePolicy.resumeRecheckInterval] so a user who leaves KeepIt in
-  /// Android recents still sees new Play releases without force-closing the app.
+  /// Avoids calling `checkForUpdate` while `startFlexibleUpdate` is actively
+  /// running (`_downloadInFlight`), because the `in_app_update` Android plugin
+  /// recreates `AppUpdateManager` inside `checkForUpdate` and would detach its
+  /// own download progress listener.
   Future<void> onAppResumed() async {
-    if (!UpdateConfig.enabled || !_service.isSupported || _checking) return;
+    if (!UpdateConfig.enabled ||
+        !_service.isSupported ||
+        _checking ||
+        _downloadInFlight) {
+      return;
+    }
     if (state.phase == AppUpdatePhase.downloading) {
       await check();
       return;
@@ -347,33 +354,72 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
   /// the user keeps using KeepIt (or falls back to Play's immediate flow when
   /// Play only permits an immediate update).
   ///
-  /// Returns `true` when the sheet can close (download started or user
-  /// cancelled), and `false` when starting failed so the sheet stays open.
+  /// Note on `in_app_update` Android plugin behaviour:
+  /// `InAppUpdate.startFlexibleUpdate()` emits `InstallStatus.downloading` on
+  /// [AppUpdateService.installStatus] while downloading, and only resolves its
+  /// returned Future with [AppUpdateResult.success] once `InstallStatus.DOWNLOADED`
+  /// is reached. We therefore subscribe to `_watchInstallState()` *before*
+  /// calling `startFlexibleUpdate()` and trigger `completeFlexibleUpdate()` as
+  /// soon as the download finishes.
   Future<bool> startFlexibleDownload() async {
     if (!_service.isSupported) return false;
     final version = state.availableVersionCode;
+    final useImmediate = !_flexibleAllowed && _immediateAllowed;
+
+    if (!useImmediate) {
+      _lastInstallStatus = null;
+      _watchInstallState();
+    }
+
+    _downloadInFlight = true;
     state = state.copyWith(
       phase: AppUpdatePhase.checking,
       busy: true,
       clearMessage: true,
     );
 
-    final useImmediate = !_flexibleAllowed && _immediateAllowed;
     final result = useImmediate
         ? await _service.performImmediateUpdate()
         : await _service.startFlexibleUpdate();
+    _downloadInFlight = false;
+    // Let any synchronous stream event emitted by startFlexibleUpdate arrive.
+    await Future<void>.delayed(Duration.zero);
     if (!mounted) return false;
 
     switch (result) {
       case AppUpdateResult.success:
-        if (!useImmediate) {
-          _watchInstallState();
+        if (useImmediate) {
+          state = state.copyWith(
+            phase: AppUpdatePhase.downloading,
+            busy: false,
+            clearMessage: true,
+          );
+          return true;
         }
-        state = state.copyWith(
-          phase: AppUpdatePhase.downloading,
-          busy: false,
-          clearMessage: true,
-        );
+        // If the stream is still at `downloading` (e.g. a mock service that
+        // resolves `startFlexibleUpdate` when the download begins), stay in
+        // `downloading` until `InstallStatus.downloaded` arrives.
+        // On real Android, `InAppUpdatePlugin.kt` resolves `startFlexibleUpdate`
+        // only when `InstallStatus.DOWNLOADED` is reached — transition to
+        // `readyToInstall` and trigger `completeFlexibleUpdate()` right away.
+        if (_lastInstallStatus == InstallStatus.downloading ||
+            _lastInstallStatus == InstallStatus.pending) {
+          state = state.copyWith(
+            phase: AppUpdatePhase.downloading,
+            busy: false,
+            clearMessage: true,
+          );
+        } else {
+          final alreadyCompleted = state.phase == AppUpdatePhase.readyToInstall;
+          state = state.copyWith(
+            phase: AppUpdatePhase.readyToInstall,
+            busy: false,
+            clearMessage: true,
+          );
+          if (!alreadyCompleted) {
+            unawaited(_service.completeFlexibleUpdate());
+          }
+        }
         return true;
       case AppUpdateResult.userDeniedUpdate:
         // Play's dialog was dismissed — do not nag again today.
@@ -398,9 +444,15 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
 
   /// "Restart & install": installs a flexible update that finished
   /// downloading. Play restarts KeepIt; if it cannot, the app stays put.
+  ///
+  /// `InAppUpdatePlugin.kt`'s `completeFlexibleUpdate` calls
+  /// `appUpdateManager.completeUpdate()` without completing the MethodChannel
+  /// `Result`, so we bound the await with a short timeout.
   Future<void> installDownloadedUpdate() async {
     state = state.copyWith(busy: true);
-    await _service.completeFlexibleUpdate();
+    await _service
+        .completeFlexibleUpdate()
+        .timeout(const Duration(seconds: 2), onTimeout: () {});
     if (!mounted) return;
     state = state.copyWith(busy: false);
   }
@@ -477,13 +529,29 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
   void _watchInstallState() {
     if (_installSub != null) return;
     _installSub = _service.installStatus.listen((status) {
+      _lastInstallStatus = status;
       switch (status) {
+        case InstallStatus.pending:
+        case InstallStatus.downloading:
+          if (state.phase != AppUpdatePhase.readyToInstall) {
+            state = state.copyWith(
+              phase: AppUpdatePhase.downloading,
+              busy: false,
+              clearMessage: true,
+            );
+          }
+          break;
         case InstallStatus.downloaded:
+          final wasReady = state.phase == AppUpdatePhase.readyToInstall;
           state = state.copyWith(
             phase: AppUpdatePhase.readyToInstall,
             busy: false,
             clearMessage: true,
           );
+          if (!wasReady) {
+            // Automatically hand off to Play to install and restart the app.
+            unawaited(_service.completeFlexibleUpdate());
+          }
           break;
         case InstallStatus.installing:
         case InstallStatus.installed:
@@ -499,8 +567,6 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
           );
           break;
         case InstallStatus.unknown:
-        case InstallStatus.pending:
-        case InstallStatus.downloading:
           break;
       }
     });

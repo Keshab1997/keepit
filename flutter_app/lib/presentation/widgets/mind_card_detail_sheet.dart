@@ -649,9 +649,8 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                                         ? const Color(
                                                             0x6610B981,
                                                           )
-                                                        : const Color(
-                                                            0x33E5E7EB,
-                                                          ),
+                                                        : palette
+                                                            .cardBorderSoft,
                                                     width: 1.0,
                                                   ),
                                                   boxShadow: const [

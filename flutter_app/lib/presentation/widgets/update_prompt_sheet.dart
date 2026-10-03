@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -52,6 +54,20 @@ class _UpdateSheet extends ConsumerWidget {
     final buildLabel = state.availableVersionCode == null
         ? ''
         : ' (build ${state.availableVersionCode})';
+
+    // Close the "A new version is ready" sheet as soon as the download starts,
+    // finishes, or is dismissed in Play's dialog (on Android, startFlexibleUpdate
+    // only resolves its Future once the entire download completes).
+    ref.listen<AppUpdateState>(appUpdateProvider, (previous, next) {
+      if (!ready &&
+          (next.phase == AppUpdatePhase.downloading ||
+              next.phase == AppUpdatePhase.readyToInstall ||
+              next.phase == AppUpdatePhase.idle)) {
+        if (navigator.canPop()) {
+          navigator.pop();
+        }
+      }
+    });
 
     return SafeArea(
       child: Container(
@@ -136,9 +152,7 @@ class _UpdateSheet extends ConsumerWidget {
                         if (ready) {
                           await controller.installDownloadedUpdate();
                         } else {
-                          final started =
-                              await controller.startFlexibleDownload();
-                          if (started && context.mounted) navigator.pop();
+                          unawaited(controller.startFlexibleDownload());
                         }
                       },
                 style: FilledButton.styleFrom(

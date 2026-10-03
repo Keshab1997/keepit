@@ -1,39 +1,62 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'app_colors.dart';
+import 'app_palette.dart';
 
 class AppTheme {
-  static ThemeData get lightTheme {
+  static ThemeData get lightTheme => _build(Brightness.light, AppPalette.light);
+
+  static ThemeData get darkTheme => _build(Brightness.dark, AppPalette.dark);
+
+  static ThemeData _build(Brightness brightness, AppPalette palette) {
+    final isDark = brightness == Brightness.dark;
+    final baseTextTheme =
+        isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme;
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: AppColors.background,
-      primaryColor: AppColors.primary,
+      brightness: brightness,
+      scaffoldBackgroundColor: palette.background,
+      primaryColor: palette.primary,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme().apply(
-        bodyColor: AppColors.textPrimary,
-        displayColor: AppColors.textPrimary,
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(baseTextTheme).apply(
+        bodyColor: palette.textPrimary,
+        displayColor: palette.textPrimary,
       ),
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        primary: AppColors.primary,
-        surface: AppColors.surface,
+        brightness: brightness,
+        seedColor: palette.primary,
+        primary: palette.primary,
+        surface: palette.surface,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
+        foregroundColor: palette.textPrimary,
+        iconTheme: IconThemeData(color: palette.textPrimary),
+        systemOverlayStyle:
+            isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: palette.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.cardBorder, width: 0.8),
+          side: BorderSide(color: palette.cardBorder, width: 0.8),
         ),
       ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: palette.surfaceElevated,
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: palette.surface,
+      ),
+      dividerTheme: DividerThemeData(
+        color: palette.divider,
+      ),
+      extensions: <ThemeExtension<dynamic>>[palette],
     );
   }
 }

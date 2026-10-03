@@ -597,11 +597,11 @@ class _SignInButton extends ConsumerWidget {
                   children: [
                     const _GoogleG(size: 16),
                     const SizedBox(width: 7),
-                    Text(
+                    const Text(
                       'Sign in',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        color: palette.textPrimary,
+                        color: Color(0xFF14171F),
                       ),
                     ),
                   ],
@@ -1230,8 +1230,7 @@ class _SheetButton extends StatelessWidget {
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           side: BorderSide(
-            color:
-                destructive ? const Color(0x55FF3B30) : const Color(0xFFE5E7EB),
+            color: destructive ? const Color(0x55FF3B30) : palette.cardBorder,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),

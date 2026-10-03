@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'package:keepit/core/theme/app_palette.dart';
+import 'package:keepit/core/theme/app_theme.dart';
 import 'package:keepit/data/datasources/local_mind_datasource.dart';
 import 'package:keepit/presentation/controllers/theme_mode_controller.dart';
 
@@ -77,5 +79,16 @@ void main() {
   test('an unrecognised stored value falls back to system', () async {
     await dataSource.putMeta(ThemeModeController.metaKey, 'sepia');
     expect(ThemeModeController(dataSource).state, ThemeMode.system);
+  });
+
+  testWidgets('AppTheme registers light and dark AppPalette extensions', (
+    tester,
+  ) async {
+    final light = AppTheme.lightTheme.extension<AppPalette>();
+    final dark = AppTheme.darkTheme.extension<AppPalette>();
+    expect(light, isNotNull);
+    expect(dark, isNotNull);
+    expect(light!.isDark, isFalse);
+    expect(dark!.isDark, isTrue);
   });
 }

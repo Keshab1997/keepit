@@ -7,12 +7,14 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:keepit/core/cloud/auth_service.dart';
 import 'package:keepit/core/cloud/cloud_sync_remote.dart';
+import 'package:keepit/core/theme/app_palette.dart';
 import 'package:keepit/core/theme/app_theme.dart';
 import 'package:keepit/data/datasources/local_mind_datasource.dart';
 import 'package:keepit/domain/entities/mind_item.dart';
 import 'package:keepit/presentation/controllers/cloud_sync_controller.dart';
 import 'package:keepit/presentation/controllers/mind_feed_controller.dart';
 import 'package:keepit/presentation/controllers/navigation_controller.dart';
+import 'package:keepit/presentation/controllers/theme_mode_controller.dart';
 import 'package:keepit/presentation/screens/home_screen.dart';
 
 /// Keeps the meta box in memory: a Hive write issued from a widget test's
@@ -131,9 +133,13 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: const HomeScreen(),
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp(
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ref.watch(themeModeProvider),
+            home: const HomeScreen(),
+          ),
         ),
       ),
     );
@@ -204,6 +210,8 @@ void main() {
     expect(find.text('Always dark'), findsOneWidget);
     expect(find.text('Dark'), findsNothing);
     expect(meta.getMeta<String>('theme_mode'), 'dark');
+    final homeCtx = tester.element(find.byType(HomeScreen));
+    expect(homeCtx.palette.isDark, isTrue);
   });
 
   testWidgets(

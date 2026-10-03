@@ -15,6 +15,7 @@ import 'core/theme/mind_toast.dart';
 import 'core/utils/notification_service.dart';
 import 'data/datasources/local_mind_datasource.dart';
 import 'presentation/controllers/mind_feed_controller.dart';
+import 'presentation/controllers/theme_mode_controller.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
 import 'presentation/widgets/notification_host.dart';
@@ -200,6 +201,7 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
   @override
   Widget build(BuildContext context) {
     final showOnboarding = _showOnboarding;
+    final themeMode = ref.watch(themeModeProvider);
     return SyncHost(
       child: NotificationHost(
         navigatorKey: navigatorKey,
@@ -208,6 +210,8 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
           title: 'KeepIt',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
           // UpdateHost asks Google Play (silently) whether a newer build
           // exists and swaps in its own update screen — or the blocking
           // "Update required" screen for a mandatory release.

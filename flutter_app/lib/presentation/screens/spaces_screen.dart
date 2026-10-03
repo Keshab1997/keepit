@@ -316,7 +316,10 @@ class _SpacesScreenState extends ConsumerState<SpacesScreen> {
                           color: color,
                           shape: BoxShape.circle,
                           border: selected
-                              ? Border.all(color: Colors.black, width: 3)
+                              ? Border.all(
+                                  color: context.palette.textPrimary,
+                                  width: 3,
+                                )
                               : null,
                         ),
                       ),

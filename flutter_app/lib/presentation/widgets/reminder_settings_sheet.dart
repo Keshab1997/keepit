@@ -282,7 +282,7 @@ class _ReminderSettingsSheetState extends ConsumerState<ReminderSettingsSheet> {
   Widget _card({required List<Widget> children}) {
     // Material (not a coloured Container) so ListTile ink splashes show.
     return Material(
-      color: Colors.white,
+      color: context.palette.surface,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),

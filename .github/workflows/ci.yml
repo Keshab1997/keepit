@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   ci:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.11.3
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.12.1
     with:
       flutter-channel: stable
       working-directory: flutter_app

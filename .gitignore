@@ -46,3 +46,5 @@ desktop/*.exe
 firebase-debug.log
 firebase-debug.*.log
 *.log
+# flutter-builder: see_screen.py downloads screenshots here
+.agent-screens/

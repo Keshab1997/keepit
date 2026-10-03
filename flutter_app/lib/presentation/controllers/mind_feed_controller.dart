@@ -197,6 +197,22 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     return withoutExtension.isEmpty ? 'Saved image' : withoutExtension;
   }
 
+  /// True when [rawUrl] is already saved in the library (ignoring tracking
+  /// query parameters and trailing slashes).
+  bool hasUrl(String rawUrl) {
+    final target = _extractCleanUrl(rawUrl.trim());
+    if (target.isEmpty) return false;
+    return state.items.any((item) {
+      final existing = item.url;
+      if (existing == null || existing.isEmpty) return false;
+      return _areUrlsEquivalent(existing, target);
+    });
+  }
+
+  /// Normalized form of [url] with tracking parameters and trailing slashes
+  /// stripped so duplicate/clipboard checks treat equivalent links as one.
+  String normalizeUrl(String url) => _normalizeUrl(_extractCleanUrl(url));
+
   String _extractCleanUrl(String text) {
     final urlRegex = RegExp(r'(https?://[^\s]+)');
     final match = urlRegex.firstMatch(text);
@@ -211,12 +227,12 @@ class MindFeedController extends StateNotifier<MindFeedState> {
 
   String _normalizeUrl(String url) {
     var clean = url.trim().toLowerCase();
-    while (clean.endsWith('/')) {
-      clean = clean.substring(0, clean.length - 1);
-    }
     if (clean.contains('?')) {
       final parts = clean.split('?');
-      final base = parts[0];
+      var base = parts[0];
+      while (base.endsWith('/')) {
+        base = base.substring(0, base.length - 1);
+      }
       final query = parts[1];
       final cleanParams = query.split('&').where((param) {
         return !param.startsWith('igsh=') &&
@@ -225,6 +241,9 @@ class MindFeedController extends StateNotifier<MindFeedState> {
             !param.startsWith('fbclid=');
       }).join('&');
       clean = cleanParams.isNotEmpty ? '$base?$cleanParams' : base;
+    }
+    while (clean.endsWith('/')) {
+      clean = clean.substring(0, clean.length - 1);
     }
     return clean;
   }

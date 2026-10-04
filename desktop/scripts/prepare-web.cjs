@@ -22,6 +22,18 @@ if (!fs.existsSync(nextPackage)) {
 // out of the .app. Stage them under a non-ignored name and load them via NODE_PATH.
 fs.rmSync(runtimeModules, { recursive: true, force: true });
 fs.cpSync(bundledModules, runtimeModules, { recursive: true });
+// Desktop installers target Windows/macOS on x64/arm64. sharp's wasm32
+// packages are optional fallbacks for WebAssembly runtimes, not these targets;
+// their large .wasm files can also be locked by Windows while electron-builder
+// copies extraResources. Keep the native sharp packages, but omit wasm32 ones.
+const imgModules = path.join(runtimeModules, "@img");
+if (fs.existsSync(imgModules)) {
+  for (const entry of fs.readdirSync(imgModules)) {
+    if (entry.startsWith("sharp-") && entry.includes("wasm32")) {
+      fs.rmSync(path.join(imgModules, entry), { recursive: true, force: true });
+    }
+  }
+}
 try {
   const moduleApi = require("node:module");
   process.env.NODE_PATH = [runtimeModules, process.env.NODE_PATH].filter(Boolean).join(path.delimiter);

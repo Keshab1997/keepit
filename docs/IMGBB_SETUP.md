@@ -71,11 +71,17 @@ You may store the key as a repository secret named `IMGBB_API_KEY`:
 
 **Repository → Settings and variables → Actions → New repository secret**
 
-A secret does not automatically reach a local APK. For a local build, pass it
-explicitly with `--dart-define` as shown above. If you later add a custom
-GitHub Actions build step, inject the secret there as the same Dart define. Do
-not hardcode it in Dart or commit it. The resulting mobile binary can still
-contain/reveal the key because ImgBB requires a client key for direct upload.
+For local builds, pass the key with `--dart-define` as shown above. In GitHub,
+KeepIt's **Manual Android Build** and **Publish Android Release** workflows now
+forward `IMGBB_API_KEY` through flutter-builder v1.14.1. After adding the secret,
+run one of those workflows and install the newly built artifact; an already
+installed APK cannot pick up a GitHub secret. The builder temporarily writes the
+key into the bundled `.env` asset and restores the checkout afterward. The key
+is still extractable from the APK/AAB, so use a dedicated ImgBB key and monitor
+it; a server-side upload proxy is safer if the key must stay private.
+
+The tag-triggered `.github/workflows/release.yml` was not changed; artifacts from
+that separate workflow will not have ImgBB configured yet.
 
 ## User flow
 

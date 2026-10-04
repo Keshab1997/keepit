@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   build:
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.14.0
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.14.1
     with:
       flutter-channel: stable
       working-directory: flutter_app
@@ -63,3 +63,5 @@ jobs:
       # iOS equivalent, written to flutter_app/ios/Runner/ (builder v1.8.0+).
       # Not used by this Android build; passed so a future iOS job gets it.
       GOOGLE_SERVICES_PLIST_BASE64: ${{ secrets.GOOGLE_SERVICES_PLIST_BASE64 }}
+      # Optional image upload key; it is bundled in the APK/AAB and extractable.
+      IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}

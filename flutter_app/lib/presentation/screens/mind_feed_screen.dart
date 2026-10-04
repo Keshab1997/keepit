@@ -13,6 +13,7 @@ import '../../core/theme/mind_toast.dart';
 import '../controllers/mind_feed_controller.dart';
 import '../widgets/mind_card_widget.dart';
 import '../widgets/mind_card_detail_sheet.dart';
+import '../widgets/quick_add_sheet.dart';
 
 class MindFeedScreen extends ConsumerStatefulWidget {
   const MindFeedScreen({super.key});
@@ -592,7 +593,8 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
           ),
           const SizedBox(width: 10),
           InkWell(
-            onTap: () => _showAddUrlDialog(context, ref),
+            key: const ValueKey('quick_add_button'),
+            onTap: () => _showQuickAddSheet(context, ref),
             borderRadius: BorderRadius.circular(16),
             child: Container(
               width: 50,
@@ -784,106 +786,18 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
     }
   }
 
-  void _showAddUrlDialog(BuildContext context, WidgetRef ref) {
-    final urlController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: AlertDialog(
-          backgroundColor: context.palette.glassWhite,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-            side: BorderSide(color: context.palette.glassBorder, width: 1.5),
-          ),
-          title: Row(
-            children: [
-              Icon(LucideIcons.sparkles,
-                  color: context.palette.primary, size: 20),
-              const SizedBox(width: 8),
-              const Text(
-                "Save to Mind",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-            ],
-          ),
-          content: TextField(
-            controller: urlController,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: "Paste Instagram reel, video, or link...",
-              hintStyle: TextStyle(
-                fontSize: 13,
-                color: context.palette.textMuted,
-              ),
-              filled: true,
-              fillColor: context.palette.tagBg.withValues(alpha: 0.6),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-            ),
-          ),
-          actions: [
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _pickAndSaveImage(context, ref);
-              },
-              icon: const Icon(LucideIcons.image, size: 16),
-              label: const Text('Image'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.palette.primary,
-                side: BorderSide(color: context.palette.primary),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                "Cancel",
-                style: TextStyle(color: context.palette.textSecondary),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final link = urlController.text.trim();
-                if (link.isNotEmpty) {
-                  Navigator.pop(ctx);
-                  final result =
-                      await ref.read(mindFeedProvider.notifier).addUrl(link);
-                  if (!context.mounted) return;
-
-                  if (result == SaveResult.duplicate) {
-                    MindToast.showDuplicateToast(context);
-                  } else if (result == SaveResult.success) {
-                    MindToast.showSuccessToast(context);
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.palette.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: const Text("Save"),
-            ),
-          ],
-        ),
-      ),
+  void _showQuickAddSheet(BuildContext context, WidgetRef ref) {
+    QuickAddSheet.show(
+      context,
+      onPickImage: () => _pickAndSaveImage(context, ref),
+      onLinkSaved: (result) {
+        if (!context.mounted) return;
+        if (result == SaveResult.duplicate) {
+          MindToast.showDuplicateToast(context);
+        } else if (result == SaveResult.success) {
+          MindToast.showSuccessToast(context);
+        }
+      },
     );
   }
 }

@@ -92,7 +92,8 @@ void main() {
     expect(gh!.headline, 'Save GitHub link?');
   });
 
-  testWidgets('keeps pending prompts until handled and restores after restart', (
+  testWidgets('keeps pending prompts until handled and restores after restart',
+      (
     tester,
   ) async {
     final dataSource = _InMemoryMetaDataSource();

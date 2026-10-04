@@ -122,13 +122,13 @@ class ShareCaptureController extends StateNotifier<ShareCaptureState> {
 
     try {
       final notifier = _ref.read(mindFeedProvider.notifier);
-      // Also mark the shared URL as seen by the clipboard prompt so it does
-      // not nag if the user also copied the same link.
+      // Mark a shared URL as handled before saving so the clipboard prompt
+      // does not appear for the same link during a share-capture race.
       if (!looksLikeImagePath(clean)) {
         final normalized = notifier.normalizeUrl(clean);
         try {
           await _ref.read(localDataSourceProvider).putMeta(
-                ClipboardPromptBanner.lastPromptedMetaKey,
+                ClipboardPromptBanner.handledUrlMetaKey,
                 normalized,
               );
         } catch (_) {}

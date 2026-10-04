@@ -9,6 +9,7 @@ import 'package:keepit/core/theme/app_theme.dart';
 import 'package:keepit/data/datasources/local_mind_datasource.dart';
 import 'package:keepit/domain/entities/mind_item.dart';
 import 'package:keepit/presentation/controllers/mind_feed_controller.dart';
+import 'package:keepit/presentation/screens/home_screen.dart';
 import 'package:keepit/presentation/widgets/clipboard_prompt_banner.dart';
 import 'package:keepit/presentation/widgets/share_capture_overlay.dart';
 
@@ -91,7 +92,7 @@ void main() {
     expect(gh!.headline, 'Save GitHub link?');
   });
 
-  testWidgets('prompts once for a new clipboard URL and saves in one tap', (
+  testWidgets('keeps pending prompts until handled and restores after restart', (
     tester,
   ) async {
     final dataSource = _InMemoryMetaDataSource();
@@ -112,7 +113,7 @@ void main() {
                 Positioned(
                   left: 16,
                   right: 16,
-                  bottom: 12,
+                  top: 12,
                   child: ClipboardPromptBanner(),
                 ),
               ],
@@ -126,6 +127,10 @@ void main() {
 
     expect(find.text('Save YouTube video?'), findsOneWidget);
     expect(find.text('Save'), findsOneWidget);
+
+    // The card does not time out while the user is looking elsewhere.
+    await tester.pump(const Duration(seconds: 20));
+    expect(find.text('Save YouTube video?'), findsOneWidget);
 
     // Dismissing hides the prompt and records the URL so resuming with the
     // same clipboard does not nag a second time.
@@ -145,9 +150,54 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Save Instagram Reel?'), findsOneWidget);
 
-    // Let the auto-hide timer expire cleanly before tearing down.
-    await tester.pump(const Duration(seconds: 9));
-    expect(find.text('Save Instagram Reel?'), findsNothing);
+    // An unanswered card survives, and an app restart can offer it again.
+    await tester.pump(const Duration(seconds: 20));
+    expect(find.text('Save Instagram Reel?'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localDataSourceProvider.overrideWithValue(dataSource),
+          clipboardReaderProvider.overrideWithValue(() async => clipboardText),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: const Scaffold(body: ClipboardPromptBanner()),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('Save Instagram Reel?'), findsOneWidget);
+  });
+
+  testWidgets('HomeScreen places the clipboard prompt at the top', (
+    tester,
+  ) async {
+    final dataSource = _InMemoryMetaDataSource();
+    await dataSource.putMeta(LocalMindDataSource.demoSeededKey, true);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          localDataSourceProvider.overrideWithValue(dataSource),
+          clipboardReaderProvider.overrideWithValue(
+            () async => 'https://example.com/article',
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: const HomeScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final promptRect = tester.getRect(find.byType(ClipboardPromptBanner));
+    final mediaQuery = MediaQuery.of(tester.element(find.byType(HomeScreen)));
+    expect(promptRect.top, closeTo(mediaQuery.padding.top + 12, 0.5));
+    expect(find.text('Save copied link from example.com?'), findsOneWidget);
   });
 
   testWidgets('skips URLs that are already saved in the library', (

@@ -48,11 +48,11 @@ class HomeScreen extends ConsumerWidget {
               child: Stack(
                 children: [
                   _pages[currentIndex],
-                  const Positioned(
+                  Positioned(
                     left: 16,
                     right: 16,
-                    bottom: 12,
-                    child: ClipboardPromptBanner(),
+                    top: MediaQuery.of(context).padding.top + 12,
+                    child: const ClipboardPromptBanner(),
                   ),
                   const Positioned(
                     left: 16,

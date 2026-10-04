@@ -117,18 +117,14 @@ class ClipboardLinkCandidate {
   }
 }
 
-/// Floating 1-tap pill shown when the user opens or resumes KeepIt with a
-/// fresh, unsaved URL on the system clipboard.
+/// Persistent 1-tap card shown when KeepIt opens or resumes with a fresh,
+/// unsaved URL on the system clipboard. It stays until the user saves or
+/// dismisses it so the prompt cannot disappear unnoticed.
 class ClipboardPromptBanner extends ConsumerStatefulWidget {
-  const ClipboardPromptBanner({
-    super.key,
-    this.autoHideDuration = const Duration(seconds: 8),
-  });
+  const ClipboardPromptBanner({super.key});
 
-  /// Hive meta key storing the last clipboard URL we already offered.
-  static const String lastPromptedMetaKey = 'last_prompted_clipboard_url';
-
-  final Duration autoHideDuration;
+  /// Hive meta key storing the last clipboard URL the user explicitly handled.
+  static const String handledUrlMetaKey = 'handled_clipboard_url';
 
   @override
   ConsumerState<ClipboardPromptBanner> createState() =>
@@ -139,7 +135,6 @@ class _ClipboardPromptBannerState extends ConsumerState<ClipboardPromptBanner>
     with WidgetsBindingObserver {
   ClipboardLinkCandidate? _candidate;
   bool _saving = false;
-  Timer? _autoHideTimer;
 
   @override
   void initState() {
@@ -153,7 +148,6 @@ class _ClipboardPromptBannerState extends ConsumerState<ClipboardPromptBanner>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _autoHideTimer?.cancel();
     super.dispose();
   }
 
@@ -174,42 +168,55 @@ class _ClipboardPromptBannerState extends ConsumerState<ClipboardPromptBanner>
     if (!mounted) return;
 
     final candidate = ClipboardLinkCandidate.tryParse(raw);
-    if (candidate == null) return;
+    if (candidate == null) {
+      if (_candidate != null) setState(() => _candidate = null);
+      return;
+    }
+
+    final normalized = notifier.normalizeUrl(candidate.url);
 
     // Never offer a link that is already in the user's library.
-    if (notifier.hasUrl(candidate.url)) return;
-
-    // Never nag twice about the same copied URL.
-    final normalized = notifier.normalizeUrl(candidate.url);
-    final local = ref.read(localDataSourceProvider);
-    final lastPrompted =
-        local.getMeta<String>(ClipboardPromptBanner.lastPromptedMetaKey);
-    if (lastPrompted == normalized) return;
-
-    try {
-      await local.putMeta(
-        ClipboardPromptBanner.lastPromptedMetaKey,
-        normalized,
-      );
-    } catch (_) {
-      // Best-effort persistence.
+    if (notifier.hasUrl(candidate.url)) {
+      if (_candidate != null) setState(() => _candidate = null);
+      return;
     }
-    if (!mounted) return;
 
-    _autoHideTimer?.cancel();
+    // A clipboard prompt is considered handled only after an explicit
+    // dismissal (or a successful/duplicate save), not merely because it was
+    // shown. This lets an unanswered prompt return after an app restart.
+    final local = ref.read(localDataSourceProvider);
+    final handledUrl =
+        local.getMeta<String>(ClipboardPromptBanner.handledUrlMetaKey);
+    if (handledUrl == normalized) {
+      if (_candidate != null) setState(() => _candidate = null);
+      return;
+    }
+
+    // Resuming with the same pending URL should not replace or flash the card.
+    if (_candidate != null &&
+        notifier.normalizeUrl(_candidate!.url) == normalized) {
+      return;
+    }
+
     setState(() => _candidate = candidate);
-    _autoHideTimer = Timer(widget.autoHideDuration, () {
-      if (mounted && !_saving) {
-        setState(() => _candidate = null);
-      }
-    });
+  }
+
+  Future<void> _markHandled(String url) async {
+    final notifier = ref.read(mindFeedProvider.notifier);
+    try {
+      await ref.read(localDataSourceProvider).putMeta(
+            ClipboardPromptBanner.handledUrlMetaKey,
+            notifier.normalizeUrl(url),
+          );
+    } catch (_) {
+      // Best-effort persistence; saved URLs are also filtered by hasUrl().
+    }
   }
 
   Future<void> _saveCandidate() async {
     final candidate = _candidate;
     if (candidate == null || _saving) return;
 
-    _autoHideTimer?.cancel();
     HapticFeedback.mediumImpact();
     setState(() => _saving = true);
 
@@ -217,29 +224,38 @@ class _ClipboardPromptBannerState extends ConsumerState<ClipboardPromptBanner>
       final result =
           await ref.read(mindFeedProvider.notifier).addUrl(candidate.url);
       if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _candidate = null;
-      });
-      if (result == SaveResult.success) {
-        MindToast.showSuccessToast(context);
-      } else if (result == SaveResult.duplicate) {
-        MindToast.showDuplicateToast(context);
+
+      if (result == SaveResult.success || result == SaveResult.duplicate) {
+        await _markHandled(candidate.url);
+        if (!mounted) return;
+        setState(() {
+          _saving = false;
+          _candidate = null;
+        });
+        if (result == SaveResult.success) {
+          MindToast.showSuccessToast(context);
+        } else {
+          MindToast.showDuplicateToast(context);
+        }
+      } else {
+        // Keep the card available if an attempted save did not complete.
+        setState(() => _saving = false);
       }
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _candidate = null;
-      });
+      // Keep the prompt visible so the user can retry after the error toast.
+      setState(() => _saving = false);
       MindToast.showDeleteToast(context, title: 'Could not save link');
     }
   }
 
-  void _dismiss() {
-    _autoHideTimer?.cancel();
+  Future<void> _dismiss() async {
+    final candidate = _candidate;
+    if (candidate == null || _saving) return;
+
     HapticFeedback.selectionClick();
     setState(() => _candidate = null);
+    await _markHandled(candidate.url);
   }
 
   @override

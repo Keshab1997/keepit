@@ -2,7 +2,7 @@
 
 **App:** KeepIt — AI-Powered Second Brain & Smart Visual Bookmarks  
 **Package name:** `com.keshabstudios.keepit`  
-**Current version:** `1.0.1+4` (`versionName 1.0.1`, `versionCode 4`)  
+**Current version:** `1.0.13+17` (`versionName 1.0.13`, `versionCode 17`)<br>
 **Privacy policy:** https://keshab1997.github.io/keepit/privacy-policy.html  
 **Account/data deletion:** https://keshab1997.github.io/keepit/delete-account.html  
 **Last reviewed:** 25 September 2026

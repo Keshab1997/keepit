@@ -1,4 +1,4 @@
-• Dark Mode Fixed: Smooth System, Light & Dark theme switching from Profile → Appearance.
-• 1-Tap Clipboard Capture: Copy any link from YouTube, Instagram, X or GitHub and open KeepIt to save it in one tap.
-• Animated Share Capture: Faster, reliable cold-start sharing from Instagram & YouTube with a new live capture card and smart tags.
-• Smarter In-App Updates: Automatic Google Play update checks when resuming the app.
+• Smarter Quick Save: copied links auto-fill and show a preview of their source.
+• Duplicates are caught before saving, with clearer progress and retry feedback.
+• The clipboard save prompt stays visible until you save or dismiss it.
+• Improved image saving from your gallery and shared apps.

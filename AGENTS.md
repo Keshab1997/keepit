@@ -3,7 +3,7 @@
 Playbook for AI agents working in this repository. Read it once at the start of
 a session: everything here exists to keep one change loop short.
 
-<!-- flutter-builder:agent-pack:start v1.13.1 -->
+<!-- flutter-builder:agent-pack:start v1.15.0 -->
 ## Rule #1 — CI is manual; preflight is your check
 
 This repository runs CI **only when the human dispatches it** (Actions → *Flutter
@@ -165,8 +165,8 @@ python3 tool/see_screen.py --route /settings --wait-ms 12000   # slow first fram
 
 | Situation | What runs |
 |---|---|
-| Push to `main` (any change) | nothing — CI is manual |
-| Docs-only change (`**.md`, `docs/**`, `distribution/**`) | nothing |
+| Push to a non-Pages branch with app/code/assets/dependency changes | web preview refreshes; CI stays manual |
+| Docs/Markdown/release-note/`.github/`-only push | nothing |
 | You ask the human to run CI | CI once, for the whole batch |
 | `flutter analyze` / `flutter test` (via flutter-bootstrap) | nothing on GitHub — 40 s to install once per session, then seconds to minutes |
 | `see_screen.py` | the UI-screenshots workflow, once per call |
@@ -179,7 +179,7 @@ If you want a run right now, do **not** retrigger it with an empty commit — us
 | Workflow | Runs when | What it does |
 |---|---|---|
 | `ci.yml` → shared `flutter-build.yml` | **manual** (`workflow_dispatch`) | `dart format` check → `flutter analyze --fatal-infos` → `flutter test` + coverage |
-| `web-preview.yml` | manual dispatch, branch delete | builds the web app, deploys `preview/<branch>/` to GitHub Pages |
+| `web-preview.yml` | relevant branch push, manual dispatch, branch delete | builds the web app and replaces that branch's `preview/<branch>/` on GitHub Pages |
 | `manual-build.yml` | manual dispatch | APK / AAB artifact |
 | `publish-release.yml` | manual dispatch | signed build → tag → GitHub Release (+ Play internal if configured) |
 | `release.yml` | `v*` tag push | signed AAB artifact for the tag |

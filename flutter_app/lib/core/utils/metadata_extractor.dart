@@ -245,6 +245,53 @@ class MetadataExtractor {
     );
   }
 
+  /// Best-effort refresh of a thumbnail URL that no longer loads.
+  ///
+  /// Signed CDN links (Instagram, many `og:image` hosts) expire while an
+  /// item sits in the library; re-scraping the source page usually returns
+  /// a fresh URL. Returns null when no image can be found.
+  static Future<String?> refreshThumbnailUrl(String rawUrl) async {
+    final url = _extractUrlFromText(rawUrl);
+    if (url.isEmpty) return null;
+
+    if (url.contains('youtube.com') || url.contains('youtu.be')) {
+      final videoId = _extractYouTubeId(url);
+      if (videoId == null || videoId.isEmpty) return null;
+      return 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+    }
+
+    if (url.contains('instagram.com/')) {
+      try {
+        final oembedUri = Uri.parse(
+          'https://api.instagram.com/oembed/?url=${Uri.encodeComponent(url)}',
+        );
+        final res = await http
+            .get(
+              oembedUri,
+            )
+            .timeout(const Duration(milliseconds: 3200));
+        if (res.statusCode == 200) {
+          final decoded = jsonDecode(res.body);
+          if (decoded is Map<String, dynamic>) {
+            final thumb = decoded['thumbnail_url'] as String?;
+            if (thumb != null && thumb.isNotEmpty) return thumb;
+          }
+        }
+      } catch (_) {
+        // Fall through to the Open Graph scrape below.
+      }
+    }
+
+    try {
+      final scraped = await _scrapeOpenGraph(url);
+      final image = scraped['image'];
+      if (image != null && image.isNotEmpty) return image;
+    } catch (_) {
+      // Page unreachable — nothing to refresh.
+    }
+    return null;
+  }
+
   /// Checks if a string contains Instagram's standard metric clutter
   /// Example: "4,520 likes, 120 comments - username on September 22, 2026: ..."
   static bool _isInstagramMetricClutter(String text) {

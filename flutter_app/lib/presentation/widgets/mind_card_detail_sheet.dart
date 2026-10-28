@@ -11,6 +11,7 @@ import '../../core/theme/mind_toast.dart';
 import '../../core/utils/external_link_launcher.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/mind_feed_controller.dart';
+import 'mind_thumbnail.dart';
 
 class MindCardDetailSheet extends ConsumerStatefulWidget {
   final MindItem item;
@@ -185,23 +186,15 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                 alignment: Alignment.center,
                                 children: [
                                   if (liveItem.thumbnailUrl != null)
-                                    Image.network(
-                                      liveItem.thumbnailUrl!,
+                                    SizedBox(
                                       width: double.infinity,
                                       height: 390,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              Container(
-                                        height: 260,
-                                        color: palette.tagBg,
-                                        child: Center(
-                                          child: Icon(
-                                            LucideIcons.image,
-                                            size: 48,
-                                            color: palette.textMuted,
-                                          ),
-                                        ),
+                                      child: MindThumbnail(
+                                        url: liveItem.thumbnailUrl!,
+                                        itemId: liveItem.id,
+                                        fit: BoxFit.cover,
+                                        memCacheWidth: 1200,
+                                        errorBuilder: _mediaError,
                                       ),
                                     )
                                   else
@@ -729,6 +722,21 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
           ),
         );
       },
+    );
+  }
+
+  /// Large media fallback used by [MindThumbnail] in the detail sheet.
+  Widget _mediaError(BuildContext context, String url, Object error) {
+    final palette = context.palette;
+    return Container(
+      color: palette.tagBg,
+      child: Center(
+        child: Icon(
+          LucideIcons.image,
+          size: 48,
+          color: palette.textMuted,
+        ),
+      ),
     );
   }
 

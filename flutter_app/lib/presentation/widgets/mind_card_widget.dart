@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/theme/app_palette.dart';
 import '../../domain/entities/mind_item.dart';
+import 'mind_thumbnail.dart';
 
 class MindCardWidget extends StatelessWidget {
   final MindItem item;
@@ -58,39 +58,15 @@ class MindCardWidget extends StatelessWidget {
                     AspectRatio(
                       aspectRatio:
                           item.type == ItemType.instagramReel ? 0.82 : 1.25,
-                      child: CachedNetworkImage(
-                        imageUrl: item.thumbnailUrl!,
+                      child: MindThumbnail(
+                        url: item.thumbnailUrl!,
+                        itemId: item.id,
                         fit: BoxFit.cover,
                         // Two-column cards are much smaller than the source
-                        // image. Decode a bounded thumbnail to reduce memory and
-                        // raster work while scrolling.
+                        // image. Decode a bounded thumbnail to reduce memory
+                        // and raster work while scrolling.
                         memCacheWidth: 360,
                         memCacheHeight: 480,
-                        filterQuality: FilterQuality.low,
-                        fadeInDuration: const Duration(milliseconds: 100),
-                        placeholder: (context, url) => Container(
-                          color: palette.tagBg,
-                          child: const Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Color(0x40FF5B37),
-                              ),
-                            ),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: palette.tagBg,
-                          child: Center(
-                            child: Icon(
-                              LucideIcons.image,
-                              color: palette.textMuted,
-                              size: 28,
-                            ),
-                          ),
-                        ),
                       ),
                     ),
 

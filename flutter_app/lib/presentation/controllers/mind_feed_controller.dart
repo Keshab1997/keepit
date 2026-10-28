@@ -91,6 +91,10 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   /// Invoked after every user-initiated data change (used by Cloud Sync).
   void Function()? onLocalChange;
 
+  /// Items whose thumbnail already failed to refresh this session, so a
+  /// dead card cannot hammer the source page on every rebuild.
+  final Set<String> _thumbnailRefreshTried = {};
+
   void _changed() => onLocalChange?.call();
 
   /// Reloads from Hive. Demo items are seeded only on the very first launch
@@ -320,6 +324,33 @@ class MindFeedController extends StateNotifier<MindFeedState> {
     // write and upload the previous version.
     await _localDataSource.updateItem(updated!);
     state = state.copyWith(items: updatedList);
+    _changed();
+  }
+
+  /// Re-scrapes the source page for a fresh thumbnail URL after the stored
+  /// one stopped loading (signed CDN links and `og:image` URLs expire).
+  ///
+  /// At most one attempt per item per session; the item is only written
+  /// when the scrape actually returns a different image.
+  Future<void> refreshThumbnail(String id) async {
+    if (_thumbnailRefreshTried.contains(id)) return;
+    final item = state.items.where((i) => i.id == id).firstOrNull;
+    if (item == null) return;
+    final source = item.url;
+    if (source == null || source.isEmpty) return;
+    _thumbnailRefreshTried.add(id);
+    final fresh = await MetadataExtractor.refreshThumbnailUrl(source);
+    if (fresh == null || fresh.isEmpty || fresh == item.thumbnailUrl) return;
+    final current = state.items.where((i) => i.id == id).firstOrNull;
+    if (current == null || current.thumbnailUrl != item.thumbnailUrl) return;
+    final updated = current.copyWith(
+      thumbnailUrl: fresh,
+      updatedAt: DateTime.now().toUtc(),
+    );
+    await _localDataSource.updateItem(updated);
+    state = state.copyWith(
+      items: [for (final i in state.items) i.id == id ? updated : i],
+    );
     _changed();
   }
 

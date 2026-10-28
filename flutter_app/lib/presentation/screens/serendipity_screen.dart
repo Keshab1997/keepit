@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -15,6 +14,7 @@ import '../../core/utils/notification_service.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/mind_feed_controller.dart';
 import '../widgets/mind_card_detail_sheet.dart';
+import '../widgets/mind_thumbnail.dart';
 import '../widgets/reminder_settings_sheet.dart';
 
 class SerendipityScreen extends ConsumerStatefulWidget {
@@ -297,12 +297,12 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
                     children: [
                       AspectRatio(
                         aspectRatio: 1.6,
-                        child: CachedNetworkImage(
-                          imageUrl: item.thumbnailUrl!,
+                        child: MindThumbnail(
+                          url: item.thumbnailUrl!,
+                          itemId: item.id,
                           fit: BoxFit.cover,
                           memCacheWidth: 900,
                           memCacheHeight: 560,
-                          filterQuality: FilterQuality.low,
                         ),
                       ),
                       Positioned(
@@ -536,14 +536,16 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
           leading: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: item.thumbnailUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: item.thumbnailUrl!,
+                ? SizedBox(
                     width: 48,
                     height: 48,
-                    fit: BoxFit.cover,
-                    memCacheWidth: 96,
-                    memCacheHeight: 96,
-                    filterQuality: FilterQuality.low,
+                    child: MindThumbnail(
+                      url: item.thumbnailUrl!,
+                      itemId: item.id,
+                      fit: BoxFit.cover,
+                      memCacheWidth: 96,
+                      memCacheHeight: 96,
+                    ),
                   )
                 : Container(
                     width: 48,

@@ -416,8 +416,8 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
                                     const EdgeInsets.fromLTRB(16, 6, 16, 20),
                                 itemCount: items.length,
                                 // Do not retain every off-screen card; image cards
-                                // can be large and CachedNetworkImage already caches
-                                // the decoded thumbnail.
+                                // can be large and the decoded thumbnail stays in
+                                // the framework image cache instead.
                                 addAutomaticKeepAlives: false,
                                 addRepaintBoundaries: true,
                                 itemBuilder: (context, index) {

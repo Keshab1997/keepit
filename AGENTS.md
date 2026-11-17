@@ -276,6 +276,9 @@ down here is never touched).
     `MindFeedController`, `SyncEngine`). A local `DateTime` serialises without a
     timezone designator and silently becomes a different moment after a
     round-trip, which corrupts last-write-wins.
+  - Because of that, anything that *displays* a stored timestamp must call
+    `.toLocal()` first — `DateFormat` prints the DateTime's own fields, so a
+    UTC value shows yesterday's date for anything saved after 18:30 UTC.
   - Reminders are scheduled in the **device's IANA zone**
     (`NotificationService.wallClockToInstant`), never UTC: the planner produces
     wall-clock times, the OS needs the matching instant.

@@ -51,9 +51,9 @@ dependencies:
   google_mobile_ads: ^9.1.0
 
   # Firebase Sync & Push Notifications
-  firebase_core: ^4.15.0
-  firebase_auth: ^6.7.0
-  cloud_firestore: ^6.10.0
+  firebase_core: ^5.0.0
+  firebase_auth: ^7.0.0
+  cloud_firestore: ^7.0.0
   flutter_local_notifications: ^23.0.2
   timezone: ^0.11.2
 

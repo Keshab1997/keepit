@@ -272,6 +272,18 @@ down here is never touched).
     `package:material_ui/material_ui.dart` instead.
   - Fixtures for one test belong in one file; shared fixtures live in
     `flutter_app/test/`. Never add a `tz_probe`-style scratch test.
+  - Every write path stores **UTC instants** (`MetadataExtractor`,
+    `MindFeedController`, `SyncEngine`). A local `DateTime` serialises without a
+    timezone designator and silently becomes a different moment after a
+    round-trip, which corrupts last-write-wins.
+  - Reminders are scheduled in the **device's IANA zone**
+    (`NotificationService.wallClockToInstant`), never UTC: the planner produces
+    wall-clock times, the OS needs the matching instant.
+  - Ad frequency rules live in `AdFrequency`, not in `AdService`; the service
+    owns plugin state and the compile-time switch only.
+  - Tests that only need the notification plan call
+    `NotificationService.initHeadless()` — `init()` talks to the plugin and
+    hangs on a host VM.
 - **Extra verification:** notification copy and scheduling are invisible to CI —
   run the planner tests with `TZ=Asia/Kolkata` when you touch reminder dates.
   Store metadata (listing, screenshots) lives in `store_assets/` +

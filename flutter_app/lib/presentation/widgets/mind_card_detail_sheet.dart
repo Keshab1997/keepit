@@ -45,8 +45,10 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
           orElse: () => widget.item,
         );
 
-    final formattedDate =
-        DateFormat('MMM d, yyyy • h:mm a').format(liveItem.createdAt);
+    // Stored in UTC; show the user's own clock.
+    final formattedDate = DateFormat(
+      'MMM d, yyyy • h:mm a',
+    ).format(liveItem.createdAt.toLocal());
     final hasDescription =
         liveItem.content != null && liveItem.content!.trim().isNotEmpty;
 

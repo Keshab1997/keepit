@@ -517,7 +517,9 @@ class _SerendipityScreenState extends ConsumerState<SerendipityScreen> {
   }
 
   Widget _buildQueueTile(BuildContext context, WidgetRef ref, MindItem item) {
-    final dateStr = DateFormat('MMM d').format(item.createdAt);
+    // Items are stamped in UTC; a bare format() would show the UTC calendar
+    // day, which is the previous day for anything saved before 05:30 in India.
+    final dateStr = DateFormat('MMM d').format(item.createdAt.toLocal());
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),

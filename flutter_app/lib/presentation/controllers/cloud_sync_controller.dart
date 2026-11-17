@@ -130,7 +130,10 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
 
   DateTime? _lastSyncFor(String uid) {
     final ms = local.getMeta<int>(SyncEngine.lastSyncKey(uid));
-    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+    // Stored as a UTC instant; read it back as one.
+    return ms == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
   }
 
   int _pendingCount() {

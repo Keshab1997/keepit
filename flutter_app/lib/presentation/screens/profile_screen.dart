@@ -926,11 +926,13 @@ class _CloudSyncCard extends ConsumerWidget {
   }
 
   static String _relative(DateTime t) {
-    final diff = DateTime.now().difference(t);
+    // `t` may be UTC (sync stamps are stored as UTC instants). A local
+    // DateTime cannot be subtracted from a UTC one, so normalise first.
+    final diff = DateTime.now().difference(t.toLocal());
     if (diff.inSeconds < 45) return 'just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
     if (diff.inHours < 24) return '${diff.inHours} h ago';
-    return DateFormat('MMM d, h:mm a').format(t);
+    return DateFormat('MMM d, h:mm a').format(t.toLocal());
   }
 }
 

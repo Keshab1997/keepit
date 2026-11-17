@@ -8,6 +8,11 @@ class SyncReport {
   final int pulled;
   final int deletedLocally;
   final int deletedRemotely;
+
+  /// UTC. Every persisted instant in the app is UTC; a local DateTime here
+  /// round-trips through `millisecondsSinceEpoch` fine, but reading it back
+  /// with `DateTime.fromMillisecondsSinceEpoch` produces a *local* DateTime,
+  /// so the Profile screen compared a local timestamp against UTC ones.
   final DateTime finishedAt;
 
   const SyncReport({
@@ -174,7 +179,7 @@ class SyncEngine {
     // Our own pushes will come back on the next pull (serverUpdatedAt > cursor);
     // they merge as no-ops because timestamps match.
     await local.putMeta(cursorKey(uid), maxServer);
-    final finishedAt = DateTime.now();
+    final finishedAt = DateTime.now().toUtc();
     await local.putMeta(lastSyncKey(uid), finishedAt.millisecondsSinceEpoch);
 
     return SyncReport(

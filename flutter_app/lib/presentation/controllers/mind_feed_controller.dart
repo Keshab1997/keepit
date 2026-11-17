@@ -10,6 +10,7 @@ import '../../domain/entities/mind_item.dart';
 import '../../data/datasources/local_mind_datasource.dart';
 import '../../core/ads/ad_service.dart';
 import '../../core/utils/imgbb_uploader.dart';
+import '../../core/utils/concurrency_gate.dart';
 import '../../core/utils/metadata_extractor.dart';
 import '../../core/screenshot_mode.dart';
 
@@ -156,30 +157,50 @@ class MindFeedController extends StateNotifier<MindFeedState> {
       return SaveResult.duplicate;
     }
 
-    // Extract metadata & save
+    // Extract metadata & save. This awaits two network calls (oEmbed + an OG
+    // scrape, each with its own timeout), so it is the window where a second
+    // save of the same link can slip in: the clipboard banner, a share intent
+    // and a quick-add tap all call this, and a cold-start share arrives while
+    // the feed is still loading.
     final newItem = await MetadataExtractor.extractFromUrl(cleanInput);
 
-    // Secondary duplicate check after metadata extraction
-    if (newItem.url != null && newItem.url!.isNotEmpty) {
-      final secondaryDuplicate = state.items.any(
-        (item) =>
-            item.url != null && _areUrlsEquivalent(item.url!, newItem.url!),
-      );
-      if (secondaryDuplicate) {
+    // The duplicate decision is made *after* the await, and the check and the
+    // insert run with no await between them. A pre-await check is not enough:
+    // two calls can both pass it, both pay for extraction, and both insert -
+    // the user ends up with the same reel twice and both copies push to the
+    // cloud.
+    // One saver at a time: the check and the insert must not be separated by
+    // another caller's insert, and there is still an `await` (the Hive write)
+    // between them. A single-slot gate is exactly that mutex.
+    return _saveGate.run(() async {
+      if (_isDuplicateOf(newItem.url ?? targetUrl)) {
         return SaveResult.duplicate;
       }
-    }
 
-    await _localDataSource.saveItem(newItem);
-    state = state.copyWith(
-      items: [newItem, ...state.items],
-      lastSavedItem: newItem,
-    );
-    _changed();
-    // Reward-moment ad: an interstitial may appear (frequency caps
-    // permitting) right after a successful save. See AdService.
-    AdService.instance.onItemSaved();
-    return SaveResult.success;
+      await _localDataSource.saveItem(newItem);
+      state = state.copyWith(
+        items: [newItem, ...state.items],
+        lastSavedItem: newItem,
+      );
+      _changed();
+      // Reward-moment ad: an interstitial may appear (frequency caps
+      // permitting) right after a successful save. See AdService.
+      AdService.instance.onItemSaved();
+      return SaveResult.success;
+    });
+  }
+
+  static final ConcurrencyGate _saveGate = ConcurrencyGate(1);
+
+  /// True when [url] is already in the feed.
+  bool _isDuplicateOf(String url) {
+    if (url.trim().isEmpty) return false;
+    final normalized = normalizeUrl(url);
+    return state.items.any((item) {
+      final existing = item.url;
+      if (existing == null || existing.isEmpty) return false;
+      return _areUrlsEquivalent(existing, normalized);
+    });
   }
 
   /// Uploads a local image to ImgBB and stores only its public URL in the

@@ -279,6 +279,9 @@ down here is never touched).
   - Reminders are scheduled in the **device's IANA zone**
     (`NotificationService.wallClockToInstant`), never UTC: the planner produces
     wall-clock times, the OS needs the matching instant.
+  - `timezone` is pinned to 0.9.x by `flutter_local_notifications` 17.x. Do not
+    bump it alone: it fails to resolve. It moves only together with the
+    `flutter_local_notifications` 23 migration.
   - Ad frequency rules live in `AdFrequency`, not in `AdService`; the service
     owns plugin state and the compile-time switch only.
   - Tests that only need the notification plan call

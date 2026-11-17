@@ -8,6 +8,7 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import 'core/ads/ad_service.dart';
 import 'core/cloud/firebase_bootstrap.dart';
+import 'core/screenshot_mode.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/notification_service.dart';
 import 'data/datasources/local_mind_datasource.dart';
@@ -196,6 +197,12 @@ class _KeepItAppState extends ConsumerState<KeepItApp> {
   /// Very first launch shows the onboarding; the flag lives in the Hive meta
   /// box so it never appears again (unless local data is wiped).
   Future<void> _checkFirstRun() async {
+    if (ScreenshotMode.active) {
+      // The screenshot workflow starts from a clean install; without this it
+      // would photograph the carousel on every route it asks for.
+      if (mounted) setState(() => _showOnboarding = false);
+      return;
+    }
     final seen = ref
             .read(localDataSourceProvider)
             .getMeta<bool>(LocalMindDataSource.onboardingSeenKey) ??

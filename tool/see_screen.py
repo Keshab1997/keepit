@@ -96,6 +96,26 @@ def route_slug(route: str) -> str:
     return cleaned or "home"
 
 
+def screenshot_defines(args: argparse.Namespace) -> str:
+    """Defines that make a clean install render a real screen instead of the
+    first-launch carousel. Off unless asked for."""
+    lines: list[str] = []
+    if args.skip_onboarding:
+        lines.append("KEEPIT_SCREENSHOT=true")
+        if args.tab:
+            lines.append(f"KEEPIT_SCREENSHOT_TAB={args.tab}")
+    if args.seed:
+        if not args.skip_onboarding:
+            raise SystemExit(
+                "see_screen: --seed needs --dismiss-onboarding, otherwise the "
+                "feed it fills is never shown")
+        lines.append("KEEPIT_SCREENSHOT_SEED=true")
+    extra = (args.dart_defines or "").strip()
+    if extra:
+        lines.append(extra)
+    return "\n".join(lines)
+
+
 def build_inputs(routes: list[str], args: argparse.Namespace, note: str) -> dict:
     """The workflow_dispatch inputs the caller forwards to the reusable workflow."""
     inputs = {
@@ -104,8 +124,9 @@ def build_inputs(routes: list[str], args: argparse.Namespace, note: str) -> dict
         "wait-ms": str(args.wait_ms or DEFAULT_WAIT_MS),
         "note": note,
     }
-    if args.dart_defines:
-        inputs["dart-defines"] = args.dart_defines
+    defines = screenshot_defines(args)
+    if defines:
+        inputs["dart-defines"] = defines
     return inputs
 
 
@@ -312,6 +333,15 @@ def main(argv: list[str] | None = None, cwd: Path | None = None) -> int:
                         help=f"milliseconds to let the app settle (default {DEFAULT_WAIT_MS})")
     parser.add_argument("--dart-defines", dest="dart_defines",
                         help="compile-time defines, one KEY=VALUE per line")
+    parser.add_argument("--dismiss-onboarding", dest="skip_onboarding",
+                        action="store_true",
+                        help="skip the first-launch carousel so a route is reached")
+    parser.add_argument("--tab", type=int, choices=[0, 1, 2, 3],
+                        help="bottom tab to open with --dismiss-onboarding "
+                             "(0 everything, 1 spaces, 2 serendipity, 3 profile)")
+    parser.add_argument("--seed", action="store_true",
+                        help="seed demo items so the feed is not empty "
+                             "(requires --dismiss-onboarding)")
     parser.add_argument("--out", default=DEFAULT_OUT,
                         help=f"where to put the images (default {DEFAULT_OUT})")
     parser.add_argument("--token-file", help="file holding a GitHub token")

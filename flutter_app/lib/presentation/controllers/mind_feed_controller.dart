@@ -7,6 +7,7 @@ import '../../data/datasources/local_mind_datasource.dart';
 import '../../core/ads/ad_service.dart';
 import '../../core/utils/imgbb_uploader.dart';
 import '../../core/utils/metadata_extractor.dart';
+import '../../core/screenshot_mode.dart';
 
 final localDataSourceProvider = Provider<LocalMindDataSource>((ref) {
   return LocalMindDataSource();
@@ -112,8 +113,10 @@ class MindFeedController extends StateNotifier<MindFeedState> {
       // Meta box unavailable — fall back to old behaviour.
     }
 
-    // Seed initial demo items if empty
-    if (items.isEmpty && seedDemo && !alreadySeeded) {
+    // Seed initial demo items if empty. Screenshot mode can force the seed on
+    // an already-marked box, because a captured run reuses one profile.
+    final forceSeed = ScreenshotMode.active && ScreenshotMode.seedDemoItems;
+    if (items.isEmpty && seedDemo && (!alreadySeeded || forceSeed)) {
       try {
         await _localDataSource.putMeta(LocalMindDataSource.demoSeededKey, true);
       } catch (_) {}

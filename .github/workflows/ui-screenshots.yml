@@ -9,6 +9,11 @@ name: Flutter UI screenshots
 # from the flutter-builder agent pack dispatches this, waits and downloads the
 # images, so a change can be *looked at* instead of guessed at.
 #
+# Screenshots start from a clean install, so by default the app opens on the
+# first-launch carousel and every route looks the same. see_screen.py passes
+# `--dismiss-onboarding` as `KEEPIT_SCREENSHOT=true` (plus a tab / demo seed)
+# when you ask it to, which the app honours in debug builds only.
+#
 # The app needs web support (`web/` in the repository, or set
 # `generate-web-platform: true` below). Apps that use platform-only plugins
 # (camera, bluetooth, local notifications) will not render on web - the capture

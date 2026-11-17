@@ -73,7 +73,10 @@ class _NotificationHostState extends ConsumerState<NotificationHost>
 
     if (_service.settings.enabled) {
       // Shown once by the OS on Android 13+/iOS; no-op if already decided.
-      unawaited(_service.requestPermission());
+      // Swallowed on purpose: a platform that cannot answer (web, a test, a
+      // device with the notification service disabled) must not turn into an
+      // unhandled async error from a call nobody awaits.
+      unawaited(_service.requestPermission().catchError((Object _) => false));
     }
 
     final launchIntent = _service.takeLaunchIntent();

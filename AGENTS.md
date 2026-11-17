@@ -290,6 +290,16 @@ down here is never touched).
   - Tests that only need the notification plan call
     `NotificationService.initHeadless()` — `init()` talks to the plugin and
     hangs on a host VM.
+  - **Widget-testing `NotificationHost` is unsolved — do not restart from
+    scratch.** What is proven: (1) without a `ProviderScope` it throws
+    `Bad state: No ProviderScope found` at once, so that is not the hang;
+    (2) `pumpAndSettle()` never returns, the host starts repeating timers;
+    (3) **opening a Hive box inside `testWidgets` never completes** — the real
+    file-I/O callback is not scheduled on the fake clock, open it in `setUp`;
+    (4) the service alone is fine, `initHeadless()` + `cancelAll()` finish in
+    milliseconds in a plain `test()`. A test satisfying all four still hangs
+    around three minutes in `_boot()`. Cover the service behaviour instead —
+    `test/notification_cancel_all_test.dart` already pins what the wiring calls.
 - **Extra verification:** notification copy and scheduling are invisible to CI —
   run the planner tests with `TZ=Asia/Kolkata` when you touch reminder dates.
   Store metadata (listing, screenshots) lives in `store_assets/` +

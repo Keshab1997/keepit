@@ -173,7 +173,9 @@ class ShareCaptureController extends StateNotifier<ShareCaptureState> {
         dismiss();
       }
     } catch (e) {
-      if (!mounted) return;
+      // Same disposed check as the success path: `state =` on a disposed
+      // StateNotifier throws, and the caller never awaits this.
+      if (_disposed || !mounted) return;
       state = ShareCaptureState(
         phase: ShareCapturePhase.failed,
         rawShared: clean,

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/mind_toast.dart';
 import '../../core/utils/external_link_launcher.dart';
+import '../../core/utils/thumbnail_repair.dart';
 import '../../domain/entities/mind_item.dart';
 import '../controllers/mind_feed_controller.dart';
 
@@ -185,24 +187,43 @@ class _MindCardDetailSheetState extends ConsumerState<MindCardDetailSheet> {
                                 alignment: Alignment.center,
                                 children: [
                                   if (liveItem.thumbnailUrl != null)
-                                    Image.network(
-                                      liveItem.thumbnailUrl!,
+                                    // Same repair path as the feed card: a
+                                    // saved thumbnail can outlive its signed
+                                    // URL, so report the failure instead of
+                                    // showing a silent grey poster.
+                                    CachedNetworkImage(
+                                      imageUrl: liveItem.thumbnailUrl!,
                                       width: double.infinity,
                                       height: 390,
                                       fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              Container(
-                                        height: 260,
-                                        color: palette.tagBg,
-                                        child: Center(
-                                          child: Icon(
-                                            LucideIcons.image,
-                                            size: 48,
-                                            color: palette.textMuted,
+                                      memCacheWidth: 900,
+                                      errorWidget: (context, url, error) {
+                                        if (ThumbnailRepair.markFailed(
+                                          liveItem.id,
+                                          url,
+                                        )) {
+                                          WidgetsBinding.instance
+                                              .addPostFrameCallback((_) {
+                                            ThumbnailRepair.repair(
+                                              ref.read(
+                                                mindFeedProvider.notifier,
+                                              ),
+                                              liveItem.id,
+                                            );
+                                          });
+                                        }
+                                        return Container(
+                                          height: 260,
+                                          color: palette.tagBg,
+                                          child: Center(
+                                            child: Icon(
+                                              LucideIcons.image,
+                                              size: 48,
+                                              color: palette.textMuted,
+                                            ),
                                           ),
-                                        ),
-                                      ),
+                                        );
+                                      },
                                     )
                                   else
                                     Container(

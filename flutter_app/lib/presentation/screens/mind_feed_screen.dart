@@ -10,6 +10,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/mind_toast.dart';
+import '../../core/utils/thumbnail_repair.dart';
 import '../controllers/mind_feed_controller.dart';
 import '../widgets/mind_card_widget.dart';
 import '../widgets/mind_card_detail_sheet.dart';
@@ -56,6 +57,13 @@ class _MindFeedScreenState extends ConsumerState<MindFeedScreen>
       vsync: this,
       duration: const Duration(milliseconds: 140),
     );
+
+    // Retry thumbnails that already failed earlier in this session. The feed
+    // stays on the cached placeholder until a live URL is found, so this never
+    // blocks the first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ThumbnailRepair.repairAll(ref.read(mindFeedProvider.notifier));
+    });
   }
 
   void _onScroll() {

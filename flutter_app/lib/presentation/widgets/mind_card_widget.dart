@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/theme/app_palette.dart';
+import '../../core/utils/thumbnail_repair.dart';
 import '../../domain/entities/mind_item.dart';
+import '../controllers/mind_feed_controller.dart';
 
-class MindCardWidget extends StatelessWidget {
+class MindCardWidget extends ConsumerWidget {
   final MindItem item;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
@@ -18,7 +21,7 @@ class MindCardWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
     // RepaintBoundary isolates this card's render tree so scrolling never triggers unnecessary repaints
     return RepaintBoundary(
@@ -81,16 +84,30 @@ class MindCardWidget extends StatelessWidget {
                             ),
                           ),
                         ),
-                        errorWidget: (context, url, error) => Container(
-                          color: palette.tagBg,
-                          child: Center(
-                            child: Icon(
-                              LucideIcons.image,
-                              color: palette.textMuted,
-                              size: 28,
+                        // A thumbnail can expire after it was saved. Report
+                        // the failure (once per URL per session) so
+                        // ThumbnailRepair can fetch a live one; the placeholder
+                        // stays only if no replacement is found.
+                        errorWidget: (context, url, error) {
+                          if (ThumbnailRepair.markFailed(item.id, url)) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              ThumbnailRepair.repair(
+                                ref.read(mindFeedProvider.notifier),
+                                item.id,
+                              );
+                            });
+                          }
+                          return Container(
+                            color: palette.tagBg,
+                            child: Center(
+                              child: Icon(
+                                LucideIcons.image,
+                                color: palette.textMuted,
+                                size: 28,
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ),
 

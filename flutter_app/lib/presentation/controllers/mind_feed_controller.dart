@@ -91,6 +91,10 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   /// Invoked after every user-initiated data change (used by Cloud Sync).
   void Function()? onLocalChange;
 
+  /// Read-only snapshot of the feed for helpers that live outside the
+  /// notifier (e.g. ThumbnailRepair), which must not touch `state` directly.
+  List<MindItem> get items => state.items;
+
   void _changed() => onLocalChange?.call();
 
   /// Reloads from Hive. Demo items are seeded only on the very first launch
@@ -354,6 +358,28 @@ class MindFeedController extends StateNotifier<MindFeedState> {
       );
       return updated!;
     }).toList();
+    if (updated == null) return;
+    await _localDataSource.updateItem(updated!);
+    state = state.copyWith(items: updatedList);
+    _changed();
+  }
+
+  /// Swaps in a live thumbnail URL for an item whose saved one expired (see
+  /// ThumbnailRepair). Writes through Hive and queues the item for cloud sync
+  /// so the repaired image reaches the user's other devices too.
+  Future<void> replaceThumbnail(String id, String url) async {
+    if (url.trim().isEmpty) return;
+    MindItem? updated;
+    final updatedList = state.items.map((item) {
+      if (item.id != id || item.thumbnailUrl == url) return item;
+      updated = item.copyWith(
+        thumbnailUrl: url,
+        updatedAt: DateTime.now().toUtc(),
+      );
+      return updated!;
+    }).toList();
+    // Nothing changed (deleted, already repaired, or a stale repair landing on
+    // a newer URL): never rewrite the record just to bump updatedAt.
     if (updated == null) return;
     await _localDataSource.updateItem(updated!);
     state = state.copyWith(items: updatedList);

@@ -16,14 +16,14 @@ class MetadataExtractor {
     // 1. YouTube Handler (Videos & Shorts)
     if (cleanUrl.contains('youtube.com') || cleanUrl.contains('youtu.be')) {
       final isShort = cleanUrl.contains('/shorts/');
-      final videoId = _extractYouTubeId(cleanUrl);
+      final videoId = youtubeVideoId(cleanUrl);
       String ytThumb = '';
       String ytTitle = isShort ? 'YouTube Short' : 'YouTube Video';
       String author = 'YouTube';
       String description = '';
 
       if (videoId != null) {
-        ytThumb = 'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+        ytThumb = permanentYoutubeThumbnail(videoId);
         try {
           final oembedRes = await http
               .get(
@@ -165,8 +165,7 @@ class MetadataExtractor {
       // Extract a meaningful, concise headline title
       final cleanTitle = _extractInstagramTitle(cleanCaption, author);
 
-      igThumb ??=
-          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=700&q=80';
+      igThumb ??= instagramFallbackThumbnail;
 
       final tags = _generateAccurateTags(
         title: cleanTitle,
@@ -607,7 +606,9 @@ class MetadataExtractor {
     return text.trim();
   }
 
-  static String? _extractYouTubeId(String url) {
+  /// Public so ThumbnailRepair can rebuild a dead YouTube image without a
+  /// network round-trip.
+  static String? youtubeVideoId(String url) {
     final regExp = RegExp(
       r'(?:v=|\/shorts\/|youtu\.be\/|\/v\/|\/embed\/)([^#&?]+)',
       caseSensitive: false,
@@ -615,6 +616,36 @@ class MetadataExtractor {
     final match = regExp.firstMatch(url);
     return match?.group(1);
   }
+
+  /// YouTube's still image route is unsigned and does not rotate, unlike the
+  /// signed CDN links other platforms hand out. hqdefault always exists.
+  static String permanentYoutubeThumbnail(String videoId) =>
+      'https://img.youtube.com/vi/$videoId/hqdefault.jpg';
+
+  /// Poster used for a Reel whose own (signed, therefore expiring) image can no
+  /// longer be fetched. Keep it in one place: the extractor and the repair pass
+  /// both fall back to it.
+  static const String instagramFallbackThumbnail =
+      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=700&q=80';
+
+  /// True for hosts whose image URLs are signed and short-lived: saving them is
+  /// fine, but after a few days the signature expires and the image 403s.
+  static bool isExpiringThumbnailHost(String? url) {
+    if (url == null || url.isEmpty) return false;
+    final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+    return host.contains('cdninstagram') ||
+        host.contains('fbcdn') ||
+        host.contains('tiktokcdn') ||
+        host.contains('licdn') ||
+        host.contains('googleusercontent') ||
+        host.contains('ggpht');
+  }
+
+  /// Fetches just the page's Open Graph / JSON-LD image. Exposed for
+  /// ThumbnailRepair, which re-asks for an image that is still live when the
+  /// URL saved months ago has expired.
+  static Future<Map<String, String?>> scrapeOpenGraph(String url) =>
+      _scrapeOpenGraph(url);
 
   static Future<Map<String, String?>> _scrapeOpenGraph(String url) async {
     final response = await http.get(

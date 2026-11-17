@@ -213,15 +213,20 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
       );
       return;
     }
-    if (_checking) return;
-    _checking = true;
-    state = state.copyWith(
-      phase: AppUpdatePhase.checking,
-      busy: true,
-      clearMessage: true,
-    );
-
+    // The re-entrancy guard lives *inside* the try so that its matching
+    // `finally` always runs. Fired from onAppResumed() while Play's native
+    // update dialog is open, this returns early - and when the guard sat above
+    // the try/finally, `_checking` stayed true for the rest of the session, so
+    // no update check could ever run again (including "Check for update").
     try {
+      if (_checking) return;
+      _checking = true;
+      state = state.copyWith(
+        phase: AppUpdatePhase.checking,
+        busy: true,
+        clearMessage: true,
+      );
+
       final installed = await _ref.read(installedBuildNumberProvider.future);
       final info = await _service.checkForUpdate();
 

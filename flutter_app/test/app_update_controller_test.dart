@@ -25,6 +25,13 @@ class _FakeAppUpdateService implements AppUpdateService {
   AppUpdateResult flexibleResult = AppUpdateResult.success;
   AppUpdateResult immediateResult = AppUpdateResult.success;
 
+  /// How many checkForUpdate() calls actually reached Play.
+  int checks = 0;
+
+  /// When set, performImmediateUpdate() waits on it, so a test can hold the
+  /// "Play's dialog is open" state and drive a second check into it.
+  Completer<void>? holdImmediate;
+
   void setInfo(AppUpdateInfo info) => _info = info;
   void emit(InstallStatus status) => _statuses.add(status);
 
@@ -32,7 +39,10 @@ class _FakeAppUpdateService implements AppUpdateService {
   bool get isSupported => supported;
 
   @override
-  Future<AppUpdateInfo?> checkForUpdate() async => _info;
+  Future<AppUpdateInfo?> checkForUpdate() async {
+    checks++;
+    return _info;
+  }
 
   @override
   Stream<InstallStatus> get installStatus => _statuses.stream;
@@ -49,6 +59,7 @@ class _FakeAppUpdateService implements AppUpdateService {
   @override
   Future<AppUpdateResult> performImmediateUpdate() async {
     immediateStarts++;
+    if (holdImmediate != null) await holdImmediate!.future;
     return immediateResult;
   }
 
@@ -164,6 +175,46 @@ void main() {
     expect(service.immediateStarts, 0);
     expect(service.flexibleStarts, 1);
     expect(service.completions, 1);
+  });
+
+  test('a check that starts while Play\'s dialog is open still works later',
+      () async {
+    // Real sequence: the app resumes, check() opens Play's native update UI and
+    // awaits it. The user backgrounds the app while the dialog is up, comes
+    // back, and onAppResumed() fires - which used to be swallowed by the
+    // `_checking` guard. Because that guard had already returned before the
+    // try/finally, `_checking` stayed true for the rest of the session and no
+    // update check could ever run again, including "Check for update".
+    final container = buildContainer();
+    final controller = container.read(appUpdateProvider.notifier);
+
+    final dialog = Completer<void>();
+    service.holdImmediate = dialog;
+    final first = controller.check();
+    await _settle();
+    expect(service.immediateStarts, 1);
+
+    // A second check arrives while the dialog is open.
+    service.holdImmediate = null;
+    await controller.check();
+    expect(
+      service.checks,
+      1,
+      reason: 'the re-entrant check must be a no-op, not a second Play call',
+    );
+
+    // Play's dialog finally closes.
+    dialog.complete();
+    await first;
+
+    // The next check must reach Play again.
+    await controller.check(manual: true);
+    expect(
+      service.checks,
+      2,
+      reason: 'a swallowed check left _checking stuck true forever',
+    );
+    expect(service.immediateStarts, 2);
   });
 
   test('dismissing Play update dialog snoozes that build, manual check retries',

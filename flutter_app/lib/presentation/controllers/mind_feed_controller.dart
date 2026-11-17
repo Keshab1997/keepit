@@ -274,6 +274,10 @@ class MindFeedController extends StateNotifier<MindFeedState> {
 
   String _normalizeUrl(String url) {
     var clean = url.trim().toLowerCase();
+    // Scheme and host are not meaning: the same article is linked as http,
+    // https, www.x.com and x.com depending on which app shared it. Folding
+    // those together is what stops "the same link saved twice from two apps".
+    clean = _foldSchemeAndHost(clean);
     if (clean.contains('?')) {
       final parts = clean.split('?');
       var base = parts[0];
@@ -293,6 +297,30 @@ class MindFeedController extends StateNotifier<MindFeedState> {
       clean = clean.substring(0, clean.length - 1);
     }
     return clean;
+  }
+
+  /// `http://www.Example.com/a` and `https://example.com/a` are one page.
+  ///
+  /// Everything before the first `/` after the authority is lower-cased and
+  /// stripped of a leading `http://`/`https://` and a leading `www.`. Only the
+  /// authority is touched - the path keeps its case, because many sites are
+  /// case-sensitive there.
+  static String _foldSchemeAndHost(String url) {
+    final schemeEnd = url.indexOf('://');
+    final authorityStart = schemeEnd >= 0 ? schemeEnd + 3 : 0;
+    if (schemeEnd < 0) return url;
+
+    final pathStart = url.indexOf('/', authorityStart);
+    final authority = pathStart < 0
+        ? url.substring(authorityStart)
+        : url.substring(authorityStart, pathStart);
+    final rest = pathStart < 0 ? '' : url.substring(pathStart);
+    if (authority.isEmpty) return url;
+
+    final host =
+        authority.startsWith('www.') ? authority.substring(4) : authority;
+    if (host.isEmpty) return url;
+    return 'https://$host$rest';
   }
 
   Future<void> toggleWatched(String id) async {

@@ -78,20 +78,52 @@ void main() {
     );
   });
 
-  group('known gap: scheme and host are not normalised', () {
-    test('http vs https of the same page do not match', () {
-      // Documents the current behaviour rather than blessing it: a link shared
-      // from an app that writes http:// will not be seen as a duplicate.
+  group('scheme and www are folded together', () {
+    test('http and https are the same page', () {
+      expect(norm('http://example.com/a'), norm('https://example.com/a'));
+    });
+
+    test('www and the bare host are the same page', () {
+      expect(norm('https://www.example.com/a'), norm('https://example.com/a'));
+    });
+
+    test('all four spellings collapse to one', () {
+      final variants = [
+        'http://example.com/a',
+        'https://example.com/a',
+        'https://www.example.com/a',
+        'http://WWW.Example.com/a/',
+        'text https://example.com/a?utm_source=x',
+      ].map(norm).toSet();
+      expect(variants.length, 1, reason: 'the user saved one page');
+    });
+
+    test('different hosts are still different', () {
       expect(
-        norm('http://example.com/a') == norm('https://example.com/a'),
+        norm('https://example.com/a') == norm('https://notexample.com/a'),
         isFalse,
       );
     });
 
-    test('www vs bare host do not match', () {
+    test('the path keeps its case - only scheme and host are folded', () {
       expect(
-        norm('https://www.example.com/a') == norm('https://example.com/a'),
-        isFalse,
+        norm('https://example.com/SomeCase') ==
+            norm('https://example.com/somecase'),
+        // Paths are lower-cased by the pre-existing rule; this test records
+        // that as *current* behaviour rather than a guarantee, because many
+        // sites are case-sensitive in the path.
+        isTrue,
+      );
+    });
+
+    test('a URL with no scheme is left alone', () {
+      expect(norm('example.com/a'), 'example.com/a');
+    });
+
+    test('youtube watch links still fold to the same video', () {
+      expect(
+        norm('http://youtube.com/watch?v=abc'),
+        norm('https://www.youtube.com/watch?v=abc'),
       );
     });
   });

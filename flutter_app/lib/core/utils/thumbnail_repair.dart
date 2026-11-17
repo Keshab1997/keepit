@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/mind_item.dart';
 import '../../presentation/controllers/mind_feed_controller.dart';
+import 'concurrency_gate.dart';
 import 'metadata_extractor.dart';
 
 /// Heals thumbnails that die over time.
@@ -23,6 +24,11 @@ class ThumbnailRepair {
   /// masonry column from firing the same doomed request on every rebuild.
   static final Set<String> _attempted = <String>{};
 
+  /// Every repair - the startup sweep *and* the ones a failing card asks for -
+  /// goes through this, so scrolling a column of stale links cannot open a
+  /// burst of requests at once. Three at a time matches the old sweep cap.
+  static final ConcurrencyGate _gate = ConcurrencyGate(3);
+
   /// Same-origin re-scrape results, cached so several cards from one site pay
   /// for a single HTML fetch.
   static final Map<String, String?> _scrapeCache = <String, String?>{};
@@ -35,11 +41,20 @@ class ThumbnailRepair {
     final item = _findById(controller.items, itemId);
     if (item == null) return;
 
-    final fresh = await _freshThumbnailFor(item, failedUrl: item.thumbnailUrl);
+    final fresh = await _gate.run(
+      () => _freshThumbnailFor(item, failedUrl: item.thumbnailUrl),
+    );
     if (fresh == null || fresh == item.thumbnailUrl) return;
 
     await controller.replaceThumbnail(item.id, fresh);
   }
+
+  /// Repairs in flight / queued, for tests and diagnostics.
+  @visibleForTesting
+  static int get inFlight => _gate.active;
+
+  @visibleForTesting
+  static int get queued => _gate.waiting;
 
   /// One pass over the feed at startup: repair everything we already know is
   /// broken, concurrency-bounded so a cold launch never opens a burst of
@@ -58,10 +73,9 @@ class ThumbnailRepair {
         )
         .toList();
 
-    for (var i = 0; i < targets.length; i += 3) {
-      final slice = targets.skip(i).take(3);
-      await Future.wait(slice.map((item) => repair(controller, item.id)));
-    }
+    // repair() is gated, so the whole sweep can be handed over at once; three
+    // requests are in flight at any moment regardless of the list length.
+    await Future.wait(targets.map((item) => repair(controller, item.id)));
   }
 
   /// Records that [url] failed for [itemId]. The widget calls this from its

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -370,24 +373,51 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   /// Swaps in a live thumbnail URL for an item whose saved one expired (see
   /// ThumbnailRepair). Writes through Hive and queues the item for cloud sync
   /// so the repaired image reaches the user's other devices too.
-  Future<void> replaceThumbnail(String id, String url) async {
-    if (url.trim().isEmpty) return;
-    MindItem? updated;
-    final updatedList = state.items.map((item) {
-      if (item.id != id || item.thumbnailUrl == url) return item;
-      updated = item.copyWith(
-        thumbnailUrl: url,
-        updatedAt: DateTime.now().toUtc(),
-      );
-      return updated!;
-    }).toList();
-    // Nothing changed (deleted, already repaired, or a stale repair landing on
-    // a newer URL): never rewrite the record just to bump updatedAt.
-    if (updated == null) return;
-    await _localDataSource.updateItem(updated!);
-    state = state.copyWith(items: updatedList);
+  Future<void> replaceThumbnail(String id, String url) {
+    if (url.trim().isEmpty) return Future<void>.value();
+
+    // Repairs overlap: a failing card and the startup sweep can both be in
+    // flight for the same item, and each awaited a scrape before getting here.
+    // Deciding from `state` while the other one is mid-write lets the loser
+    // overwrite the winner with a different URL and bump `updatedAt` again -
+    // one extra cloud push per round-trip of that fight.
+    //
+    // So writes are chained: each caller still awaits *its own* write (the
+    // returned future is the real one), they just happen one at a time.
+    _thumbnailPending++;
+    final next = _thumbnailWrites.then((_) => _writeThumbnail(id, url));
+    next.whenComplete(() => _thumbnailPending--);
+    // Keep the chain alive when one write throws, so later repairs are not
+    // silently dropped; the error still reaches this caller.
+    _thumbnailWrites = next.catchError((Object _) {});
+    return next;
+  }
+
+  Future<void> _writeThumbnail(String id, String url) async {
+    final current = state.items.where((item) => item.id == id).firstOrNull;
+    // Deleted meanwhile, already repaired, or already this URL: never rewrite
+    // the record just to bump updatedAt.
+    if (current == null || current.thumbnailUrl == url) return;
+
+    final updated = current.copyWith(
+      thumbnailUrl: url,
+      updatedAt: DateTime.now().toUtc(),
+    );
+    await _localDataSource.updateItem(updated);
+    state = state.copyWith(
+      items: [for (final item in state.items) item.id == id ? updated : item],
+    );
     _changed();
   }
+
+  /// The tail of the thumbnail write chain. Completed futures chain instantly,
+  /// so this only costs anything while a repair is actually in flight.
+  Future<void> _thumbnailWrites = Future<void>.value();
+
+  /// Writes still queued behind the one in flight, for tests.
+  @visibleForTesting
+  int get pendingThumbnailWrites => _thumbnailPending;
+  int _thumbnailPending = 0;
 
   Future<void> deleteItem(String id) async {
     await _localDataSource.deleteItem(id);

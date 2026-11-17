@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:keepit/core/notifications/serendipity_planner.dart';
+import 'package:keepit/core/notifications/serendipity_store.dart';
 
 /// `loadState()` swallows a parse error by returning a *fresh* state, and a
 /// fresh state has an empty `lastStage`. That does not merely lose history: it
@@ -97,6 +99,54 @@ void main() {
     expect(state.settings.enabled, isTrue, reason: 'default, not "yes"');
     expect(state.settings.hour, 20, reason: '"eight" is not an hour');
     expect(state.settings.minute, 30);
+  });
+
+  group('the store on disk', () {
+    late Directory dir;
+
+    setUp(() async {
+      dir = await Directory.systemTemp.createTemp('keepit_state');
+    });
+
+    tearDown(() async {
+      await dir.delete(recursive: true);
+    });
+
+    File stateFile() => File('${dir.path}/${SerendipityStore.stateFileName}');
+
+    test('a corrupt file is quarantined, not re-read every launch', () async {
+      await stateFile().writeAsString('{ this is not json');
+      final store = SerendipityStore(dir.path);
+
+      final first = await store.loadState();
+      expect(first.lastStage, isEmpty);
+
+      expect(
+        stateFile().existsSync(),
+        isFalse,
+        reason: 'leaving it in place means the same parse failure next launch',
+      );
+      expect(
+        File('${stateFile().path}.corrupt').existsSync(),
+        isTrue,
+        reason: 'keep the evidence for a bug report',
+      );
+
+      // Second load is clean, not another parse failure.
+      expect((await store.loadState()).lastStage, isEmpty);
+      expect(stateFile().existsSync(), isFalse);
+    });
+
+    test('a good file survives a load untouched', () async {
+      await stateFile().writeAsString(
+        '{"version": 1, "lastStage": {"a": 2}, "snoozes": {}, "plan": []}',
+      );
+      final store = SerendipityStore(dir.path);
+
+      expect((await store.loadState()).lastStage, {'a': 2});
+      expect(stateFile().existsSync(), isTrue);
+      expect(File('${stateFile().path}.corrupt').existsSync(), isFalse);
+    });
   });
 
   test('a completely empty object still produces a usable state', () {

@@ -96,8 +96,23 @@ class SerendipityStore {
         jsonDecode(raw) as Map<String, dynamic>,
       );
     } catch (_) {
-      // Corrupt file: start fresh rather than crash the app.
+      // Corrupt file: start fresh rather than crash the app - but move the bad
+      // file aside first. It is only overwritten by the next saveState(), so
+      // an app that is killed between the two would parse the same broken file
+      // on the next launch, and a user who never opens the reminder sheet
+      // never triggers that save at all.
+      await _quarantine(file);
       return const SerendipityEngineState();
+    }
+  }
+
+  /// Renames an unreadable state file out of the way (best effort). The
+  /// `.corrupt` copy is left on disk for a bug report rather than deleted.
+  Future<void> _quarantine(File file) async {
+    try {
+      await file.rename('${file.path}.corrupt');
+    } catch (_) {
+      // Leave it; the next save overwrites it anyway.
     }
   }
 

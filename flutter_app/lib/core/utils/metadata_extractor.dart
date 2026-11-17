@@ -372,7 +372,10 @@ class MetadataExtractor {
     clean = clean
         .replaceAll(
           RegExp(
-            r'\s*[-|•]\s*(YouTube|Instagram|Medium).*$',
+            // Separators sites actually use: hyphen, en/em dash, pipe, bullet,
+            // middot. Without the dashes a title like "Song – YouTube" kept
+            // the suffix and the card read as "Song – YouTube".
+            r'\s*[-–—|•·]\s*(YouTube|Instagram|Medium).*$',
             caseSensitive: false,
           ),
           '',

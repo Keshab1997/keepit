@@ -364,6 +364,9 @@ void main() {
     test('cleanTitle drops the site suffix and never returns empty', () {
       expect(MetadataExtractor.cleanTitle('  A title | YouTube '), 'A title');
       expect(MetadataExtractor.cleanTitle('Something - Medium'), 'Something');
+      expect(MetadataExtractor.cleanTitle('Song – YouTube'), 'Song');
+      expect(MetadataExtractor.cleanTitle('Photo — Instagram'), 'Photo');
+      expect(MetadataExtractor.cleanTitle('Read · Medium'), 'Read');
       expect(MetadataExtractor.cleanTitle('   '), 'Saved Item');
     });
   });

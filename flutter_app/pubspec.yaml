@@ -14,6 +14,10 @@ dependencies:
   # package:flutter/material.dart is deprecated and CI analyzes with
   # --fatal-infos, so the app imports this directly.
   material_ui: ^1.11.1
+
+  # Grapheme-aware truncation (metadata captions, notification text): a plain
+  # substring can split an emoji's surrogate pair and throw.
+  characters: ^1.4.1
   
   # State Management & DI
   flutter_riverpod: ^2.5.1

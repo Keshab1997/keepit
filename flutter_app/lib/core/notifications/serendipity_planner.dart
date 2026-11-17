@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:characters/characters.dart';
+
 import '../../domain/entities/mind_item.dart';
 
 /// Pure (platform-free) scheduling logic for the Serendipity notification
@@ -532,8 +534,11 @@ class SerendipityPlanner {
 
   static String _truncate(String text, int max) {
     final clean = text.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (clean.length <= max) return clean;
-    return '${clean.substring(0, max - 1).trimRight()}…';
+    // Count graphemes, not UTF-16 units: a caption of emoji would otherwise be
+    // cut mid-surrogate-pair, and `max <= 1` would index below zero.
+    final glyphs = clean.characters;
+    if (glyphs.length <= max || max <= 0) return clean;
+    return '${glyphs.take(max - 1).toString().trimRight()}…';
   }
 
   static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);

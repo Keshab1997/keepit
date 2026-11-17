@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:characters/characters.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import 'package:uuid/uuid.dart';
@@ -316,13 +317,16 @@ class MetadataExtractor {
       firstLine = firstLine.replaceFirst('"', '');
     }
 
-    // Limit length to a punchy, clean headline
-    if (firstLine.length > 65) {
+    // Limit length to a punchy, clean headline.
+    // Grapheme-aware: captions are full of emoji and Indic conjuncts, and a
+    // plain `substring` can cut a surrogate pair in half (RangeError: Invalid
+    // code unit) — which used to surface as a failed save.
+    if (firstLine.characters.length > 65) {
       final words = firstLine.split(RegExp(r'\s+'));
       if (words.length > 8) {
         firstLine = '${words.take(8).join(' ')}...';
       } else {
-        firstLine = '${firstLine.substring(0, 62)}...';
+        firstLine = '${firstLine.characters.take(62)}...';
       }
     }
 

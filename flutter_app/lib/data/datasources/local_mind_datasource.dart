@@ -213,10 +213,19 @@ class LocalMindDataSource {
   }
 
   /// Wipes all saved items and sync state from this device.
+  ///
+  /// Deliberately *not* a factory reset: the two first-run flags survive, so
+  /// deleting local data from the Profile screen does not replay the onboarding
+  /// and the sample cards never come back on an empty mind. Everything that
+  /// belongs to the data itself (sync cursor, last-sync time, tombstones,
+  /// custom Spaces) is removed, so the next sync re-downloads the cloud copy.
   Future<void> clearAll() async {
+    final onboardingSeen = meta.get(onboardingSeenKey);
+    final demoSeeded = meta.get(demoSeededKey);
     await box.clear();
     await meta.clear();
-    // Keep the demo flag so sample cards don't reappear on an empty mind.
-    await meta.put(demoSeededKey, true);
+    if (onboardingSeen != null)
+      await meta.put(onboardingSeenKey, onboardingSeen);
+    await meta.put(demoSeededKey, demoSeeded ?? true);
   }
 }

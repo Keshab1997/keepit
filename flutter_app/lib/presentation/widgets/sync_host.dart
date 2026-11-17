@@ -22,7 +22,7 @@ class _SyncHostState extends ConsumerState<SyncHost>
     WidgetsBinding.instance.addObserver(this);
     // Create the controller eagerly so it starts listening to auth state.
     final sync = ref.read(cloudSyncProvider.notifier);
-    ref.read(mindFeedProvider.notifier).onLocalChange = sync.notifyLocalChange;
+    MindFeedController.onLocalChange = sync.notifyLocalChange;
   }
 
   @override

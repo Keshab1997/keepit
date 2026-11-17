@@ -2,12 +2,14 @@ import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:keepit/core/theme/app_palette.dart';
 import 'package:keepit/core/theme/app_theme.dart';
 import 'package:keepit/data/datasources/local_mind_datasource.dart';
 import 'package:keepit/domain/entities/mind_item.dart';
+import 'package:keepit/presentation/controllers/mind_feed_controller.dart';
 import 'package:keepit/presentation/controllers/theme_mode_controller.dart';
 import 'package:keepit/presentation/widgets/mind_card_widget.dart';
 
@@ -31,6 +33,22 @@ class _InMemoryMetaDataSource extends LocalMindDataSource {
     }
   }
 }
+
+ProviderContainer _container(LocalMindDataSource source) {
+  final container = ProviderContainer(
+    overrides: [localDataSourceProvider.overrideWithValue(source)],
+  );
+  addTearDown(container.dispose);
+  return container;
+}
+
+/// A fresh container is what "the next launch" means for a Notifier: the
+/// controller no longer takes its data source in the constructor.
+ThemeModeController _controller(LocalMindDataSource source) =>
+    _container(source).read(themeModeProvider.notifier);
+
+ThemeMode _mode(LocalMindDataSource source) =>
+    _container(source).read(themeModeProvider);
 
 void main() {
   late Directory tempDir;
@@ -59,28 +77,28 @@ void main() {
   });
 
   test('starts out following the system', () {
-    expect(ThemeModeController(dataSource).state, ThemeMode.system);
+    expect(_mode(dataSource), ThemeMode.system);
   });
 
   test('a chosen mode survives a restart', () async {
-    final controller = ThemeModeController(dataSource);
+    final controller = _controller(dataSource);
     await controller.setMode(ThemeMode.dark);
 
     expect(dataSource.getMeta<String>(ThemeModeController.metaKey), 'dark');
-    // A fresh controller is what the next launch constructs.
-    expect(ThemeModeController(dataSource).state, ThemeMode.dark);
+    // A fresh container is what the next launch constructs.
+    expect(_mode(dataSource), ThemeMode.dark);
   });
 
   test('every mode round-trips through storage', () async {
     for (final mode in ThemeMode.values) {
-      await ThemeModeController(dataSource).setMode(mode);
-      expect(ThemeModeController(dataSource).state, mode);
+      await _controller(dataSource).setMode(mode);
+      expect(_mode(dataSource), mode);
     }
   });
 
   test('an unrecognised stored value falls back to system', () async {
     await dataSource.putMeta(ThemeModeController.metaKey, 'sepia');
-    expect(ThemeModeController(dataSource).state, ThemeMode.system);
+    expect(_mode(dataSource), ThemeMode.system);
   });
 
   testWidgets('AppTheme registers light and dark AppPalette extensions', (

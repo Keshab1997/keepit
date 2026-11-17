@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/screenshot_mode.dart';
 
@@ -13,7 +13,16 @@ class HomeTab {
 
 /// Currently selected home tab. Lifted into a provider so notification deep
 /// links can switch tabs (e.g. the Sunday Digest opens Serendipity).
-final homeTabProvider = StateProvider<int>(
-  (ref) =>
-      ScreenshotMode.active ? ScreenshotMode.initialTab : HomeTab.everything,
+final homeTabProvider = NotifierProvider<HomeTabNotifier, int>(
+  HomeTabNotifier.new,
 );
+
+class HomeTabNotifier extends Notifier<int> {
+  @override
+  int build() =>
+      ScreenshotMode.active ? ScreenshotMode.initialTab : HomeTab.everything;
+
+  /// Was `ref.read(homeTabProvider.notifier).state = index` under
+  /// StateProvider; a Notifier has no writable `.state`.
+  void select(int index) => state = index;
+}

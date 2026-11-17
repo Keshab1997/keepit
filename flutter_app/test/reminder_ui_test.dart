@@ -72,7 +72,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     // Switching tabs through the provider (as notification deep links do).
-    container.read(homeTabProvider.notifier).state = HomeTab.serendipity;
+    container.read(homeTabProvider.notifier).select(HomeTab.serendipity);
     await tester.pump();
     expect(find.text('DAILY RECALL SPARK'), findsOneWidget);
     expect(find.byTooltip('Remind me in 1 week'), findsOneWidget);

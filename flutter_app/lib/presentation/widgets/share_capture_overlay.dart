@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/theme/app_palette.dart';
@@ -41,13 +40,23 @@ class ShareCaptureState {
   bool get isVisible => phase != ShareCapturePhase.idle;
 }
 
-class ShareCaptureController extends StateNotifier<ShareCaptureState> {
-  ShareCaptureController(this._ref) : super(const ShareCaptureState());
-
-  final Ref _ref;
+class ShareCaptureController extends Notifier<ShareCaptureState> {
+  Ref get _ref => ref;
   Timer? _hideTimer;
 
-  /// Set in [dispose]. `capture()` and `retry()` await the network and then
+  @override
+  ShareCaptureState build() {
+    // Not `ref.onDispose` on a field: with a Notifier, disposal also drops the
+    // timer, so cancelling here is the single place that matters.
+    ref.onDispose(() {
+      _disposed = true;
+      _hideTimer?.cancel();
+    });
+    return const ShareCaptureState();
+  }
+
+  /// Set when the provider is disposed. `capture()` and `retry()` await the
+  /// network and then
   /// read `_ref` and assign `state`; when the provider goes away mid-await
   /// (hot restart, sign-out that rebuilds the tree) doing either throws
   /// "Cannot use ref after the widget was disposed" / "state was accessed
@@ -121,7 +130,7 @@ class ShareCaptureController extends StateNotifier<ShareCaptureState> {
     final (sourceLabel, sourceIcon) = _describeSource(clean);
 
     // Bring the user to the Everything feed so they see their new card arrive.
-    _ref.read(homeTabProvider.notifier).state = HomeTab.everything;
+    _ref.read(homeTabProvider.notifier).select(HomeTab.everything);
 
     state = ShareCaptureState(
       phase: ShareCapturePhase.saving,
@@ -147,7 +156,7 @@ class ShareCaptureController extends StateNotifier<ShareCaptureState> {
       final result = looksLikeImagePath(clean)
           ? await notifier.addImagePath(clean)
           : await notifier.addUrl(clean);
-      if (_disposed || !mounted) return;
+      if (_disposed || !ref.mounted) return;
 
       if (result == SaveResult.success) {
         HapticFeedback.mediumImpact();
@@ -175,7 +184,7 @@ class ShareCaptureController extends StateNotifier<ShareCaptureState> {
     } catch (e) {
       // Same disposed check as the success path: `state =` on a disposed
       // StateNotifier throws, and the caller never awaits this.
-      if (_disposed || !mounted) return;
+      if (_disposed || !ref.mounted) return;
       state = ShareCaptureState(
         phase: ShareCapturePhase.failed,
         rawShared: clean,
@@ -196,30 +205,23 @@ class ShareCaptureController extends StateNotifier<ShareCaptureState> {
 
   void dismiss() {
     _hideTimer?.cancel();
-    if (!mounted) return;
+    if (!ref.mounted) return;
     state = const ShareCaptureState();
   }
 
   void _scheduleHide(Duration duration) {
     _hideTimer?.cancel();
     _hideTimer = Timer(duration, () {
-      if (mounted) {
+      if (!_disposed && ref.mounted) {
         state = const ShareCaptureState();
       }
     });
   }
-
-  @override
-  void dispose() {
-    _disposed = true;
-    _hideTimer?.cancel();
-    super.dispose();
-  }
 }
 
 final shareCaptureProvider =
-    StateNotifierProvider<ShareCaptureController, ShareCaptureState>(
-  (ref) => ShareCaptureController(ref),
+    NotifierProvider<ShareCaptureController, ShareCaptureState>(
+  ShareCaptureController.new,
 );
 
 /// Animated capture card shown when a link or image is shared into KeepIt from

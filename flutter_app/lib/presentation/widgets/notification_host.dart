@@ -168,7 +168,7 @@ class _NotificationHostState extends ConsumerState<NotificationHost>
     if (!mounted) return;
 
     if (intent.type == NotificationIntent.typeDigest) {
-      ref.read(homeTabProvider.notifier).state = HomeTab.serendipity;
+      ref.read(homeTabProvider.notifier).select(HomeTab.serendipity);
       return;
     }
 
@@ -187,7 +187,7 @@ class _NotificationHostState extends ConsumerState<NotificationHost>
       return;
     }
 
-    ref.read(homeTabProvider.notifier).state = HomeTab.serendipity;
+    ref.read(homeTabProvider.notifier).select(HomeTab.serendipity);
     // Close any sheet/dialog already open so the item opens on top of home.
     widget.navigatorKey.currentState?.popUntil((route) => route.isFirst);
     MindCardDetailSheet.show(ctx, item);

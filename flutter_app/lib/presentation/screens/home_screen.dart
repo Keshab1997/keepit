@@ -38,7 +38,7 @@ class HomeScreen extends ConsumerWidget {
       canPop: currentIndex == HomeTab.everything,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop || currentIndex == HomeTab.everything) return;
-        ref.read(homeTabProvider.notifier).state = HomeTab.everything;
+        ref.read(homeTabProvider.notifier).select(HomeTab.everything);
       },
       child: Scaffold(
         backgroundColor: palette.background,
@@ -82,7 +82,7 @@ class HomeScreen extends ConsumerWidget {
               child: BottomNavigationBar(
                 currentIndex: currentIndex,
                 onTap: (index) =>
-                    ref.read(homeTabProvider.notifier).state = index,
+                    ref.read(homeTabProvider.notifier).select(index),
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 selectedItemColor: palette.primary,

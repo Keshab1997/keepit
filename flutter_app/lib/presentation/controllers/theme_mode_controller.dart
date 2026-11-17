@@ -1,5 +1,5 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/local_mind_datasource.dart';
 import 'mind_feed_controller.dart';
@@ -12,15 +12,14 @@ import 'mind_feed_controller.dart';
 ///
 /// Default is [ThemeMode.system]: a user who has already told the OS what they
 /// prefer should not have to tell the app as well.
-class ThemeModeController extends StateNotifier<ThemeMode> {
-  ThemeModeController(LocalMindDataSource local)
-      : _local = local,
-        super(_read(local));
-
+class ThemeModeController extends Notifier<ThemeMode> {
   /// Key in the Hive meta box.
   static const String metaKey = 'theme_mode';
 
-  final LocalMindDataSource _local;
+  LocalMindDataSource get _local => ref.watch(localDataSourceProvider);
+
+  @override
+  ThemeMode build() => _read(_local);
 
   static ThemeMode _read(LocalMindDataSource local) {
     switch (local.getMeta<String>(metaKey)) {
@@ -47,7 +46,6 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
       };
 }
 
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
-  return ThemeModeController(ref.watch(localDataSourceProvider));
-});
+final themeModeProvider = NotifierProvider<ThemeModeController, ThemeMode>(
+  ThemeModeController.new,
+);

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:keepit/core/cloud/sync_engine.dart';
@@ -112,10 +113,14 @@ void main() {
 
     await local.clearAll();
 
-    final feed = MindFeedController(local);
+    final container = ProviderContainer(
+      overrides: [localDataSourceProvider.overrideWithValue(local)],
+    );
+    addTearDown(container.dispose);
+    final feed = container.read(mindFeedProvider.notifier);
     await feed.ready;
     await feed.loadItems(seedDemo: false);
 
-    expect(feed.state.items, isEmpty);
+    expect(container.read(mindFeedProvider).items, isEmpty);
   });
 }

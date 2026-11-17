@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
@@ -83,19 +82,30 @@ class MindFeedState {
 
 enum SaveResult { success, duplicate, empty }
 
-class MindFeedController extends StateNotifier<MindFeedState> {
-  final LocalMindDataSource _localDataSource;
+class MindFeedController extends Notifier<MindFeedState> {
+  LocalMindDataSource get _localDataSource => ref.read(localDataSourceProvider);
 
-  MindFeedController(this._localDataSource) : super(const MindFeedState()) {
-    ready = loadItems();
+  @override
+  MindFeedState build() {
+    // `loadItems()` writes `state`, and a Notifier's state does not exist until
+    // build() returns - calling it here throws "Tried to read the state of an
+    // uninitialized provider". So start it right after, on the same microtask
+    // order the constructor used to have.
+    final initial = Future<void>.microtask(loadItems);
+    _ready = initial;
+    return const MindFeedState();
   }
 
   /// Completes once the first load from Hive has finished (used by
   /// notification deep links that may arrive before the feed is ready).
-  late final Future<void> ready;
+  Future<void> _ready = Future<void>.value();
+  Future<void> get ready => _ready;
 
   /// Invoked after every user-initiated data change (used by Cloud Sync).
-  void Function()? onLocalChange;
+  ///
+  /// Kept static: SyncHost assigns it once at startup, and a Notifier is
+  /// re-created on every rebuild, so an instance field would silently reset.
+  static void Function()? onLocalChange;
 
   /// Read-only snapshot of the feed for helpers that live outside the
   /// notifier (e.g. ThumbnailRepair), which must not touch `state` directly.
@@ -570,8 +580,6 @@ class MindFeedController extends StateNotifier<MindFeedState> {
   }
 }
 
-final mindFeedProvider =
-    StateNotifierProvider<MindFeedController, MindFeedState>((ref) {
-  final dataSource = ref.watch(localDataSourceProvider);
-  return MindFeedController(dataSource);
-});
+final mindFeedProvider = NotifierProvider<MindFeedController, MindFeedState>(
+  MindFeedController.new,
+);

@@ -185,8 +185,12 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   String _sourceTitle(ClipboardLinkCandidate? candidate, Uri? uri) {
     if (candidate == null) return uri?.host ?? 'Web link';
     final title = candidate.headline;
+    // "Save Instagram Reel?" -> "Instagram Reel". Grapheme-aware: a host or
+    // headline whose first character is outside the BMP would make the raw
+    // code-unit indices slice the wrong glyphs (or throw on a short string).
     if (title.startsWith('Save ') && title.endsWith('?')) {
-      return title.substring(5, title.length - 1);
+      final glyphs = title.characters;
+      return glyphs.skip(5).take(glyphs.length - 6).toString().trim();
     }
     return title;
   }

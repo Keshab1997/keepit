@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 import '../../core/cloud/auth_service.dart';
 import '../../core/cloud/cloud_sync_remote.dart';
@@ -73,22 +72,26 @@ final cloudSyncRemoteProvider = Provider<CloudSyncRemote?>((ref) {
   return FirebaseBootstrap.isAvailable ? FirestoreSyncRemote() : null;
 });
 
-class CloudSyncController extends StateNotifier<CloudSyncState> {
-  CloudSyncController({
-    required this.auth,
-    required this.remote,
-    required this.local,
-    required this.onLocalDataChanged,
-  }) : super(CloudSyncState(available: auth.isAvailable && remote != null)) {
-    _init();
-  }
-
-  final AuthService auth;
-  final CloudSyncRemote? remote;
-  final LocalMindDataSource local;
+class CloudSyncController extends Notifier<CloudSyncState> {
+  AuthService get auth => ref.read(authServiceProvider);
+  CloudSyncRemote? get remote => ref.read(cloudSyncRemoteProvider);
+  LocalMindDataSource get local => ref.read(localDataSourceProvider);
 
   /// Called after a sync changed local data so the feed reloads from Hive.
-  final Future<void> Function() onLocalDataChanged;
+  Future<void> Function() get onLocalDataChanged =>
+      () => ref.read(mindFeedProvider.notifier).loadItems(seedDemo: false);
+
+  @override
+  CloudSyncState build() {
+    ref.onDispose(() {
+      _authSub?.cancel();
+      _debounce?.cancel();
+    });
+    // `_init()` assigns state, which a Notifier cannot do until build()
+    // returns; queue it for right after, as the old constructor did.
+    Future<void>.microtask(_init);
+    return CloudSyncState(available: auth.isAvailable && remote != null);
+  }
 
   static const String _autoSyncKey = 'auto_sync_enabled';
 
@@ -104,6 +107,7 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
   bool _rerunRequested = false;
 
   void _init() {
+    if (!ref.mounted) return;
     final auto = local.getMeta<bool>(_autoSyncKey) ?? true;
     state = state.copyWith(autoSync: auto, pendingChanges: _pendingCount());
     if (!state.available) return;
@@ -155,7 +159,7 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
 
   /// Call after any local data change. Debounced auto-sync when enabled.
   void notifyLocalChange() {
-    if (!mounted) return;
+    if (!ref.mounted) return;
     state = state.copyWith(pendingChanges: _pendingCount());
     if (!state.signedIn || !state.autoSync) return;
     _debounce?.cancel();
@@ -185,7 +189,7 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
     _running = future;
     return future.whenComplete(() {
       _running = null;
-      if (_rerunRequested && mounted) {
+      if (_rerunRequested && ref.mounted) {
         _rerunRequested = false;
         syncNow(silent: true);
       }
@@ -203,7 +207,7 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
         local: local,
         remote: remote,
       ).sync(user.uid).timeout(const Duration(seconds: 45));
-      if (!mounted) return report;
+      if (!ref.mounted) return report;
       if (report.changedLocalData) await onLocalDataChanged();
       state = state.copyWith(
         status: SyncStatus.success,
@@ -213,7 +217,7 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
       );
       return report;
     } on TimeoutException {
-      if (mounted) {
+      if (ref.mounted) {
         state = state.copyWith(
           status: SyncStatus.error,
           message: 'Sync timed out. Check your connection.',
@@ -221,7 +225,7 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
       }
     } catch (e) {
       debugPrint('KeepIt sync failed: $e');
-      if (mounted) {
+      if (ref.mounted) {
         state = state.copyWith(
           status: SyncStatus.error,
           message: _friendlyError(e),
@@ -259,7 +263,7 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
       // authStateChanges also fires; set eagerly for snappier UI.
       state = state.copyWith(user: user, lastSyncAt: _lastSyncFor(user.uid));
     } finally {
-      if (mounted) state = state.copyWith(busy: false);
+      if (ref.mounted) state = state.copyWith(busy: false);
     }
   }
 
@@ -291,7 +295,7 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
         pendingChanges: _pendingCount(),
       );
     } finally {
-      if (mounted) state = state.copyWith(busy: false);
+      if (ref.mounted) state = state.copyWith(busy: false);
     }
   }
 
@@ -321,7 +325,7 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
         pendingChanges: _pendingCount(),
       );
     } finally {
-      if (mounted) state = state.copyWith(busy: false);
+      if (ref.mounted) state = state.copyWith(busy: false);
     }
   }
 
@@ -331,23 +335,8 @@ class CloudSyncController extends StateNotifier<CloudSyncState> {
     await onLocalDataChanged();
     state = state.copyWith(pendingChanges: _pendingCount());
   }
-
-  @override
-  void dispose() {
-    _authSub?.cancel();
-    _debounce?.cancel();
-    super.dispose();
-  }
 }
 
-final cloudSyncProvider =
-    StateNotifierProvider<CloudSyncController, CloudSyncState>((ref) {
-  final controller = CloudSyncController(
-    auth: ref.watch(authServiceProvider),
-    remote: ref.watch(cloudSyncRemoteProvider),
-    local: ref.watch(localDataSourceProvider),
-    onLocalDataChanged: () =>
-        ref.read(mindFeedProvider.notifier).loadItems(seedDemo: false),
-  );
-  return controller;
-});
+final cloudSyncProvider = NotifierProvider<CloudSyncController, CloudSyncState>(
+  CloudSyncController.new,
+);

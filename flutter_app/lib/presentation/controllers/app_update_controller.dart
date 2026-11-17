@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -163,9 +162,8 @@ final installedBuildNumberProvider = FutureProvider<int?>((ref) async {
   }
 });
 
-final appUpdateProvider =
-    StateNotifierProvider<AppUpdateController, AppUpdateState>(
-  (ref) => AppUpdateController(ref),
+final appUpdateProvider = NotifierProvider<AppUpdateController, AppUpdateState>(
+  AppUpdateController.new,
 );
 
 /// Drives Google Play's native in-app update flow directly.
@@ -175,16 +173,23 @@ final appUpdateProvider =
 /// fallback to `startFlexibleUpdate()` + `completeFlexibleUpdate()` if only
 /// flexible updates are permitted). Google Play handles the prompt, download,
 /// installation, and app restart natively.
-class AppUpdateController extends StateNotifier<AppUpdateState> {
-  AppUpdateController(this._ref) : super(const AppUpdateState());
-
-  final Ref _ref;
+class AppUpdateController extends Notifier<AppUpdateState> {
+  Ref get _ref => ref;
   StreamSubscription<InstallStatus>? _installSub;
   bool _checking = false;
 
-  AppUpdateService get _service => _ref.read(appUpdateServiceProvider);
-  UpdatePolicy get _policy => _ref.read(updatePolicyProvider);
-  UpdatePreferences get _prefs => _ref.read(updatePreferencesProvider);
+  @override
+  AppUpdateState build() {
+    ref.onDispose(() {
+      _installSub?.cancel();
+      _installSub = null;
+    });
+    return const AppUpdateState();
+  }
+
+  AppUpdateService get _service => ref.read(appUpdateServiceProvider);
+  UpdatePolicy get _policy => ref.read(updatePolicyProvider);
+  UpdatePreferences get _prefs => ref.read(updatePreferencesProvider);
 
   /// Called when KeepIt returns to the foreground.
   Future<void> onAppResumed() async {
@@ -319,7 +324,7 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
   }) async {
     if (info.immediateUpdateAllowed) {
       final result = await _service.performImmediateUpdate();
-      if (!mounted) return;
+      if (!ref.mounted) return;
       switch (result) {
         case AppUpdateResult.success:
           state = state.copyWith(
@@ -341,7 +346,7 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
               _policy.snoozeDuration,
               versionCode: availableVersionCode,
             );
-            if (!mounted) return;
+            if (!ref.mounted) return;
             state = state.copyWith(
               phase: AppUpdatePhase.idle,
               busy: false,
@@ -374,7 +379,7 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
     if (info.flexibleUpdateAllowed) {
       _watchInstallState();
       final result = await _service.startFlexibleUpdate();
-      if (!mounted) return;
+      if (!ref.mounted) return;
       switch (result) {
         case AppUpdateResult.success:
           state = state.copyWith(
@@ -389,7 +394,7 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
             _policy.snoozeDuration,
             versionCode: availableVersionCode,
           );
-          if (!mounted) return;
+          if (!ref.mounted) return;
           state = state.copyWith(
             phase: AppUpdatePhase.idle,
             busy: false,
@@ -416,7 +421,7 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
     await _service
         .completeFlexibleUpdate()
         .timeout(const Duration(milliseconds: 200), onTimeout: () {});
-    if (!mounted) return;
+    if (!ref.mounted) return;
     state = state.copyWith(busy: false);
   }
 
@@ -426,7 +431,7 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
     state = state.copyWith(busy: true, clearMessage: true);
 
     final result = await _service.performImmediateUpdate();
-    if (!mounted) return;
+    if (!ref.mounted) return;
 
     switch (result) {
       case AppUpdateResult.success:
@@ -455,7 +460,7 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
       _policy.snoozeDuration,
       versionCode: state.availableVersionCode,
     );
-    if (!mounted) return;
+    if (!ref.mounted) return;
     state = state.copyWith(phase: AppUpdatePhase.idle, busy: false);
   }
 
@@ -497,12 +502,5 @@ class AppUpdateController extends StateNotifier<AppUpdateState> {
         unawaited(_service.completeFlexibleUpdate());
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _installSub?.cancel();
-    _installSub = null;
-    super.dispose();
   }
 }

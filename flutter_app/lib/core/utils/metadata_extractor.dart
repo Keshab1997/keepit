@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:characters/characters.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import 'package:uuid/uuid.dart';
@@ -8,6 +9,13 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/mind_item.dart';
 
 class MetadataExtractor {
+  /// HTTP client used for every request. Overridable so tests (and anything
+  /// offline) can drive the whole pipeline without touching the network.
+  static http.Client client = http.Client();
+
+  @visibleForTesting
+  static void resetClient() => client = http.Client();
+
   static Future<MindItem> extractFromUrl(String rawText) async {
     final cleanUrl = _extractUrlFromText(rawText);
     final uri = Uri.tryParse(cleanUrl);
@@ -26,7 +34,7 @@ class MetadataExtractor {
       if (videoId != null) {
         ytThumb = permanentYoutubeThumbnail(videoId);
         try {
-          final oembedRes = await http
+          final oembedRes = await client
               .get(
                 Uri.parse(
                   'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=$videoId&format=json',
@@ -92,7 +100,7 @@ class MetadataExtractor {
             final oembedUri = Uri.parse(
               'https://api.instagram.com/oembed/?url=${Uri.encodeComponent(cleanUrl)}',
             );
-            final oembedRes = await http
+            final oembedRes = await client
                 .get(oembedUri)
                 .timeout(const Duration(milliseconds: 3200));
             if (oembedRes.statusCode == 200) {
@@ -353,6 +361,11 @@ class MetadataExtractor {
     }
     return null;
   }
+
+  /// Normalises a scraped headline: trims the " | YouTube" style suffix and
+  /// falls back to "Saved Item" for an empty result. Public so the copy rules
+  /// stay testable and reusable (ThumbnailRepair reuses the scrape output).
+  static String cleanTitle(String title) => _cleanTitle(title);
 
   static String _cleanTitle(String title) {
     var clean = title.trim();
@@ -652,7 +665,7 @@ class MetadataExtractor {
       _scrapeOpenGraph(url);
 
   static Future<Map<String, String?>> _scrapeOpenGraph(String url) async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse(url),
       headers: {
         'User-Agent':
@@ -710,14 +723,12 @@ class MetadataExtractor {
       try {
         final decoded = jsonDecode(script.text);
         for (final object in _jsonLdObjects(decoded)) {
+          // Accept anything content-like and skip the structural nodes a page
+          // also emits. The previous allow-list ("article / creativework /
+          // video / image") silently dropped `BlogPosting`, which is what most
+          // blogs actually publish — so JSON-LD fallback almost never worked.
           final type = _jsonLdString(object['@type'])?.toLowerCase() ?? '';
-          if (type.isNotEmpty &&
-              !type.contains('article') &&
-              !type.contains('creativework') &&
-              !type.contains('video') &&
-              !type.contains('image')) {
-            continue;
-          }
+          if (_jsonLdStructuralTypes.contains(type)) continue;
           ldTitle ??= _jsonLdString(object['headline']) ??
               _jsonLdString(object['name']);
           ldDescription ??= _jsonLdString(object['description']);
@@ -743,6 +754,20 @@ class MetadataExtractor {
               ?.trim(),
     };
   }
+
+  /// Schema.org nodes that describe the page's scaffolding, not its content.
+  static const Set<String> _jsonLdStructuralTypes = {
+    'organization',
+    'website',
+    'webpage',
+    'person',
+    'breadcrumblist',
+    'listitem',
+    'sitenavigationelement',
+    'searchaction',
+    'itemlist',
+    'webpagenav',
+  };
 
   static Iterable<Map<String, dynamic>> _jsonLdObjects(dynamic value) sync* {
     if (value is List) {

@@ -50,13 +50,22 @@ class ReminderSettings {
         'weeklyDigest': weeklyDigest,
       };
 
+  /// `as num?` throws on a String, and a throw here loses the whole state
+  /// file (see [SerendipityEngineState._mapSafe]).
+  static int? _intOrNull(Object? value) {
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
+    return null;
+  }
+
   factory ReminderSettings.fromJson(Map<String, dynamic>? json) {
     if (json == null) return const ReminderSettings();
     return ReminderSettings(
-      enabled: json['enabled'] as bool? ?? true,
-      hour: (json['hour'] as num?)?.toInt().clamp(0, 23) ?? 20,
-      minute: (json['minute'] as num?)?.toInt().clamp(0, 59) ?? 30,
-      weeklyDigest: json['weeklyDigest'] as bool? ?? true,
+      enabled: json['enabled'] is bool ? json['enabled'] as bool : true,
+      hour: _intOrNull(json['hour'])?.clamp(0, 23) ?? 20,
+      minute: _intOrNull(json['minute'])?.clamp(0, 59) ?? 30,
+      weeklyDigest:
+          json['weeklyDigest'] is bool ? json['weeklyDigest'] as bool : true,
     );
   }
 }
@@ -191,17 +200,52 @@ class SerendipityEngineState {
       settings: ReminderSettings.fromJson(
         (json['settings'] as Map?)?.cast<String, dynamic>(),
       ),
-      lastStage: rawStages.map(
-        (k, v) => MapEntry(k as String, (v as num).toInt()),
+      lastStage: _mapSafe<int>(
+        rawStages,
+        (v) => v is num ? v.toInt() : int.tryParse('$v'),
       ),
-      snoozes: rawSnoozes.map(
-        (k, v) => MapEntry(k as String, DateTime.parse(v as String)),
-      ),
+      snoozes: _mapSafe<DateTime>(rawSnoozes, (v) {
+        if (v is! String) return null;
+        return DateTime.tryParse(v);
+      }),
       plan: rawPlan
           .whereType<Map>()
-          .map((e) => PlannedReminder.fromJson(e.cast<String, dynamic>()))
+          .map(_planEntryOrNull)
+          .whereType<PlannedReminder>()
           .toList(),
     );
+  }
+
+  /// One unreadable entry must cost that entry, not the whole state file.
+  ///
+  /// [loadState] swallows an exception by returning a *fresh* state, and a
+  /// fresh state has no `lastStage` at all - which does not just lose the
+  /// history, it makes every item look like it was never reminded. The user
+  /// then gets the same spark again for things they have already seen, which
+  /// is the one bug this engine exists to avoid. So parse tolerantly and keep
+  /// whatever is still usable.
+  static Map<String, T> _mapSafe<T>(
+      Map<dynamic, dynamic> raw, T? Function(Object? value) read) {
+    final result = <String, T>{};
+    raw.forEach((key, value) {
+      if (key is! String || key.isEmpty) return;
+      final parsed = read(value);
+      if (parsed != null) result[key] = parsed;
+    });
+    return result;
+  }
+
+  static PlannedReminder? _planEntryOrNull(Map<dynamic, dynamic> entry) {
+    try {
+      final json = entry.cast<String, dynamic>();
+      // `id` is the only field with no fallback; without it the reminder
+      // cannot be cancelled or matched, so drop just this one.
+      if (json['id'] is! num || json['fireAt'] is! String) return null;
+      if (DateTime.tryParse(json['fireAt'] as String) == null) return null;
+      return PlannedReminder.fromJson(json);
+    } catch (_) {
+      return null;
+    }
   }
 }
 

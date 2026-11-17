@@ -224,8 +224,9 @@ class LocalMindDataSource {
     final demoSeeded = meta.get(demoSeededKey);
     await box.clear();
     await meta.clear();
-    if (onboardingSeen != null)
+    if (onboardingSeen != null) {
       await meta.put(onboardingSeenKey, onboardingSeen);
+    }
     await meta.put(demoSeededKey, demoSeeded ?? true);
   }
 }

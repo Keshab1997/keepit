@@ -2,27 +2,10 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:keepit/core/cloud/auth_service.dart';
-import 'package:keepit/core/cloud/cloud_sync_remote.dart';
 import 'package:keepit/core/cloud/sync_engine.dart';
 import 'package:keepit/data/datasources/local_mind_datasource.dart';
 import 'package:keepit/domain/entities/mind_item.dart';
 import 'package:keepit/presentation/controllers/mind_feed_controller.dart';
-
-class _EmptyRemote implements CloudSyncRemote {
-  @override
-  Future<List<RemoteRecord>> fetchChanges(String uid,
-          {int sinceServerMillis = 0}) async =>
-      const [];
-  @override
-  Future<void> push(String uid,
-      {List<RemoteRecord> upserts = const [],
-      Map<String, int> deletions = const {}}) async {}
-  @override
-  Future<void> deleteAllUserData(String uid) async {}
-  @override
-  Future<int> countItems(String uid) async => 0;
-}
 
 /// A [LocalMindDataSource] on uniquely named boxes, so several "devices" can
 /// live side by side inside one test binary (mirrors sync_engine_test).

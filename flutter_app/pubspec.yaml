@@ -20,7 +20,7 @@ dependencies:
   characters: ^1.4.1
   
   # State Management & DI
-  flutter_riverpod: ^2.5.1
+  flutter_riverpod: ^3.5.0
   
   # Local-First Database
   hive: ^2.2.3

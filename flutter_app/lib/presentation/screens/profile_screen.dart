@@ -276,7 +276,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   static Future<void> _emailSupport(BuildContext context, WidgetRef ref) async {
-    final info = ref.read(packageInfoProvider).valueOrNull;
+    final info = ref.read(packageInfoProvider).value;
     final version =
         info == null ? '' : ' v${info.version} (${info.buildNumber})';
     final uri = Uri(
@@ -314,7 +314,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   static void _showLicenses(BuildContext context, WidgetRef ref) {
-    final info = ref.read(packageInfoProvider).valueOrNull;
+    final info = ref.read(packageInfoProvider).value;
     showLicensePage(
       context: context,
       applicationName: AppConfig.appName,
@@ -1361,7 +1361,7 @@ class _VersionFooter extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
-    final info = ref.watch(packageInfoProvider).valueOrNull;
+    final info = ref.watch(packageInfoProvider).value;
     return Column(
       children: [
         Icon(LucideIcons.sparkles, size: 18, color: palette.primary),

@@ -234,6 +234,37 @@ void main() {
     expect(remote.users[uid]!['a']!.deleted, isFalse);
   });
 
+  test(
+    'a stale remote tombstone neither deletes nor strands a newer local copy',
+    () async {
+      final remote = FakeRemote();
+      final local = await device();
+      await local.saveItem(
+        mk('a', title: 'Rescued', updated: DateTime.utc(2026, 9, 10)),
+      );
+      await SyncEngine(local: local, remote: remote).sync(uid);
+      expect(local.getItem('a')?.isSynced, isTrue);
+
+      // Another device deleted an *older* version of this item.
+      remote.deleteFromOtherDevice(uid, 'a', DateTime.utc(2026, 9, 2));
+
+      final ran = await SyncEngine(local: local, remote: remote).sync(uid);
+
+      // The item survives…
+      expect(local.getItem('a')?.title, 'Rescued');
+      // …and the cloud copy is repaired, not left as a tombstone.
+      expect(remote.users[uid]!['a']!.deleted, isFalse);
+      expect(remote.users[uid]!['a']!.data['title'], 'Rescued');
+      // Repaired by the push path, so local ends up synced again (not dirty).
+      expect(local.getItem('a')?.isSynced, isTrue);
+      expect(ran.pushed, 1);
+      // A repeat sync is a no-op — no infinite repair loop.
+      final again = await SyncEngine(local: local, remote: remote).sync(uid);
+      expect(again.pushed, 0);
+      expect(again.pulled, 0);
+    },
+  );
+
   test('local deletions propagate as tombstones to other devices', () async {
     final remote = FakeRemote();
     final phone = await device();

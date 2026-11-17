@@ -80,8 +80,9 @@ class SyncEngine {
           final localMs = _ms(localItem.updatedAt);
           if (localMs > r.updatedAtMs) {
             // A stale remote tombstone must not erase a newer local version.
-            // If the local version was previously marked synced, mark it dirty
-            // so the newer value repairs the cloud record below.
+            // If that version is currently marked synced (so the push below
+            // would skip it), save it unsynced to repair the cloud record.
+            // (saveItem defaults to synced: false — that *is* the dirtying.)
             if (localItem.isSynced) {
               await local.saveItem(localItem);
             }

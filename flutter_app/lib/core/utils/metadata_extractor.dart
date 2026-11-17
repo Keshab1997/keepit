@@ -539,7 +539,7 @@ class MetadataExtractor {
 
     topicMap.forEach((category, keywords) {
       for (final kw in keywords) {
-        if (fullCorpus.contains(kw)) {
+        if (_mentions(fullCorpus, kw)) {
           tags.add(category);
           break;
         }
@@ -563,6 +563,19 @@ class MetadataExtractor {
     }
 
     return tags.take(8).toList();
+  }
+
+  /// True when [keyword] appears as a whole word/phrase in [corpus].
+  ///
+  /// A plain `contains` tags "email marketing" as `ai` (em-**ai**-l) and
+  /// "said" as `ai` too, which is how two unrelated cards end up in the same
+  /// smart space. Multi-word keywords ("how to", "step by step") still match
+  /// as phrases.
+  static bool _mentions(String corpus, String keyword) {
+    final pattern = RegExp(
+      '(?<![a-z0-9])${RegExp.escape(keyword)}(?![a-z0-9])',
+    );
+    return pattern.hasMatch(corpus);
   }
 
   static bool _isStopWord(String word) {

@@ -301,6 +301,35 @@ void main() {
     });
   });
 
+  group('tags — word boundaries', () {
+    Future<MindItem> saveArticle(String title) async {
+      MetadataExtractor.client = fakeClient(routes: {
+        'example.com/a': html(
+          '<html><head><meta property="og:title" content="$title" />'
+          '</head></html>',
+        ),
+      });
+      return MetadataExtractor.extractFromUrl('https://example.com/a');
+    }
+
+    test('"email" is not tagged as AI', () async {
+      final item = await saveArticle('Email marketing for beginners');
+      expect(item.tags, isNot(contains('ai')));
+      expect(item.tags, contains('marketing'));
+    });
+
+    test('"said" does not tag AI, "AI" does', () async {
+      expect(
+          (await saveArticle('Said no one ever')).tags, isNot(contains('ai')));
+      expect((await saveArticle('AI agents in 2026')).tags, contains('ai'));
+    });
+
+    test('multi-word keywords still match as phrases', () async {
+      expect((await saveArticle('How to budget every month')).tags,
+          contains('tutorial'));
+    });
+  });
+
   group('public helpers', () {
     test('youtubeVideoId understands every share shape', () {
       for (final url in [

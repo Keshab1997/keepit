@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -23,6 +24,13 @@ class ImgBbUploader {
   static String get _apiKey =>
       dotenv.env['IMGBB_API_KEY'] ??
       const String.fromEnvironment('IMGBB_API_KEY');
+
+  /// Overridable for tests so the upload contract can be exercised without a
+  /// network round-trip or a real API key.
+  static http.Client client = http.Client();
+
+  @visibleForTesting
+  static void resetClient() => client = http.Client();
 
   static final Uri _endpoint = Uri.parse('https://api.imgbb.com/1/upload');
   static const int _maxBytes = 32 * 1024 * 1024;
@@ -58,7 +66,8 @@ class ImgBbUploader {
 
     late final http.StreamedResponse response;
     try {
-      response = await request.send().timeout(const Duration(seconds: 45));
+      response =
+          await client.send(request).timeout(const Duration(seconds: 45));
     } catch (_) {
       throw const ImgBbUploadException(
         'Image upload failed. Check your internet connection.',
@@ -93,6 +102,9 @@ class ImgBbUploader {
     }
     return url.trim();
   }
+
+  @visibleForTesting
+  static String safeFilename(String name) => _safeFilename(name);
 
   static String _safeFilename(String name) {
     final trimmed = name.trim();

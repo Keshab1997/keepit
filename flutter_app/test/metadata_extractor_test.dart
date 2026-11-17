@@ -330,6 +330,31 @@ void main() {
     });
   });
 
+  group('timestamps', () {
+    test('saved items carry UTC instants, so a round-trip keeps the moment',
+        () async {
+      MetadataExtractor.client = fakeClient(routes: {
+        'example.com/utc': html('<html><title>Instant</title></html>'),
+      });
+      final before = DateTime.now().toUtc();
+      final item =
+          await MetadataExtractor.extractFromUrl('https://example.com/utc');
+      final after = DateTime.now().toUtc();
+
+      expect(item.createdAt.isUtc, isTrue);
+      expect(item.updatedAt.isUtc, isTrue);
+      expect(item.createdAt.isBefore(before), isFalse);
+      expect(item.createdAt.isAfter(after), isFalse);
+
+      // The bug: a local stamp serialised without a designator came back as a
+      // *different* instant (and in local time). Round-tripping must not move
+      // the moment at all.
+      final restored = MindItem.fromMap(item.toMap());
+      expect(restored.createdAt.isAtSameMomentAs(item.createdAt), isTrue);
+      expect(restored.createdAt.isUtc, isTrue);
+    });
+  });
+
   group('public helpers', () {
     test('youtubeVideoId understands every share shape', () {
       for (final url in [

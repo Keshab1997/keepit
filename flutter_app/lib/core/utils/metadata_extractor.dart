@@ -19,7 +19,13 @@ class MetadataExtractor {
   static Future<MindItem> extractFromUrl(String rawText) async {
     final cleanUrl = _extractUrlFromText(rawText);
     final uri = Uri.tryParse(cleanUrl);
-    final now = DateTime.now();
+    // UTC, like every other write path: `toIso8601String()` on a local
+    // DateTime emits no timezone designator, so a save made in India became
+    // "now - 5:30" with `isUtc == false` after a round-trip, and last-write-wins
+    // compared those naive stamps against the other device's UTC ones. Equal
+    // instants were enough to hand a conflict to the wrong side; half an hour
+    // of clock skew could keep them apart entirely.
+    final now = DateTime.now().toUtc();
     final id = const Uuid().v4();
 
     // 1. YouTube Handler (Videos & Shorts)

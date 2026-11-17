@@ -30,7 +30,12 @@ void main() {
 
   setUp(() {
     ImgBbUploader.resetClient();
-    dotenv.testLoad(mergeWith: {'IMGBB_API_KEY': 'test-key'});
+    // dotenv 6 renamed testLoad() -> loadFromString() and now throws on an
+    // empty env string unless it is marked optional.
+    dotenv.loadFromString(
+      isOptional: true,
+      mergeWith: {'IMGBB_API_KEY': 'test-key'},
+    );
   });
 
   tearDown(() {
@@ -173,7 +178,10 @@ void main() {
   });
 
   test('a missing API key never reaches the network', () async {
-    dotenv.testLoad(mergeWith: {'IMGBB_API_KEY': ''});
+    dotenv.loadFromString(
+      isOptional: true,
+      mergeWith: {'IMGBB_API_KEY': ''},
+    );
     var called = false;
     ImgBbUploader.client = MockClient((request) async {
       called = true;

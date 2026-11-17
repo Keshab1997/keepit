@@ -66,7 +66,7 @@ dependencies:
   share_plus: ^13.3.0
 
   # Loads local config from .env (git-ignored): IMGBB_API_KEY etc.
-  flutter_dotenv: ^5.1.0
+  flutter_dotenv: ^6.0.2
 
   # In-app updates: asks Google Play whether a newer build of KeepIt exists and
   # downloads/installs it without leaving the app. Android-only at runtime.

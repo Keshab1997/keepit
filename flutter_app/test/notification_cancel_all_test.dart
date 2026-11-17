@@ -23,7 +23,7 @@ void main() {
       () async {
     final store = SerendipityStore.inMemory();
     final service = NotificationService();
-    await service.init(store: store);
+    await service.initHeadless(store: store);
 
     await service.reschedule([savedLongAgo('a')]);
     expect(service.upcoming, isNotEmpty);
@@ -38,7 +38,7 @@ void main() {
   test('planning again after a wipe schedules nothing', () async {
     final store = SerendipityStore.inMemory();
     final service = NotificationService();
-    await service.init(store: store);
+    await service.initHeadless(store: store);
     await service.reschedule([savedLongAgo('a')]);
     await service.cancelAll();
 

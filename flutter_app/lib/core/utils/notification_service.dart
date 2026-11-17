@@ -90,6 +90,18 @@ class NotificationService {
   /// instant. Injectable so tests can pin a zone without a platform channel.
   static Future<tz.Location> Function() timeZoneResolver = resolveLocalZone;
 
+  /// Loads the persisted engine state without touching a platform channel.
+  ///
+  /// [init] also creates the notification channels and asks the plugin for its
+  /// launch details, which never completes on a host VM. Tests that only care
+  /// about planning (`cancelAll`, `reschedule`) use this instead.
+  @visibleForTesting
+  Future<void> initHeadless({SerendipityStore? store}) async {
+    _store = store ?? SerendipityStore.inMemory();
+    _state = await _store.loadState();
+    _initialized = true;
+  }
+
   /// The device's real timezone name (`Asia/Kolkata`), with a fixed-offset
   /// fallback for platforms/paths where the plugin cannot answer.
   static Future<tz.Location> resolveLocalZone() async {

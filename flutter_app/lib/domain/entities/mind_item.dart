@@ -110,27 +110,65 @@ class MindItem {
   factory MindItem.fromMap(Map<dynamic, dynamic> map) {
     return MindItem(
       id: map['id'] as String,
-      title: map['title'] as String? ?? 'Untitled',
-      url: map['url'] as String?,
-      content: map['content'] as String?,
-      thumbnailUrl: map['thumbnailUrl'] as String?,
-      authorName: map['authorName'] as String?,
-      authorAvatar: map['authorAvatar'] as String?,
+      title: _asString(map['title']) ?? 'Untitled',
+      url: _asString(map['url']),
+      content: _asString(map['content']),
+      thumbnailUrl: _asString(map['thumbnailUrl']),
+      authorName: _asString(map['authorName']),
+      authorAvatar: _asString(map['authorAvatar']),
       type: ItemType.values.firstWhere(
         (e) => e.name == map['type'],
         orElse: () => ItemType.webArticle,
       ),
-      tags: List<String>.from(map['tags'] ?? []),
-      spaceId: map['spaceId'] as String?,
-      isWatched: map['isWatched'] as bool? ?? false,
-      isTopMind: map['isTopMind'] as bool? ?? false,
-      dominantColorHex: map['dominantColorHex'] as String?,
+      tags: _asTags(map['tags']),
+      spaceId: _asString(map['spaceId']),
+      isWatched: _asBool(map['isWatched']),
+      isTopMind: _asBool(map['isTopMind']),
+      dominantColorHex: _asString(map['dominantColorHex']),
       createdAt: _parseTimestamp(map['createdAt']) ?? _fallbackCreatedAt,
       updatedAt: _parseTimestamp(map['updatedAt']) ??
           _parseTimestamp(map['createdAt']) ??
           _fallbackCreatedAt,
-      isSynced: map['isSynced'] as bool? ?? false,
+      isSynced: _asBool(map['isSynced']),
     );
+  }
+
+  /// Field readers that never throw.
+  ///
+  /// The same reasoning as [_parseTimestamp]: a cast failure on any one field
+  /// used to take the whole item down, and every caller treats a failed
+  /// [fromMap] as "this item does not exist". A single bad `tags` value - a
+  /// String instead of a List, a null entry, a bool where a String was
+  /// expected - therefore removed the card from the feed *and* from sync, and
+  /// the corrupt record stayed on disk, so it never came back. One wrong field
+  /// must cost that field, not the memory.
+  static String? _asString(Object? value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is num || value is bool) return value.toString();
+    return null;
+  }
+
+  static bool _asBool(Object? value) {
+    if (value is bool) return value;
+    if (value is String) return value.toLowerCase() == 'true' || value == '1';
+    if (value is num) return value != 0;
+    return false;
+  }
+
+  static List<String> _asTags(Object? value) {
+    if (value is Iterable) {
+      return value
+          .map(_asString)
+          .whereType<String>()
+          .where((tag) => tag.trim().isNotEmpty)
+          .toList();
+    }
+    // A single tag stored as a bare string (an old export, or a hand-edited
+    // backup) is still a tag.
+    final single = _asString(value);
+    if (single != null && single.trim().isNotEmpty) return [single];
+    return const [];
   }
 
   /// Never throws. A single malformed timestamp used to make [fromMap] fail,

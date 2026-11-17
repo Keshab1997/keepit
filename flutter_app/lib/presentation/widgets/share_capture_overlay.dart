@@ -45,6 +45,14 @@ class ShareCaptureController extends StateNotifier<ShareCaptureState> {
 
   final Ref _ref;
   Timer? _hideTimer;
+
+  /// Set in [dispose]. `capture()` and `retry()` await the network and then
+  /// read `_ref` and assign `state`; when the provider goes away mid-await
+  /// (hot restart, sign-out that rebuilds the tree) doing either throws
+  /// "Cannot use ref after the widget was disposed" / "state was accessed
+  /// after being disposed" from an un-awaited call site — an unhandled
+  /// framework error, not a crash log anyone can act on.
+  bool _disposed = false;
   String? _lastRaw;
   DateTime? _lastStartedAt;
 
@@ -108,6 +116,7 @@ class ShareCaptureController extends StateNotifier<ShareCaptureState> {
     _lastStartedAt = now;
     _hideTimer?.cancel();
 
+    if (_disposed) return;
     final (sourceLabel, sourceIcon) = _describeSource(clean);
 
     // Bring the user to the Everything feed so they see their new card arrive.
@@ -137,7 +146,7 @@ class ShareCaptureController extends StateNotifier<ShareCaptureState> {
       final result = looksLikeImagePath(clean)
           ? await notifier.addImagePath(clean)
           : await notifier.addUrl(clean);
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
 
       if (result == SaveResult.success) {
         HapticFeedback.mediumImpact();
@@ -199,6 +208,7 @@ class ShareCaptureController extends StateNotifier<ShareCaptureState> {
 
   @override
   void dispose() {
+    _disposed = true;
     _hideTimer?.cancel();
     super.dispose();
   }

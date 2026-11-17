@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../domain/entities/mind_item.dart';
@@ -83,6 +85,59 @@ class NotificationService {
       StreamController<NotificationIntent>.broadcast();
   final StreamController<NotificationActionRecord> _foregroundActions =
       StreamController<NotificationActionRecord>.broadcast();
+
+  /// How the planner's local wall-clock times are turned into an absolute
+  /// instant. Injectable so tests can pin a zone without a platform channel.
+  static Future<tz.Location> Function() timeZoneResolver = resolveLocalZone;
+
+  /// The device's real timezone name (`Asia/Kolkata`), with a fixed-offset
+  /// fallback for platforms/paths where the plugin cannot answer.
+  static Future<tz.Location> resolveLocalZone() async {
+    tz_data.initializeTimeZones();
+    try {
+      final info = await FlutterTimezone.getLocalTimezone();
+      return tz.getLocation(info.identifier);
+    } catch (e) {
+      debugPrint('KeepIt: timezone lookup failed, using a fixed offset ($e)');
+      // Positional, matching the `timezone` API: name, transition instants,
+      // the zone index active after each transition, and the zones themselves.
+      return tz.Location(
+        'device',
+        const [0],
+        const [0],
+        [
+          tz.TimeZone(
+            DateTime.now().timeZoneOffset.inMilliseconds,
+            isDst: false,
+            abbreviation: 'LOCAL',
+          ),
+        ],
+      );
+    }
+  }
+
+  /// Cached device zone; refreshed on every reschedule so travelling (or a DST
+  /// flip while the app is open) is picked up without an app restart.
+  tz.Location _zone = tz.UTC;
+
+  /// Turns a planner wall-clock time (`20:30` on 21 Nov, no zone) into the
+  /// absolute instant the OS must fire, in [zone].
+  ///
+  /// Built with the wall-clock fields on purpose: `TZDateTime.from` maps an
+  /// *instant* into a zone, so it would depend on whatever timezone the host
+  /// happens to be in. This reads the intended clock time ("the user's 20:30")
+  /// and asks `timezone` for that moment in [zone] — which also normalises the
+  /// hour that does not exist on a spring-forward night.
+  static tz.TZDateTime wallClockToInstant(DateTime fireAt, tz.Location zone) =>
+      tz.TZDateTime(
+        zone,
+        fireAt.year,
+        fireAt.month,
+        fireAt.day,
+        fireAt.hour,
+        fireAt.minute,
+        fireAt.second,
+      );
 
   SerendipityStore _store = SerendipityStore.inMemory();
   SerendipityEngineState _state = const SerendipityEngineState();
@@ -296,6 +351,7 @@ class NotificationService {
   }
 
   Future<void> _reschedule(List<MindItem> items, DateTime now) async {
+    _zone = await timeZoneResolver();
     final ids = items.map((i) => i.id).toSet();
     _state = SerendipityPlanner.commitDelivered(
       _state,
@@ -343,10 +399,12 @@ class NotificationService {
     PlannedReminder reminder,
     Map<String, MindItem> byId,
   ) async {
-    // Convert the planned *local* wall-clock time into an absolute instant.
-    // Using UTC avoids needing the device's IANA timezone name; the plan is
-    // rebuilt on every launch/resume so DST changes self-correct.
-    final when = tz.TZDateTime.from(reminder.fireAt, tz.UTC);
+    // Convert the planned *local* wall-clock time into an absolute instant in
+    // the device's real timezone, so a 20:30 reminder fires at 20:30 local even
+    // across a DST change or when the user travels. `fireAt` is a local
+    // DateTime, so `TZDateTime.from` converts the whole wall clock rather than
+    // relabelling it. The plan is rebuilt on launch/resume as a safety net.
+    final when = wallClockToInstant(reminder.fireAt, _zone);
     final details = _detailsFor(reminder, byId);
 
     Future<void> scheduleWith(AndroidScheduleMode mode) {

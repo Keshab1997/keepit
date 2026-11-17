@@ -56,6 +56,10 @@ dependencies:
   cloud_firestore: ^6.10.0
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.4
+
+  # The device's IANA zone name (Asia/Kolkata), so reminders fire at the
+  # user's chosen wall-clock time across DST changes and travel.
+  flutter_timezone: ^5.1.1
   path_provider: ^2.1.5
   google_sign_in: ^7.2.0
   package_info_plus: ^10.2.1

@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 /// A 3D-styled animated launch screen shown immediately while KeepIt boots its

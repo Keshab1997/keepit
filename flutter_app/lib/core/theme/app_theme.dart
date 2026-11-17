@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -20,7 +20,13 @@ class AppTheme {
       scaffoldBackgroundColor: palette.background,
       primaryColor: palette.primary,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(baseTextTheme).apply(
+      // material_ui ships its own TextTheme, which google_fonts (still typed
+      // against the framework one) cannot fill directly. Starting from the
+      // base theme and applying the family is equivalent to
+      // GoogleFonts.plusJakartaSansTextTheme(baseTextTheme), and keeps every
+      // text style styled instead of just one.
+      textTheme: baseTextTheme.apply(
+        fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
         bodyColor: palette.textPrimary,
         displayColor: palette.textPrimary,
       ),

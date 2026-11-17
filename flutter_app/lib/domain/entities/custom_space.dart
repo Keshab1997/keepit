@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A user-created Space. The icon is stored by a stable name instead of an
 /// IconData object so it survives Hive/Firestore/export round trips.

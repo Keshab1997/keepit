@@ -5,6 +5,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:hive/hive.dart';
 
 import 'ad_config.dart';
+import 'ad_frequency.dart';
 
 /// Ads only ship in the Android build right now (iOS is not published yet).
 ///
@@ -37,8 +38,12 @@ class AdService {
   bool _loadingRewarded = false;
   bool _showingInterstitial = false;
 
-  int _savesSinceInterstitial = 0;
-  DateTime? _lastInterstitialAt;
+  /// The persisted counters, interpreted by [AdFrequency] (the rule lives
+  /// there so it can be tested without AdMob).
+  AdFrequency _frequency = const AdFrequency(
+    savesSinceLast: 0,
+    lastShownAt: null,
+  );
 
   static const _kSavesSince = 'ads_saves_since_interstitial';
   static const _kLastInterstitialAt = 'ads_last_interstitial_at';
@@ -74,16 +79,18 @@ class AdService {
   }
 
   void _restoreCounters() {
-    _savesSinceInterstitial = (_prefs?.get(_kSavesSince) as int?) ?? 0;
     final last = _prefs?.get(_kLastInterstitialAt) as int?;
-    _lastInterstitialAt =
-        last == null ? null : DateTime.fromMillisecondsSinceEpoch(last);
+    _frequency = AdFrequency(
+      savesSinceLast: (_prefs?.get(_kSavesSince) as int?) ?? 0,
+      lastShownAt:
+          last == null ? null : DateTime.fromMillisecondsSinceEpoch(last),
+    );
   }
 
   Future<void> _persistCounters() async {
     try {
-      await _prefs?.put(_kSavesSince, _savesSinceInterstitial);
-      final last = _lastInterstitialAt;
+      await _prefs?.put(_kSavesSince, _frequency.savesSinceLast);
+      final last = _frequency.lastShownAt;
       if (last != null) {
         await _prefs?.put(_kLastInterstitialAt, last.millisecondsSinceEpoch);
       }
@@ -120,7 +127,7 @@ class AdService {
   /// conservative frequency caps allow it.
   void onItemSaved() {
     if (!_initialized || !AdConfig.enableInterstitial) return;
-    _savesSinceInterstitial++;
+    _frequency = _frequency.afterSave();
     _persistCounters();
     if (!_canShowInterstitial) return;
     Future.delayed(AdConfig.interstitialDelay, () {
@@ -131,17 +138,12 @@ class AdService {
   }
 
   bool get _canShowInterstitial {
+    // "Is ads traffic allowed to show right now" is this class's job (plugin
+    // state and the compile-time switch); "has the user earned one" is
+    // AdFrequency's.
     if (!_initialized || !AdConfig.enableInterstitial) return false;
     if (_interstitial == null || _showingInterstitial) return false;
-    if (_savesSinceInterstitial < AdConfig.savesBetweenInterstitials) {
-      return false;
-    }
-    final last = _lastInterstitialAt;
-    if (last != null &&
-        DateTime.now().difference(last) < AdConfig.minInterstitialInterval) {
-      return false;
-    }
-    return true;
+    return _frequency.allowsInterstitial(DateTime.now());
   }
 
   Future<void> _showInterstitial() async {
@@ -149,8 +151,7 @@ class AdService {
     if (ad == null) return;
     _interstitial = null;
     _showingInterstitial = true;
-    _lastInterstitialAt = DateTime.now();
-    _savesSinceInterstitial = 0;
+    _frequency = _frequency.afterShown(DateTime.now());
     await _persistCounters();
 
     ad.fullScreenContentCallback = FullScreenContentCallback(

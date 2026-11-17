@@ -7,6 +7,7 @@ import '../../core/notifications/serendipity_store.dart';
 import '../../core/theme/mind_toast.dart';
 import '../../core/utils/notification_service.dart';
 import '../../domain/entities/mind_item.dart';
+import '../controllers/cloud_sync_controller.dart';
 import '../controllers/mind_feed_controller.dart';
 import '../controllers/navigation_controller.dart';
 import 'mind_card_detail_sheet.dart';
@@ -194,6 +195,25 @@ class _NotificationHostState extends ConsumerState<NotificationHost>
     ref.listen<MindFeedState>(mindFeedProvider, (prev, next) {
       if (!identical(prev?.items, next.items)) _scheduleDebounced(next.items);
     });
+    // Signing out (or deleting the account) must not leave the previous
+    // account's cards waiting in the notification tray: those strings are the
+    // user's saved titles, and a reminder that opens an item which no longer
+    // exists is a dead tap. Cancel, then re-plan from the items that remain.
+    ref.listen<CloudSyncState>(cloudSyncProvider, (prev, next) {
+      final wasSignedIn = prev?.user != null;
+      if (wasSignedIn && next.user == null) {
+        unawaited(_onSignedOut());
+      }
+    });
     return widget.child;
+  }
+
+  Future<void> _onSignedOut() async {
+    _debounce?.cancel();
+    await _service.cancelAll();
+    if (!mounted) return;
+    // If the user kept local data it simply re-plans; after a wipe the list is
+    // empty and planning schedules nothing.
+    await _rescheduleNow();
   }
 }

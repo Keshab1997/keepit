@@ -257,10 +257,23 @@ Everything above the end marker is maintained by
 `scripts/install-agent-pack.sh` (re-run the one-liner to update it; your text
 down here is never touched).
 
-- **App:** keepit — one line about what it does.
-- **App directory:** `.` (change this line if the Flutter app lives in a
-  subdirectory).
-- **Extra project rules:** _(fill in: invariants, store metadata that must stay
-  in sync, screenshots that must be regenerated, …)_
-- **Extra verification:** _(fill in: anything CI cannot see — copy changes,
-  Play Console steps, manual checks …)_
+- **App:** keepit — local-first "save anything, resurface it later" library
+  (Flutter app + Next.js web app + Electron desktop shell + Chrome extension).
+- **App directory:** `flutter_app/` — every Flutter command
+  (`flutter analyze`, `flutter test`, `pubspec.yaml`) runs from there, not from
+  the repository root.
+- **Extra project rules:**
+  - Items are UTC instants; anything that derives a *calendar day* from
+    `MindItem.createdAt` must go through the device timezone first
+    (`SerendipityPlanner` has the seam — pass `deviceZone` in tests).
+  - `LocalMindDataSource.clearAll()` is a **data** wipe, not a factory reset:
+    `onboarding_seen` and `demo_seeded` survive it.
+  - `package:flutter/material.dart` is deprecated on the CI toolchain; import
+    `package:material_ui/material_ui.dart` instead.
+  - Fixtures for one test belong in one file; shared fixtures live in
+    `flutter_app/test/`. Never add a `tz_probe`-style scratch test.
+- **Extra verification:** notification copy and scheduling are invisible to CI —
+  run the planner tests with `TZ=Asia/Kolkata` when you touch reminder dates.
+  Store metadata (listing, screenshots) lives in `store_assets/` +
+  `docs/PLAY_STORE_*.md`; regenerate screenshots with `tool/see_screen.py`
+  after a UI change.

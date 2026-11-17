@@ -289,7 +289,13 @@ class SerendipityPlanner {
     required SerendipityEngineState state,
     required DateTime now,
     int horizon = horizonDays,
+
+    /// How stored UTC instants are read back as the user's local time.
+    /// Defaults to the device timezone; tests pass a fixed zone so the
+    /// day-boundary behaviour is pinned even on a UTC CI runner.
+    DateTime Function(DateTime)? deviceZone,
   }) {
+    DateTime inZone(DateTime t) => (deviceZone ?? _inDeviceZone)(t);
     final settings = state.settings;
     if (!settings.enabled) return const [];
 
@@ -332,10 +338,25 @@ class SerendipityPlanner {
       );
       if (!fireAt.isAfter(now)) continue;
 
-      final pick = _pickSpark(candidates, lastStage, snoozes, fireAt);
+      final pick = _pickSpark(
+        candidates,
+        lastStage,
+        snoozes,
+        fireAt,
+        deviceZone: inZone,
+      );
       if (pick == null) continue;
 
-      result.add(_buildSpark(day, fireAt, pick.item, pick.stage, pick.snoozed));
+      result.add(
+        _buildSpark(
+          day,
+          fireAt,
+          pick.item,
+          pick.stage,
+          pick.snoozed,
+          deviceZone: inZone,
+        ),
+      );
       if (pick.snoozed) {
         snoozes.remove(pick.item.id);
       } else {
@@ -354,8 +375,9 @@ class SerendipityPlanner {
     List<MindItem> candidates,
     Map<String, int> lastStage,
     Map<String, DateTime> snoozes,
-    DateTime fireAt,
-  ) {
+    DateTime fireAt, {
+    DateTime Function(DateTime)? deviceZone,
+  }) {
     final fireDay = _dateOnly(fireAt);
     final picks = <_SparkPick>[];
 
@@ -372,7 +394,7 @@ class SerendipityPlanner {
       final nextStage = (lastStage[item.id] ?? -1) + 1;
       if (nextStage >= stageDays.length) continue;
 
-      final created = _dateOnly(item.createdAt);
+      final created = _dateOnly((deviceZone ?? _inDeviceZone)(item.createdAt));
       int? dueStage;
       DateTime? dueDate;
       for (var s = nextStage; s < stageDays.length; s++) {
@@ -430,12 +452,17 @@ class SerendipityPlanner {
     DateTime fireAt,
     MindItem item,
     int stage,
-    bool snoozed,
-  ) {
+    bool snoozed, {
+    DateTime Function(DateTime)? deviceZone,
+  }) {
     final noun = nounFor(item.type);
     final title = _truncate(item.title, 70);
     final by = _byline(item);
-    final age = ageLabel(item.createdAt, fireAt);
+    final age = ageLabel(
+      item.createdAt,
+      fireAt,
+      deviceZone: deviceZone,
+    );
 
     String heading;
     String body;
@@ -505,8 +532,13 @@ class SerendipityPlanner {
 
   /// "today", "yesterday", "3 days ago", "2 weeks ago", "3 months ago"...
   /// measured from [createdAt] to [at] in calendar days.
-  static String ageLabel(DateTime createdAt, DateTime at) {
-    final days = _dateOnly(at).difference(_dateOnly(createdAt)).inHours ~/ 24;
+  static String ageLabel(
+    DateTime createdAt,
+    DateTime at, {
+    DateTime Function(DateTime)? deviceZone,
+  }) {
+    final savedOn = _dateOnly((deviceZone ?? _inDeviceZone)(createdAt));
+    final days = _dateOnly(at).difference(savedOn).inHours ~/ 24;
     if (days <= 0) return 'today';
     if (days == 1) return 'yesterday';
     if (days < 7) return '$days days ago';
@@ -542,6 +574,14 @@ class SerendipityPlanner {
   }
 
   static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  /// Items store UTC instants (`DateTime.now().toUtc()`), so their date fields
+  /// are UTC: an item saved at 01:30 IST is 20:00Z the previous day. Reading
+  /// the raw `year/month/day` of that instant pushes the spaced-repetition due
+  /// date a full day early for every save made before the local UTC offset
+  /// (5:30 h in India), so every stored date is read through this first.
+  static DateTime _inDeviceZone(DateTime timestamp) =>
+      timestamp.isUtc ? timestamp.toLocal() : timestamp;
 
   /// Stable per-calendar-day number (UTC-based so DST never shifts it).
   static int _dayNumber(DateTime day) =>

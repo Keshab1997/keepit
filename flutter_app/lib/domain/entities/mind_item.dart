@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 enum ItemType {
   instagramReel,
   youtubeVideo,
@@ -123,9 +125,35 @@ class MindItem {
       isWatched: map['isWatched'] as bool? ?? false,
       isTopMind: map['isTopMind'] as bool? ?? false,
       dominantColorHex: map['dominantColorHex'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
-      updatedAt: DateTime.parse(map['updatedAt'] as String),
+      createdAt: _parseTimestamp(map['createdAt']) ?? _fallbackCreatedAt,
+      updatedAt: _parseTimestamp(map['updatedAt']) ??
+          _parseTimestamp(map['createdAt']) ??
+          _fallbackCreatedAt,
       isSynced: map['isSynced'] as bool? ?? false,
     );
   }
+
+  /// Never throws. A single malformed timestamp used to make [fromMap] fail,
+  /// and callers treat a failed parse as "this item does not exist": the card
+  /// disappeared from the feed *and* from sync, and the next cloud pull happily
+  /// overwrote the copy that was still on disk. Keeping the item with a
+  /// best-effort date is always better than losing it.
+  static DateTime? _parseTimestamp(Object? raw) {
+    if (raw is DateTime) return raw;
+    final text = raw is String ? raw : null;
+    final millis =
+        raw is int ? raw : (text == null ? null : int.tryParse(text.trim()));
+    if (millis != null) {
+      return DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true);
+    }
+    final parsed = text == null ? null : DateTime.tryParse(text);
+    if (parsed != null) return parsed;
+    if (text != null) {
+      debugPrint('KeepIt: unreadable timestamp "$text" — using epoch fallback');
+    }
+    return null;
+  }
+
+  static final DateTime _fallbackCreatedAt =
+      DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 }

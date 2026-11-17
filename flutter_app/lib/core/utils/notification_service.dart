@@ -119,7 +119,7 @@ class NotificationService {
         const [0],
         [
           tz.TimeZone(
-            DateTime.now().timeZoneOffset.inMilliseconds,
+            DateTime.now().timeZoneOffset,
             isDst: false,
             abbreviation: 'LOCAL',
           ),
@@ -219,7 +219,7 @@ class NotificationService {
       );
 
       await _plugin.initialize(
-        InitializationSettings(
+        settings: InitializationSettings(
           android: const AndroidInitializationSettings(
             '@drawable/ic_stat_keepit',
           ),
@@ -403,7 +403,7 @@ class NotificationService {
       );
     } catch (_) {}
     for (final id in ids) {
-      await _plugin.cancel(id);
+      await _plugin.cancel(id: id);
     }
   }
 
@@ -421,14 +421,12 @@ class NotificationService {
 
     Future<void> scheduleWith(AndroidScheduleMode mode) {
       return _plugin.zonedSchedule(
-        reminder.id,
-        reminder.title,
-        reminder.body,
-        when,
-        details,
+        id: reminder.id,
+        title: reminder.title,
+        body: reminder.body,
+        scheduledDate: when,
+        notificationDetails: details,
         androidScheduleMode: mode,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
         payload: reminder.payload,
       );
     }
@@ -527,10 +525,10 @@ class NotificationService {
     );
     try {
       await _plugin.show(
-        preview.id,
-        preview.title,
-        preview.body,
-        _detailsFor(preview, {item.id: item}),
+        id: preview.id,
+        title: preview.title,
+        body: preview.body,
+        notificationDetails: _detailsFor(preview, {item.id: item}),
         payload: preview.payload,
       );
       return true;

@@ -58,9 +58,14 @@ void main() {
       r'com\.android\.application"\) version "([0-9.]+)"',
     ).firstMatch(settings);
     expect(agp, isNotNull);
+    // A floor, not an equality: the project rides the toolchain Flutter 3.50
+    // ships (AGP 9.3.1) and must never fall below what the notification
+    // plugin needs.
+    final parts = agp!.group(1)!.split('.').map(int.parse).toList();
+    final major = parts[0], minor = parts[1];
     expect(
-      agp!.group(1),
-      '9.1.1',
+      major * 100 + minor,
+      greaterThanOrEqualTo(901),
       reason: 'the notification plugin targets AGP 9.1.1; keep them aligned',
     );
   });

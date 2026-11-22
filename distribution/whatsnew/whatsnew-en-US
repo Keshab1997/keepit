@@ -1,4 +1,5 @@
-• Smarter Quick Save: copied links auto-fill and show a preview of their source.
-• Duplicates are caught before saving, with clearer progress and retry feedback.
-• The clipboard save prompt stays visible until you save or dismiss it.
-• Improved image saving from your gallery and shared apps.
+• Your Spaces now sync to the cloud and travel with your backups.
+• Restore a KeepIt JSON backup straight from your clipboard.
+• Duplicate links are caught more reliably, even with www or http/https.
+• Serendipity reminders now follow your device's timezone.
+• Safer saves and thumbnails: fewer crashes from damaged or expired data.

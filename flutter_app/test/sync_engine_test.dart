@@ -8,6 +8,7 @@ import 'package:keepit/core/cloud/cloud_sync_remote.dart';
 import 'package:keepit/core/cloud/sync_engine.dart';
 import 'package:keepit/core/utils/data_export.dart';
 import 'package:keepit/data/datasources/local_mind_datasource.dart';
+import 'package:keepit/domain/entities/custom_space.dart';
 import 'package:keepit/domain/entities/mind_item.dart';
 
 /// In-memory stand-in for Firestore with a monotonically increasing
@@ -72,12 +73,85 @@ class FakeRemote implements CloudSyncRemote {
     });
   }
 
+  final Map<String, Map<String, RemoteSpaceRecord>> spaceUsers = {};
+  int spacePushCalls = 0;
+
+  Map<String, RemoteSpaceRecord> _s(String uid) =>
+      spaceUsers.putIfAbsent(uid, () => {});
+
+  /// Simulates another device writing a Space to the cloud.
+  void putSpaceFromOtherDevice(String uid, CustomSpace space) {
+    _s(uid)[space.id] = RemoteSpaceRecord(
+      id: space.id,
+      data: space.toMap()..remove('isSynced'),
+      updatedAtMs: space.effectiveUpdatedAt.toUtc().millisecondsSinceEpoch,
+      serverMillis: ++_clock,
+    );
+  }
+
+  void deleteSpaceFromOtherDevice(String uid, String id, DateTime at) {
+    _s(uid)[id] = RemoteSpaceRecord(
+      id: id,
+      data: const {},
+      updatedAtMs: at.toUtc().millisecondsSinceEpoch,
+      deleted: true,
+      serverMillis: ++_clock,
+    );
+  }
+
   @override
-  Future<void> deleteAllUserData(String uid) async => users.remove(uid);
+  Future<List<RemoteSpaceRecord>> fetchSpaceChanges(
+    String uid, {
+    int sinceServerMillis = 0,
+  }) async =>
+      _s(uid).values.where((r) => r.serverMillis > sinceServerMillis).toList();
+
+  @override
+  Future<void> pushSpaces(
+    String uid, {
+    List<RemoteSpaceRecord> upserts = const [],
+    Map<String, int> deletions = const {},
+  }) async {
+    spacePushCalls++;
+    for (final r in upserts) {
+      _s(uid)[r.id] = RemoteSpaceRecord(
+        id: r.id,
+        data: r.data,
+        updatedAtMs: r.updatedAtMs,
+        serverMillis: ++_clock,
+      );
+    }
+    deletions.forEach((id, at) {
+      _s(uid)[id] = RemoteSpaceRecord(
+        id: id,
+        data: const {},
+        updatedAtMs: at,
+        deleted: true,
+        serverMillis: ++_clock,
+      );
+    });
+  }
+
+  @override
+  Future<void> deleteAllUserData(String uid) async {
+    users.remove(uid);
+    spaceUsers.remove(uid);
+  }
 
   @override
   Future<int> countItems(String uid) async =>
       _u(uid).values.where((r) => !r.deleted).length;
+}
+
+/// Firestore denies the `spaces` collection until its rule is deployed; the
+/// engine has to survive that.
+class _SpaceDeniedRemote extends FakeRemote {
+  @override
+  Future<List<RemoteSpaceRecord>> fetchSpaceChanges(
+    String uid, {
+    int sinceServerMillis = 0,
+  }) async =>
+      throw Exception('permission-denied');
 }
 
 MindItem mk(
@@ -407,6 +481,137 @@ void main() {
     expect(const AppUser(uid: '1', email: 'keshab@gmail.com').initials, 'KG');
     expect(const AppUser(uid: '1', displayName: 'Keshab').initials, 'K');
     expect(const AppUser(uid: '1').initials, '?');
+  });
+
+  group('spaces', () {
+    CustomSpace space(
+      String id,
+      String name, {
+      DateTime? updated,
+      bool synced = false,
+      int color = 0xFF10B981,
+      String icon = 'lightbulb',
+    }) =>
+        CustomSpace(
+          id: id,
+          name: name,
+          colorValue: color,
+          iconName: icon,
+          updatedAt: updated ?? DateTime.utc(2026, 9, 1, 12),
+          isSynced: synced,
+        );
+
+    test('a local Space is uploaded and marked synced', () async {
+      final local = await device();
+      final remote = FakeRemote();
+      await local.saveCustomSpaces([space('s1', 'Startup ideas')]);
+
+      final report = await SyncEngine(local: local, remote: remote).sync(uid);
+
+      expect(report.spacesPushed, 1);
+      // A Space is not a memory: it must not inflate the item count.
+      expect(report.pushed, 0);
+      final stored = (await local.getCustomSpaces()).single;
+      expect(stored.isSynced, isTrue);
+      expect(remote.spaceUsers[uid]!['s1']!.data['name'], 'Startup ideas');
+    });
+
+    test('a second device downloads the Space, colour and icon included',
+        () async {
+      final remote = FakeRemote();
+      final phone = await device();
+      await phone.saveCustomSpaces(
+          [space('s1', 'Design', color: 0xFFEC4899, icon: 'palette')]);
+      await SyncEngine(local: phone, remote: remote).sync(uid);
+
+      final tablet = await device();
+      final report = await SyncEngine(local: tablet, remote: remote).sync(uid);
+
+      expect(report.spacesPulled, 1);
+      final pulled = (await tablet.getCustomSpaces()).single;
+      expect(pulled.name, 'Design');
+      expect(pulled.colorValue, 0xFFEC4899);
+      expect(pulled.iconName, 'palette');
+      expect(pulled.isSynced, isTrue);
+    });
+
+    test('a rename on the phone reaches the tablet', () async {
+      final remote = FakeRemote();
+      final phone = await device();
+      await phone.saveCustomSpaces([space('s1', 'Old name')]);
+      await SyncEngine(local: phone, remote: remote).sync(uid);
+
+      final tablet = await device();
+      await SyncEngine(local: tablet, remote: remote).sync(uid);
+
+      // Rename on the phone, at a later instant.
+      await phone.saveCustomSpaces(
+          [space('s1', 'New name', updated: DateTime.utc(2026, 9, 9))]);
+      await SyncEngine(local: phone, remote: remote).sync(uid);
+      final report = await SyncEngine(local: tablet, remote: remote).sync(uid);
+
+      expect(report.spacesPulled, 1);
+      expect((await tablet.getCustomSpaces()).single.name, 'New name');
+    });
+
+    test('a Space saved before sync existed still reaches the other device',
+        () async {
+      final remote = FakeRemote();
+      final phone = await device();
+      // No updatedAt at all: the pre-sync shape, read back as the epoch.
+      await phone.saveCustomSpaces([
+        const CustomSpace(
+          id: 'legacy',
+          name: 'Reading list',
+          colorValue: 0xFF3B82F6,
+          iconName: 'book',
+        ),
+      ]);
+      await SyncEngine(local: phone, remote: remote).sync(uid);
+
+      final tablet = await device();
+      final report = await SyncEngine(local: tablet, remote: remote).sync(uid);
+
+      // Pushing the epoch would make the cloud copy permanently "oldest" and
+      // no other device could ever accept it.
+      expect(report.spacesPulled, 1);
+      expect((await tablet.getCustomSpaces()).single.name, 'Reading list');
+    });
+
+    test(
+        'deleting a Space reaches the other device and clears the local '
+        'tombstone', () async {
+      final remote = FakeRemote();
+      final phone = await device();
+      await phone.saveCustomSpaces([space('s1', 'Doomed')]);
+      await SyncEngine(local: phone, remote: remote).sync(uid);
+
+      final tablet = await device();
+      await SyncEngine(local: tablet, remote: remote).sync(uid);
+      expect((await tablet.getCustomSpaces()), hasLength(1));
+
+      await phone.deleteCustomSpace('s1');
+      await SyncEngine(local: phone, remote: remote).sync(uid);
+      expect(phone.getSpaceTombstones(), isEmpty);
+
+      await SyncEngine(local: tablet, remote: remote).sync(uid);
+      expect(await tablet.getCustomSpaces(), isEmpty);
+    });
+
+    test('a Space sync failure leaves the item sync untouched', () async {
+      final local = await device();
+      final remote = _SpaceDeniedRemote();
+      await local.saveItem(mk('a'));
+      await local.saveCustomSpaces([space('s1', 'Ideas')]);
+
+      final report = await SyncEngine(local: local, remote: remote).sync(uid);
+
+      expect(report.pushed, 1);
+      expect(await remote.countItems(uid), 1);
+      expect(report.spacesPushed, 0);
+      // The Space stays dirty for the next run, not lost.
+      expect((await local.getCustomSpaces()).single.isSynced, isFalse);
+    });
   });
 }
 

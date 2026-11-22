@@ -26,6 +26,35 @@ class RemoteRecord {
   });
 }
 
+/// One Space document as stored in the cloud.
+///
+/// Same envelope as [RemoteRecord] (client timestamp + tombstone + server
+/// cursor), because Spaces reconcile exactly like items: last-write-wins on the
+/// client timestamp, deletions as tombstones.
+class RemoteSpaceRecord {
+  final String id;
+
+  /// `CustomSpace.toMap()` payload (without `isSynced`).
+  final Map<String, dynamic> data;
+
+  /// Client modification time, UTC epoch millis.
+  final int updatedAtMs;
+
+  /// Tombstone: the Space was deleted on some device.
+  final bool deleted;
+
+  /// Server write time, UTC epoch millis (`0` when unknown).
+  final int serverMillis;
+
+  const RemoteSpaceRecord({
+    required this.id,
+    required this.data,
+    required this.updatedAtMs,
+    this.deleted = false,
+    this.serverMillis = 0,
+  });
+}
+
 /// Storage backend for sync. Abstracted so [SyncEngine] is unit-testable.
 abstract class CloudSyncRemote {
   /// Records written after [sinceServerMillis] (all records when 0).
@@ -41,6 +70,19 @@ abstract class CloudSyncRemote {
     Map<String, int> deletions,
   });
 
+  /// Space records written after [sinceServerMillis] (all records when 0).
+  Future<List<RemoteSpaceRecord>> fetchSpaceChanges(
+    String uid, {
+    int sinceServerMillis = 0,
+  });
+
+  /// Upserts Spaces and writes tombstones for deleted ids.
+  Future<void> pushSpaces(
+    String uid, {
+    List<RemoteSpaceRecord> upserts,
+    Map<String, int> deletions,
+  });
+
   /// Removes every cloud document of the user (account deletion).
   Future<void> deleteAllUserData(String uid);
 
@@ -51,6 +93,7 @@ abstract class CloudSyncRemote {
 /// Firestore layout:
 /// ```
 /// users/{uid}/items/{itemId}    { ...item, updatedAtMs, deleted, serverUpdatedAt }
+/// users/{uid}/spaces/{spaceId}  { ...space, updatedAtMs, deleted, serverUpdatedAt }
 /// ```
 /// The parent user document is intentionally not written during normal sync:
 /// each extra write increases the bill without helping item reconciliation.
@@ -66,6 +109,9 @@ class FirestoreSyncRemote implements CloudSyncRemote {
 
   CollectionReference<Map<String, dynamic>> _items(String uid) =>
       _db.collection('users').doc(uid).collection('items');
+
+  CollectionReference<Map<String, dynamic>> _spaces(String uid) =>
+      _db.collection('users').doc(uid).collection('spaces');
 
   @override
   Future<List<RemoteRecord>> fetchChanges(
@@ -138,7 +184,87 @@ class FirestoreSyncRemote implements CloudSyncRemote {
   }
 
   @override
+  Future<List<RemoteSpaceRecord>> fetchSpaceChanges(
+    String uid, {
+    int sinceServerMillis = 0,
+  }) async {
+    Query<Map<String, dynamic>> query = _spaces(uid);
+    if (sinceServerMillis > 0) {
+      query = query.where(
+        'serverUpdatedAt',
+        isGreaterThan: Timestamp.fromMillisecondsSinceEpoch(sinceServerMillis),
+      );
+    }
+    final snap = await query.get(const GetOptions(source: Source.server));
+    return snap.docs.map((doc) {
+      final raw = Map<String, dynamic>.from(doc.data());
+      final deleted = raw.remove('deleted') == true;
+      final updatedAtMs = (raw.remove('updatedAtMs') as num?)?.toInt() ?? 0;
+      final server = raw.remove('serverUpdatedAt');
+      raw.remove('isSynced');
+      return RemoteSpaceRecord(
+        id: doc.id,
+        data: raw,
+        updatedAtMs: updatedAtMs,
+        deleted: deleted,
+        serverMillis: server is Timestamp ? server.millisecondsSinceEpoch : 0,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<void> pushSpaces(
+    String uid, {
+    List<RemoteSpaceRecord> upserts = const [],
+    Map<String, int> deletions = const {},
+  }) async {
+    final ops = <void Function(WriteBatch)>[];
+    for (final r in upserts) {
+      final doc = <String, dynamic>{
+        ...r.data,
+        'id': r.id,
+        'updatedAtMs': r.updatedAtMs,
+        'deleted': false,
+        'serverUpdatedAt': FieldValue.serverTimestamp(),
+      }..remove('isSynced');
+      ops.add((b) => b.set(_spaces(uid).doc(r.id), doc));
+    }
+    deletions.forEach((id, deletedAtMs) {
+      ops.add(
+        (b) => b.set(_spaces(uid).doc(id), {
+          'id': id,
+          'deleted': true,
+          'updatedAtMs': deletedAtMs,
+          'serverUpdatedAt': FieldValue.serverTimestamp(),
+        }),
+      );
+    });
+    if (ops.isEmpty) return;
+
+    for (var i = 0; i < ops.length; i += _batchSize) {
+      final batch = _db.batch();
+      for (final op in ops.skip(i).take(_batchSize)) {
+        op(batch);
+      }
+      await batch.commit();
+    }
+  }
+
+  @override
   Future<void> deleteAllUserData(String uid) async {
+    // Spaces are the user's data too: an account deletion that left them
+    // behind would keep names they chose on a server they asked to be gone.
+    while (true) {
+      final snap = await _spaces(uid)
+          .limit(_batchSize)
+          .get(const GetOptions(source: Source.server));
+      if (snap.docs.isEmpty) break;
+      final batch = _db.batch();
+      for (final d in snap.docs) {
+        batch.delete(d.reference);
+      }
+      await batch.commit();
+    }
     while (true) {
       final snap = await _items(uid)
           .limit(_batchSize)

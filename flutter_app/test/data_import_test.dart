@@ -235,6 +235,9 @@ void main() {
           'name': 'Startup ideas',
           'colorValue': 0xFF10B981,
           'iconName': 'lightbulb',
+          // Spaces now carry their own timestamp, so a restored Space takes
+          // part in last-write-wins instead of always losing to the cloud.
+          'updatedAt': ideas.effectiveUpdatedAt.toIso8601String(),
         },
       ]);
     });

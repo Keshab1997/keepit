@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
+
 import '../../data/datasources/local_mind_datasource.dart';
+import '../../domain/entities/custom_space.dart';
 import '../../domain/entities/mind_item.dart';
 import 'cloud_sync_remote.dart';
 
@@ -8,6 +11,12 @@ class SyncReport {
   final int pulled;
   final int deletedLocally;
   final int deletedRemotely;
+
+  /// Spaces are synced after the items and never counted in `pushed`: a Space
+  /// is not a memory, and the Profile line would read as if two extra items
+  /// had been uploaded.
+  final int spacesPushed;
+  final int spacesPulled;
 
   /// UTC. Every persisted instant in the app is UTC; a local DateTime here
   /// round-trips through `millisecondsSinceEpoch` fine, but reading it back
@@ -20,10 +29,13 @@ class SyncReport {
     this.pulled = 0,
     this.deletedLocally = 0,
     this.deletedRemotely = 0,
+    this.spacesPushed = 0,
+    this.spacesPulled = 0,
     required this.finishedAt,
   });
 
-  bool get changedLocalData => pulled > 0 || deletedLocally > 0;
+  bool get changedLocalData =>
+      pulled > 0 || deletedLocally > 0 || spacesPulled > 0;
 
   String get summary {
     final parts = <String>[];
@@ -31,6 +43,9 @@ class SyncReport {
     if (pulled > 0) parts.add('$pulled downloaded');
     final removed = deletedLocally + deletedRemotely;
     if (removed > 0) parts.add('$removed removed');
+    if (spacesPulled > 0) {
+      parts.add(spacesPulled == 1 ? '1 space' : '$spacesPulled spaces');
+    }
     return parts.isEmpty ? 'Everything is up to date' : parts.join(' • ');
   }
 }
@@ -68,6 +83,22 @@ class SyncEngine {
       uid,
       sinceServerMillis: cursor,
     );
+
+    // Spaces are pulled with the same cursor as items, but a failure here must
+    // never take the item sync down with it: the `spaces` collection needs its
+    // own firewall rule, and until that is deployed a read is *denied*, which
+    // is a perfectly ordinary state for this app to be in.
+    var remoteSpaces = const <RemoteSpaceRecord>[];
+    var spaceSyncReachable = true;
+    try {
+      remoteSpaces = await remote.fetchSpaceChanges(
+        uid,
+        sinceServerMillis: cursor,
+      );
+    } catch (e) {
+      spaceSyncReachable = false;
+      debugPrint('KeepIt: space sync unavailable this run ($e)');
+    }
 
     var pulled = 0;
     var deletedLocally = 0;
@@ -176,6 +207,27 @@ class SyncEngine {
       );
     }
 
+    var spacesPushed = 0;
+    var spacesPulled = 0;
+    if (spaceSyncReachable) {
+      try {
+        final spaceResult = await _syncSpaces(
+          uid,
+          remoteSpaces,
+          startCursor: maxServer,
+        );
+        spacesPulled = spaceResult.pulled;
+        spacesPushed = spaceResult.pushed;
+        if (spaceResult.maxServer > maxServer) {
+          maxServer = spaceResult.maxServer;
+        }
+      } catch (e) {
+        // A space problem is not worth an item sync failure. The next run
+        // retries; nothing local was lost because spaces are written last.
+        debugPrint('KeepIt: space sync skipped this run ($e)');
+      }
+    }
+
     // Our own pushes will come back on the next pull (serverUpdatedAt > cursor);
     // they merge as no-ops because timestamps match.
     await local.putMeta(cursorKey(uid), maxServer);
@@ -187,8 +239,131 @@ class SyncEngine {
       pulled: pulled,
       deletedLocally: deletedLocally,
       deletedRemotely: pendingDeletes.length,
+      spacesPushed: spacesPushed,
+      spacesPulled: spacesPulled,
       finishedAt: finishedAt,
     );
+  }
+
+  /// Two-way Space sync: pull with last-write-wins, then push what is left.
+  ///
+  /// Same shape as the item pass above, with one difference that matters: a
+  /// Space saved before sync existed has no stored timestamp, so it is pushed
+  /// with *now* as its client time. Pushing the epoch instead would create a
+  /// cloud document no other device could ever accept as newer, and the Space
+  /// would silently never arrive anywhere.
+  Future<({int pushed, int pulled, int maxServer})> _syncSpaces(
+    String uid,
+    List<RemoteSpaceRecord> remoteSpaces, {
+    required int startCursor,
+  }) async {
+    final localSpaces = await local.getCustomSpaces();
+    final spaceTombstones = Map<String, int>.from(local.getSpaceTombstones());
+    final settled = <String>{};
+    final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+
+    final byId = <String, CustomSpace>{
+      for (final space in localSpaces) space.id: space,
+    };
+    var changed = false;
+    var pulled = 0;
+    var maxServer = startCursor;
+
+    for (final r in remoteSpaces) {
+      if (r.serverMillis > maxServer) maxServer = r.serverMillis;
+      final localSpace = byId[r.id];
+      final localTombstone = spaceTombstones[r.id];
+
+      if (r.deleted) {
+        if (localSpace != null) {
+          if (_ms(localSpace.effectiveUpdatedAt) > r.updatedAtMs) {
+            // A stale cloud tombstone must not erase a newer local Space: keep
+            // it and let the push below re-upload it.
+            if (localSpace.isSynced) {
+              byId[r.id] = localSpace.copyWith(isSynced: false);
+              changed = true;
+            }
+          } else {
+            byId.remove(r.id);
+            changed = true;
+          }
+        }
+        if (localTombstone != null && r.updatedAtMs >= localTombstone) {
+          settled.add(r.id);
+        }
+        continue;
+      }
+
+      // A local deletion newer than the remote edit wins.
+      if (localTombstone != null && localTombstone >= r.updatedAtMs) continue;
+
+      CustomSpace remoteSpace;
+      try {
+        remoteSpace = CustomSpace.fromMap({...r.data, 'id': r.id});
+      } catch (_) {
+        continue; // Malformed cloud document — skip, do not crash the sync.
+      }
+
+      if (localSpace == null) {
+        byId[r.id] = remoteSpace.copyWith(id: r.id, isSynced: true);
+        changed = true;
+        pulled++;
+        continue;
+      }
+
+      final localMs = _ms(localSpace.effectiveUpdatedAt);
+      if (r.updatedAtMs > localMs) {
+        byId[r.id] = remoteSpace.copyWith(id: r.id, isSynced: true);
+        changed = true;
+        pulled++;
+      } else if (r.updatedAtMs == localMs && !localSpace.isSynced) {
+        byId[r.id] = localSpace.copyWith(isSynced: true);
+        changed = true;
+      } else if (r.updatedAtMs < localMs && localSpace.isSynced) {
+        // Clock skew or a delayed retry left a stale copy in the cloud; keep
+        // the newer local Space and repair the cloud instead of losing the edit.
+        byId[r.id] = localSpace.copyWith(isSynced: false);
+        changed = true;
+      }
+    }
+
+    final unsynced = byId.values.where((space) => !space.isSynced).toList();
+    final pendingDeletes = Map<String, int>.from(spaceTombstones)
+      ..removeWhere((id, _) => settled.contains(id));
+
+    if (unsynced.isNotEmpty || pendingDeletes.isNotEmpty) {
+      await remote.pushSpaces(
+        uid,
+        upserts: unsynced
+            .map(
+              (space) => RemoteSpaceRecord(
+                id: space.id,
+                data: space.toMap()..remove('isSynced'),
+                updatedAtMs: () {
+                  final ms = _ms(space.effectiveUpdatedAt);
+                  return ms > 0 ? ms : nowMs;
+                }(),
+              ),
+            )
+            .toList(),
+        deletions: pendingDeletes,
+      );
+      for (final space in unsynced) {
+        final current = byId[space.id];
+        if (current != null && !current.isSynced) {
+          byId[space.id] = current.copyWith(isSynced: true);
+          changed = true;
+        }
+      }
+      await local.clearSpaceTombstones(pendingDeletes.keys);
+    }
+    await local.clearSpaceTombstones(settled);
+
+    if (changed) {
+      await local.saveCustomSpaces(byId.values.toList());
+    }
+
+    return (pushed: unsynced.length, pulled: pulled, maxServer: maxServer);
   }
 
   /// Forgets the sync cursor so the next run re-downloads everything.

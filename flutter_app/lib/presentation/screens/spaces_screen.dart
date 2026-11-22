@@ -373,6 +373,10 @@ class _SpacesScreenState extends ConsumerState<SpacesScreen> {
                   dialogContext,
                   CustomSpace(
                     id: existing?.id ?? const Uuid().v4(),
+                    // A rename or a colour change is a new version for cloud
+                    // sync, so it gets a fresh timestamp and goes out unsynced.
+                    updatedAt: DateTime.now().toUtc(),
+                    isSynced: false,
                     name: name,
                     colorValue: selectedColor.toARGB32(),
                     iconName: selectedIcon,

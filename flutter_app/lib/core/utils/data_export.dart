@@ -33,7 +33,7 @@ class DataExport {
       // Spaces are part of the library, not decoration: restoring items without
       // them left every card pointing at a Space that did not exist any more.
       'spaceCount': spaces.length,
-      'spaces': spaces.map((s) => s.toMap()).toList(),
+      'spaces': spaces.map((s) => s.toMap()..remove('isSynced')).toList(),
     };
     return const JsonEncoder.withIndent('  ').convert(payload);
   }

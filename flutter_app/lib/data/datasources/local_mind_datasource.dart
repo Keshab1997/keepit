@@ -9,6 +9,11 @@ class LocalMindDataSource {
 
   static const String _tombstonesKey = 'tombstones';
 
+  /// Space deletions, `{spaceId: deletedAtMillis}`. Spaces are not in the item
+  /// box, so they need their own tombstones or a delete on the phone would be
+  /// undone by the next pull from the cloud.
+  static const String spaceTombstonesKey = 'space_tombstones';
+
   /// Set once demo items were seeded or the user emptied their mind, so the
   /// sample cards never come back.
   static const String demoSeededKey = 'demo_seeded';
@@ -152,6 +157,26 @@ class LocalMindDataSource {
     }
   }
 
+  Map<String, int> getSpaceTombstones() {
+    final raw = meta.get(spaceTombstonesKey);
+    if (raw is! Map) return {};
+    final out = <String, int>{};
+    raw.forEach((key, value) {
+      if (key is String && value is int) out[key] = value;
+    });
+    return out;
+  }
+
+  Future<void> clearSpaceTombstones(Iterable<String> ids) async {
+    if (ids.isEmpty) return;
+    final tombstones = getSpaceTombstones();
+    var changed = false;
+    for (final id in ids) {
+      changed = tombstones.remove(id) != null || changed;
+    }
+    if (changed) await meta.put(spaceTombstonesKey, tombstones);
+  }
+
   Future<List<CustomSpace>> getCustomSpaces() async {
     final raw = meta.get(customSpacesKey);
     if (raw is! List) return const [];
@@ -179,6 +204,11 @@ class LocalMindDataSource {
     final spaces = await getCustomSpaces();
     await saveCustomSpaces(
         spaces.where((space) => space.id != spaceId).toList());
+    // Recorded so the deletion reaches the cloud and the other devices; the
+    // engine clears it once the cloud has the tombstone.
+    final tombstones = getSpaceTombstones()
+      ..[spaceId] = DateTime.now().toUtc().millisecondsSinceEpoch;
+    await meta.put(spaceTombstonesKey, tombstones);
     final affected = <MindItem>[];
     for (final raw in box.values) {
       if (raw is! Map) continue;

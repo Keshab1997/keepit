@@ -14,6 +14,7 @@ import '../../core/theme/app_palette.dart';
 import '../../core/theme/mind_toast.dart';
 import '../../core/updates/app_update_service.dart';
 import '../../core/utils/data_export.dart';
+import '../../core/utils/data_import.dart';
 import '../../core/utils/notification_service.dart';
 import '../controllers/app_update_controller.dart';
 import '../controllers/cloud_sync_controller.dart';
@@ -84,6 +85,12 @@ class ProfileScreen extends ConsumerWidget {
                 title: 'Export my data',
                 subtitle: 'Download all ${items.length} items as JSON',
                 onTap: () => _export(context, ref),
+              ),
+              _Tile(
+                icon: LucideIcons.upload,
+                title: 'Restore from clipboard',
+                subtitle: 'Bring items back from a KeepIt JSON backup',
+                onTap: () => _import(context, ref),
               ),
               if (!sync.signedIn)
                 _Tile(
@@ -296,6 +303,63 @@ class ProfileScreen extends ConsumerWidget {
         );
       }
     }
+  }
+
+  /// Restores a backup the user has copied to the clipboard.
+  ///
+  /// Files come to the app as text rather than through a picker: nobody shares
+  /// a `.json` into a bookmark app, but "copy the backup, tap restore" works on
+  /// both Android and desktop today, with no new plugin.
+  static Future<void> _import(BuildContext context, WidgetRef ref) async {
+    if (!context.mounted) return;
+    String? text;
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      text = data?.text;
+    } catch (_) {
+      text = null;
+    }
+    if (text == null || text.trim().isEmpty) {
+      if (!context.mounted) return;
+      MindToast.showInfoToast(
+        context,
+        title: 'Clipboard is empty',
+        subtitle: 'Copy a KeepIt backup first, then tap Restore.',
+      );
+      return;
+    }
+
+    final ImportOutcome outcome;
+    try {
+      outcome = await ref.read(mindFeedProvider.notifier).importBackup(text);
+    } on ImportFormatException {
+      if (!context.mounted) return;
+      MindToast.showDeleteToast(
+        context,
+        title: 'That is not a KeepIt backup',
+      );
+      return;
+    } catch (_) {
+      if (!context.mounted) return;
+      MindToast.showDeleteToast(context, title: 'Restore failed');
+      return;
+    }
+
+    if (!context.mounted) return;
+    if (outcome.added == 0) {
+      // Nothing new, but say *why* - "3 already here" reads very differently
+      // from a silent no-op after a paste.
+      MindToast.showInfoToast(
+        context,
+        title: 'Nothing new to restore',
+        subtitle: outcome.malformed > 0
+            ? '${outcome.duplicates} already here, '
+                '${outcome.malformed} unreadable.'
+            : '${outcome.duplicates} already here.',
+      );
+      return;
+    }
+    MindToast.showSuccessToast(context, title: outcome.summary);
   }
 
   static Future<void> _export(BuildContext context, WidgetRef ref) async {

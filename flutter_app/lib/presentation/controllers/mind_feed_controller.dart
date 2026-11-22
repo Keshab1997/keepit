@@ -88,12 +88,14 @@ enum SaveResult { success, duplicate, empty }
 class ImportOutcome {
   const ImportOutcome({
     required this.added,
+    required this.spacesAdded,
     required this.duplicates,
     required this.malformed,
     required this.total,
   });
 
   final int added;
+  final int spacesAdded;
   final int duplicates;
   final int malformed;
   final int total;
@@ -101,6 +103,9 @@ class ImportOutcome {
   /// `"12 restored"`, plus what was skipped only when something was.
   String get summary {
     final parts = <String>['$added restored'];
+    if (spacesAdded > 0) {
+      parts.add(spacesAdded == 1 ? '1 space' : '$spacesAdded spaces');
+    }
     if (duplicates > 0) parts.add('$duplicates already here');
     if (malformed > 0) parts.add('$malformed unreadable');
     return parts.join(' • ');
@@ -467,16 +472,31 @@ class MindFeedController extends Notifier<MindFeedState> {
   /// them like any other fresh save instead of leaving them local-only.
   Future<ImportOutcome> importBackup(String jsonText) async {
     await ready;
-    final plan = DataImport.plan(jsonText, existing: state.items);
+    final existingSpaces = await _localDataSource.getCustomSpaces();
+    final plan = DataImport.plan(
+      jsonText,
+      existing: state.items,
+      existingSpaces: existingSpaces,
+    );
+
     if (plan.isEmpty) {
       return ImportOutcome(
         added: 0,
+        spacesAdded: 0,
         duplicates: plan.duplicates,
         malformed: plan.malformed,
         total: plan.total,
       );
     }
 
+    // Spaces first: an item's `spaceId` must already resolve when the card is
+    // built, otherwise the first frame shows it as unsorted.
+    if (plan.spaces.isNotEmpty) {
+      await _localDataSource.saveCustomSpaces([
+        ...existingSpaces,
+        ...plan.spaces,
+      ]);
+    }
     for (final item in plan.items) {
       await _localDataSource.saveItem(item);
     }
@@ -484,6 +504,7 @@ class MindFeedController extends Notifier<MindFeedState> {
     _changed();
     return ImportOutcome(
       added: plan.kept,
+      spacesAdded: plan.spacesKept,
       duplicates: plan.duplicates,
       malformed: plan.malformed,
       total: plan.total,

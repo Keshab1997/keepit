@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:keepit/core/utils/data_export.dart';
 import 'package:keepit/core/utils/data_import.dart';
+import 'package:keepit/domain/entities/custom_space.dart';
 import 'package:keepit/domain/entities/mind_item.dart';
 
 /// `DataImport` is the other half of `DataExport`: what the app writes out has
@@ -201,6 +202,186 @@ void main() {
         ],
       });
       expect(DataImport.plan(json).total, 2);
+    });
+  });
+
+  group('spaces (backup format v2)', () {
+    const ideas = CustomSpace(
+      id: 'space-ideas',
+      name: 'Startup ideas',
+      colorValue: 0xFF10B981,
+      iconName: 'lightbulb',
+    );
+    const design = CustomSpace(
+      id: 'space-design',
+      name: 'Design',
+      colorValue: 0xFFEC4899,
+      iconName: 'palette',
+    );
+
+    test('the export is version 2 and carries the spaces', () {
+      final json = jsonDecode(
+        DataExport.buildJson(
+          [item(id: 'a', url: 'https://example.com/a')],
+          spaces: const [ideas],
+        ),
+      ) as Map<String, dynamic>;
+
+      expect(json['version'], 2);
+      expect(json['spaceCount'], 1);
+      expect(json['spaces'], [
+        {
+          'id': 'space-ideas',
+          'name': 'Startup ideas',
+          'colorValue': 0xFF10B981,
+          'iconName': 'lightbulb',
+        },
+      ]);
+    });
+
+    test('spaces and their assignments survive a round-trip', () {
+      final plan = DataImport.plan(
+        DataExport.buildJson(
+          [
+            MindItem(
+              id: 'a',
+              title: 'A startup thought',
+              type: ItemType.quickNote,
+              spaceId: 'space-ideas',
+              createdAt: DateTime.utc(2026, 11, 1),
+              updatedAt: DateTime.utc(2026, 11, 1),
+            ),
+          ],
+          spaces: const [ideas, design],
+        ),
+      );
+
+      expect(plan.spacesKept, 2);
+      expect(plan.spaces.map((s) => s.name), ['Startup ideas', 'Design']);
+      expect(plan.items.single.spaceId, 'space-ideas');
+      expect(plan.orphanedSpaces, 0);
+    });
+
+    test(
+        'a space already on the device under another id is not duplicated '
+        'and the item is re-pointed at the local one', () {
+      final local = [
+        const CustomSpace(
+          id: 'local-startup',
+          name: 'startup ideas',
+          colorValue: 0xFFFF5B37,
+          iconName: 'folder',
+        ),
+      ];
+
+      final plan = DataImport.plan(
+        DataExport.buildJson(
+          [
+            MindItem(
+              id: 'a',
+              title: 'A startup thought',
+              type: ItemType.quickNote,
+              spaceId: 'space-ideas',
+              createdAt: DateTime.utc(2026, 11, 1),
+              updatedAt: DateTime.utc(2026, 11, 1),
+            ),
+          ],
+          spaces: const [ideas],
+        ),
+        existingSpaces: local,
+      );
+
+      expect(plan.spacesKept, 0);
+      expect(plan.spaceDuplicates, 1);
+      expect(plan.items.single.spaceId, 'local-startup');
+      expect(plan.orphanedSpaces, 0);
+    });
+
+    test('a space with a familiar id is a duplicate, not an overwrite', () {
+      final plan = DataImport.plan(
+        DataExport.buildJson([], spaces: const [ideas]),
+        existingSpaces: const [
+          CustomSpace(
+            id: 'space-ideas',
+            name: 'Renamed on this device',
+            colorValue: 0xFF000000,
+            iconName: 'folder',
+          ),
+        ],
+      );
+
+      expect(plan.spacesKept, 0);
+      expect(plan.spaceDuplicates, 1);
+    });
+
+    test(
+        'an assignment to a space that exists nowhere is dropped, not '
+        'left dangling', () {
+      final plan = DataImport.plan(
+        DataExport.buildJson([
+          MindItem(
+            id: 'a',
+            title: 'Homeless',
+            type: ItemType.quickNote,
+            spaceId: 'space-gone',
+            createdAt: DateTime.utc(2026, 11, 1),
+            updatedAt: DateTime.utc(2026, 11, 1),
+          ),
+        ]),
+      );
+
+      expect(plan.items.single.spaceId, isNull);
+      expect(plan.orphanedSpaces, 1);
+    });
+
+    test('a v1 backup (no spaces key) still restores its items', () {
+      final v1 = jsonEncode({
+        'app': 'KeepIt',
+        'format': 'keepit-export',
+        'version': 1,
+        'count': 1,
+        'items': [
+          {'id': 'old', 'title': 'From v1', 'spaceId': 'space-ideas'},
+        ],
+      });
+
+      final plan = DataImport.plan(
+        v1,
+        existingSpaces: const [
+          CustomSpace(
+            id: 'space-ideas',
+            name: 'Startup ideas',
+            colorValue: 0xFF10B981,
+            iconName: 'lightbulb',
+          ),
+        ],
+      );
+
+      expect(plan.kept, 1);
+      expect(plan.spacesKept, 0);
+      expect(plan.items.single.spaceId, 'space-ideas');
+      expect(plan.orphanedSpaces, 0);
+    });
+
+    test('a nameless space is skipped, the rest of the restore still runs', () {
+      final json = jsonEncode({
+        'format': 'keepit-export',
+        'version': 2,
+        'items': [
+          {'id': 'ok', 'title': 'Fine'},
+        ],
+        'spaces': [
+          {'id': 'nameless', 'name': '   '},
+          {'id': 'real', 'name': 'Reading list'},
+        ],
+      });
+
+      final plan = DataImport.plan(json);
+
+      expect(plan.spacesKept, 1);
+      expect(plan.spaces.single.name, 'Reading list');
+      expect(plan.spaceMalformed, 1);
+      expect(plan.kept, 1);
     });
   });
 }

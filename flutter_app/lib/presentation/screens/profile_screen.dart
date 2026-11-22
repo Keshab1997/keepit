@@ -355,7 +355,9 @@ class ProfileScreen extends ConsumerWidget {
         subtitle: outcome.malformed > 0
             ? '${outcome.duplicates} already here, '
                 '${outcome.malformed} unreadable.'
-            : '${outcome.duplicates} already here.',
+            : outcome.duplicates > 0
+                ? '${outcome.duplicates} already here.'
+                : 'The backup contained no readable items.',
       );
       return;
     }
@@ -369,7 +371,10 @@ class ProfileScreen extends ConsumerWidget {
       return;
     }
     try {
-      await DataExport.shareExport(items);
+      // Spaces travel with the items: a backup that restores cards but not the
+      // Spaces they belong to is only half a backup.
+      final spaces = await ref.read(localDataSourceProvider).getCustomSpaces();
+      await DataExport.shareExport(items, spaces: spaces);
     } catch (e) {
       if (context.mounted) {
         MindToast.showDeleteToast(context, title: 'Export failed');

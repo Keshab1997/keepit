@@ -54,14 +54,15 @@ Designers building moodboards · Anyone who reads and watches a lot.
 Start building your second brain today. It's free.
 ```
 
-## Release notes: v1.0.0
+## Release notes: v1.0.14 (paste into Play Console → What's new)
 
 ```
-Welcome to KeepIt 🎉
-• Save links, reels, videos and notes from any app
-• Visual feed, smart tags and Spaces
-• Serendipity reminders & Sunday digest
-• Optional Google sign-in with cloud backup & sync
+Your Spaces go with you 🎉
+• Spaces now sync to the cloud and are included in backup & restore
+• Restore a KeepIt JSON backup straight from your clipboard
+• Duplicate links are caught more reliably, even with www or http/https
+• Serendipity reminders follow your device's timezone
+• Safer saves and thumbnails: fewer crashes from damaged or expired data
 ```
 
 ## Screenshot captions (for a framed mockup)

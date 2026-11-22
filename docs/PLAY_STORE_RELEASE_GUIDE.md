@@ -2,7 +2,7 @@
 
 **App:** KeepIt — AI-Powered Second Brain & Smart Visual Bookmarks  
 **Package name:** `com.keshabstudios.keepit`  
-**Current version:** `1.0.14+18` (`versionName 1.0.14`, `versionCode 18`)<br>
+**Current version:** `1.0.15+19` (`versionName 1.0.15`, `versionCode 19`)<br>
 **Privacy policy:** https://keshab1997.github.io/keepit/privacy-policy.html  
 **Account/data deletion:** https://keshab1997.github.io/keepit/delete-account.html  
 **Last reviewed:** 25 September 2026
@@ -138,7 +138,7 @@ Save anything worth remembering from your phone’s share menu, then find it aga
 
 KeepIt is built for curious people who collect ideas and want to make them useful later.
 
-### Release notes — v1.0.14 (What's new)
+### Release notes — v1.0.15 (What's new)
 
 Your Spaces go with you: they now sync to the cloud and are included in backup and restore. You can restore a KeepIt JSON backup straight from your clipboard, duplicate links are caught more reliably, reminders follow your device's timezone, and saves are more resilient to damaged or expired data.
 

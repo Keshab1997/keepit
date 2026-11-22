@@ -54,7 +54,7 @@ Designers building moodboards · Anyone who reads and watches a lot.
 Start building your second brain today. It's free.
 ```
 
-## Release notes: v1.0.14 (paste into Play Console → What's new)
+## Release notes: v1.0.15 (paste into Play Console → What's new)
 
 ```
 Your Spaces go with you 🎉

@@ -11,6 +11,8 @@ import '../../core/ads/ad_service.dart';
 import '../../core/utils/imgbb_uploader.dart';
 import '../../core/utils/concurrency_gate.dart';
 import '../../core/utils/metadata_extractor.dart';
+import '../../core/utils/url_normalization.dart';
+import '../../core/utils/data_import.dart';
 import '../../core/screenshot_mode.dart';
 
 final localDataSourceProvider = Provider<LocalMindDataSource>((ref) {
@@ -81,6 +83,29 @@ class MindFeedState {
 }
 
 enum SaveResult { success, duplicate, empty }
+
+/// What a restore actually did, for the confirmation toast.
+class ImportOutcome {
+  const ImportOutcome({
+    required this.added,
+    required this.duplicates,
+    required this.malformed,
+    required this.total,
+  });
+
+  final int added;
+  final int duplicates;
+  final int malformed;
+  final int total;
+
+  /// `"12 restored"`, plus what was skipped only when something was.
+  String get summary {
+    final parts = <String>['$added restored'];
+    if (duplicates > 0) parts.add('$duplicates already here');
+    if (malformed > 0) parts.add('$malformed unreadable');
+    return parts.join(' • ');
+  }
+}
 
 class MindFeedController extends Notifier<MindFeedState> {
   LocalMindDataSource get _localDataSource => ref.read(localDataSourceProvider);
@@ -155,7 +180,7 @@ class MindFeedController extends Notifier<MindFeedState> {
     // loadItems() and gets overwritten when loadItems() completes.
     await ready;
 
-    final targetUrl = _extractCleanUrl(cleanInput);
+    final targetUrl = UrlNormalization.extract(cleanInput);
 
     // Duplicate Check: Check if URL already exists in current mind items
     final isDuplicate = state.items.any((item) {
@@ -257,7 +282,7 @@ class MindFeedController extends Notifier<MindFeedState> {
   /// True when [rawUrl] is already saved in the library (ignoring tracking
   /// query parameters and trailing slashes).
   bool hasUrl(String rawUrl) {
-    final target = _extractCleanUrl(rawUrl.trim());
+    final target = UrlNormalization.extract(rawUrl.trim());
     if (target.isEmpty) return false;
     return state.items.any((item) {
       final existing = item.url;
@@ -268,70 +293,14 @@ class MindFeedController extends Notifier<MindFeedState> {
 
   /// Normalized form of [url] with tracking parameters and trailing slashes
   /// stripped so duplicate/clipboard checks treat equivalent links as one.
-  String normalizeUrl(String url) => _normalizeUrl(_extractCleanUrl(url));
-
-  String _extractCleanUrl(String text) {
-    final urlRegex = RegExp(r'(https?://[^\s]+)');
-    final match = urlRegex.firstMatch(text);
-    return match != null ? match.group(0)! : text;
-  }
-
-  bool _areUrlsEquivalent(String url1, String url2) {
-    final u1 = _normalizeUrl(url1);
-    final u2 = _normalizeUrl(url2);
-    return u1 == u2;
-  }
-
-  String _normalizeUrl(String url) {
-    var clean = url.trim().toLowerCase();
-    // Scheme and host are not meaning: the same article is linked as http,
-    // https, www.x.com and x.com depending on which app shared it. Folding
-    // those together is what stops "the same link saved twice from two apps".
-    clean = _foldSchemeAndHost(clean);
-    if (clean.contains('?')) {
-      final parts = clean.split('?');
-      var base = parts[0];
-      while (base.endsWith('/')) {
-        base = base.substring(0, base.length - 1);
-      }
-      final query = parts[1];
-      final cleanParams = query.split('&').where((param) {
-        return !param.startsWith('igsh=') &&
-            !param.startsWith('si=') &&
-            !param.startsWith('utm_') &&
-            !param.startsWith('fbclid=');
-      }).join('&');
-      clean = cleanParams.isNotEmpty ? '$base?$cleanParams' : base;
-    }
-    while (clean.endsWith('/')) {
-      clean = clean.substring(0, clean.length - 1);
-    }
-    return clean;
-  }
-
-  /// `http://www.Example.com/a` and `https://example.com/a` are one page.
   ///
-  /// Everything before the first `/` after the authority is lower-cased and
-  /// stripped of a leading `http://`/`https://` and a leading `www.`. Only the
-  /// authority is touched - the path keeps its case, because many sites are
-  /// case-sensitive there.
-  static String _foldSchemeAndHost(String url) {
-    final schemeEnd = url.indexOf('://');
-    final authorityStart = schemeEnd >= 0 ? schemeEnd + 3 : 0;
-    if (schemeEnd < 0) return url;
+  /// The rule itself lives in [UrlNormalization] because backup import needs
+  /// the same answer; a second copy here would drift and a restore would
+  /// re-add links the app already considers duplicates.
+  String normalizeUrl(String url) => UrlNormalization.key(url);
 
-    final pathStart = url.indexOf('/', authorityStart);
-    final authority = pathStart < 0
-        ? url.substring(authorityStart)
-        : url.substring(authorityStart, pathStart);
-    final rest = pathStart < 0 ? '' : url.substring(pathStart);
-    if (authority.isEmpty) return url;
-
-    final host =
-        authority.startsWith('www.') ? authority.substring(4) : authority;
-    if (host.isEmpty) return url;
-    return 'https://$host$rest';
-  }
+  bool _areUrlsEquivalent(String url1, String url2) =>
+      UrlNormalization.same(url1, url2);
 
   Future<void> toggleWatched(String id) async {
     MindItem? updated;
@@ -485,6 +454,40 @@ class MindFeedController extends Notifier<MindFeedState> {
       items: state.items.where((element) => element.id != id).toList(),
     );
     _changed();
+  }
+
+  /// Restores items from a `DataExport` JSON backup.
+  ///
+  /// Throws [ImportFormatException] when [jsonText] is not a KeepIt backup at
+  /// all. Duplicates (same id, or same link after [UrlNormalization]) and
+  /// unreadable entries are skipped and reported, never thrown: a restore of
+  /// 300 saved reels must not fail because one record is malformed.
+  ///
+  /// Imported items are written with `synced: false`, so Cloud Sync uploads
+  /// them like any other fresh save instead of leaving them local-only.
+  Future<ImportOutcome> importBackup(String jsonText) async {
+    await ready;
+    final plan = DataImport.plan(jsonText, existing: state.items);
+    if (plan.isEmpty) {
+      return ImportOutcome(
+        added: 0,
+        duplicates: plan.duplicates,
+        malformed: plan.malformed,
+        total: plan.total,
+      );
+    }
+
+    for (final item in plan.items) {
+      await _localDataSource.saveItem(item);
+    }
+    state = state.copyWith(items: [...plan.items, ...state.items]);
+    _changed();
+    return ImportOutcome(
+      added: plan.kept,
+      duplicates: plan.duplicates,
+      malformed: plan.malformed,
+      total: plan.total,
+    );
   }
 
   void setSearchQuery(String query) {

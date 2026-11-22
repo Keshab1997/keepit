@@ -132,7 +132,11 @@ Check Firestore: `users/<uid>/items/*` should contain your items.
 ## How sync works (for developers)
 
 - Local-first: Hive is the source of truth; the UI never waits for the network.
-- Layout: `users/{uid}/items/{itemId}` = item fields + `updatedAtMs`, `deleted`, `serverUpdatedAt`.
+- Layout: `users/{uid}/items/{itemId}` and `users/{uid}/spaces/{spaceId}` =
+  document fields + `updatedAtMs`, `deleted`, `serverUpdatedAt`. Spaces
+  reconcile exactly like items (last-write-wins on `updatedAt`, deletions as
+  tombstones), which is why `firestore.rules` needs a match block per
+  collection — rules do not cascade to subcollections.
 - Pull: `serverUpdatedAt > lastCursor` (incremental). Push: dirty items (`isSynced == false`) + local tombstones.
 - Conflicts: **last write wins** by `updatedAt`. Deletes are tombstones so other devices learn about them.
 - Auto sync: 4 s after any local change and on sign-in. Foreground remote polling is capped at once per 5 minutes to avoid billed empty reads; Profile → Sync now always checks immediately. Can be turned off in Profile.

@@ -1,7 +1,10 @@
 rules_version = '2';
 
 // KeepIt Cloud Sync security rules.
-// Every user can only read/write their own subtree: users/{uid}/items/{itemId}.
+// Every user can only read/write their own subtree: users/{uid}/items/{itemId}
+// and users/{uid}/spaces/{spaceId}. Firestore rules do not cascade, so each
+// synced collection needs its own match block - a collection without one falls
+// through to the closed default at the bottom of this file.
 // Deploy: firebase deploy --only firestore:rules  (or paste in Firebase Console → Firestore → Rules)
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -25,6 +28,22 @@ service cloud.firestore {
               || request.resource.data.content == null
               || (request.resource.data.content is string
                   && request.resource.data.content.size() < 20000));
+      }
+
+      // Spaces: the user's own groupings. Same envelope as items (updatedAtMs
+      // for last-write-wins, deleted for tombstones), but the document is only
+      // a name, a colour and an icon name, so the size cap is much tighter.
+      match /spaces/{spaceId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.id == spaceId
+          && request.resource.data.updatedAtMs is int
+          && request.resource.data.deleted is bool
+          && request.resource.size() < 20
+          && (!('name' in request.resource.data)
+              || (request.resource.data.name is string
+                  && request.resource.data.name.size() > 0
+                  && request.resource.data.name.size() <= 80));
       }
     }
 

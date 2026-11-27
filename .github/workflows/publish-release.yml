@@ -51,7 +51,7 @@ jobs:
   publish:
     # Use the fixed build directly: the v1.18.9 publisher wrapper still calls
     # the old build. Keep its release defaults below until a fixed tag ships.
-    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@ccb97e5d88884ad5c38bc6bcf4e84ad56d24d08f
+    uses: Keshab1997/flutter-builder/.github/workflows/flutter-build.yml@v1.19.0
     with:
       release-name: KeepIt
       publish-github-release: true
